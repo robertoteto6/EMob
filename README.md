@@ -1,4 +1,8 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# eSports Tracker
+
+This project aims to provide an application to follow electronic sports competitions with a design inspired by Fotmob. It was bootstrapped with [Next.js](https://nextjs.org) using [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+Currently the home page ofrece un enlace a la sección de eSports donde se listan los próximos enfrentamientos. Cada partido puede abrirse en una página de detalle para ver información ampliada.
 
 ## Getting Started
 
