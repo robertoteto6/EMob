@@ -2,6 +2,8 @@
 
 This project aims to provide an application to follow electronic sports competitions with a design inspired by Fotmob. It was bootstrapped with [Next.js](https://nextjs.org) using [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+The `/esports` section now fetches real match data from the [OpenDota API](https://api.opendota.com), displaying recent professional Dota 2 games.
+
 ## Getting Started
 
 First, run the development server:
