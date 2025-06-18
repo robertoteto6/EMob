@@ -10,7 +10,9 @@ export async function GET(
   const { id } = context.params;
   const res = await fetch(
     `https://api.pandascore.co/matches/${id}?token=${PANDA_SCORE_TOKEN}`,
-    { cache: "no-store", agent: getProxyAgent() }
+    // Cast to allow the non-standard `agent` option which is used only in
+    // the Node.js runtime.
+    { cache: "no-store", agent: getProxyAgent() } as RequestInit & { agent?: any }
   );
   if (!res.ok) {
     return new NextResponse("Failed to fetch match", { status: res.status });

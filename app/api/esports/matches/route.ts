@@ -8,7 +8,8 @@ export async function GET(req: Request) {
   const game = searchParams.get("game") || "dota2";
   const res = await fetch(
     `https://api.pandascore.co/${game}/matches?per_page=50&token=${PANDA_SCORE_TOKEN}`,
-    { cache: "no-store", agent: getProxyAgent() }
+    // Allow the custom `agent` option in Node.js fetch.
+    { cache: "no-store", agent: getProxyAgent() } as RequestInit & { agent?: any }
   );
   if (!res.ok) {
     return new NextResponse("Failed to fetch matches", { status: res.status });
