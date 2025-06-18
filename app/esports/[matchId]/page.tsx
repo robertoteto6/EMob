@@ -95,6 +95,7 @@ export default function MatchPage({
   const [match, setMatch] = useState<MatchDetail | null>(null);
   const [vodUrl, setVodUrl] = useState<string | null>(null);
   const [findingVod, setFindingVod] = useState<boolean>(false);
+  const [searchedVod, setSearchedVod] = useState<boolean>(false);
 
   useEffect(() => {
     async function load() {
@@ -108,7 +109,7 @@ export default function MatchPage({
     if (!match) return;
     const now = Date.now() / 1000;
     const ended = match.end_time !== null && now > match.end_time;
-    if (!ended || vodUrl || findingVod) return;
+    if (!ended || vodUrl || findingVod || searchedVod) return;
     const twitch =
       match.streams.find(
         (s) => s.embed_url.includes("twitch") || s.raw_url.includes("twitch")
@@ -123,6 +124,7 @@ export default function MatchPage({
     }
     async function searchVod() {
       setFindingVod(true);
+      setSearchedVod(true);
       try {
         const res = await fetch("/api/esports/vod", {
           method: "POST",
@@ -142,7 +144,7 @@ export default function MatchPage({
       }
     }
     searchVod();
-  }, [match, vodUrl, findingVod]);
+  }, [match, vodUrl, findingVod, searchedVod]);
 
   if (!match) {
     return (
@@ -285,6 +287,9 @@ export default function MatchPage({
           })()}
           {findingVod && (
             <p className="text-sm text-gray-400">Buscando grabación...</p>
+          )}
+          {searchedVod && !vodUrl && !findingVod && (
+            <p className="text-sm text-gray-400">No se encontró grabación</p>
           )}
           {vodUrl && (
             <p className="text-sm">

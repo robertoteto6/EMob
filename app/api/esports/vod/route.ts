@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getProxyAgent } from "../../../lib/proxyAgent";
 
 const GEMINI_API_KEY = "AIzaSyDegDWFj78Gl2zrk1CiKO_dJtRNbB2sdGs";
+
 const GEMINI_MODEL = "models/gemini-2.5-flash";
 
 export async function POST(req: Request) {
