@@ -93,6 +93,8 @@ export default function MatchPage({
 }) {
   const { matchId } = use(params);
   const [match, setMatch] = useState<MatchDetail | null>(null);
+  const [vodUrl, setVodUrl] = useState<string | null>(null);
+  const [findingVod, setFindingVod] = useState<boolean>(false);
 
   useEffect(() => {
     async function load() {
@@ -101,6 +103,46 @@ export default function MatchPage({
     }
     load();
   }, [matchId]);
+
+  useEffect(() => {
+    if (!match) return;
+    const now = Date.now() / 1000;
+    const ended = match.end_time !== null && now > match.end_time;
+    if (!ended || vodUrl || findingVod) return;
+    const twitch =
+      match.streams.find(
+        (s) => s.embed_url.includes("twitch") || s.raw_url.includes("twitch")
+      ) || match.streams[0];
+    if (!twitch) return;
+    let channel = "";
+    try {
+      const u = new URL(twitch.raw_url || twitch.embed_url);
+      channel = u.pathname.replace(/^\//, "").split("/")[0];
+    } catch {
+      return;
+    }
+    async function searchVod() {
+      setFindingVod(true);
+      try {
+        const res = await fetch("/api/esports/vod", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            matchName: match.name,
+            channel,
+            startTime: match.start_time,
+          }),
+        });
+        const data = await res.json();
+        if (data.url) setVodUrl(data.url);
+      } catch {
+        /* ignore */
+      } finally {
+        setFindingVod(false);
+      }
+    }
+    searchVod();
+  }, [match, vodUrl, findingVod]);
 
   if (!match) {
     return (
@@ -204,6 +246,20 @@ export default function MatchPage({
               ) || match.streams[0];
             if (!twitch) return null;
             const embedUrl = (() => {
+              if (vodUrl) {
+                const m = vodUrl.match(/videos\/(\d+)/);
+                if (m) {
+                  const url = new URL("https://player.twitch.tv/");
+                  url.searchParams.set("video", m[1]);
+                  if (typeof window !== "undefined") {
+                    if (!url.searchParams.get("parent")) {
+                      url.searchParams.set("parent", window.location.hostname);
+                    }
+                  }
+                  return url.toString();
+                }
+                return vodUrl;
+              }
               try {
                 const url = new URL(twitch.embed_url);
                 if (typeof window !== "undefined") {
@@ -227,6 +283,21 @@ export default function MatchPage({
               </div>
             );
           })()}
+          {findingVod && (
+            <p className="text-sm text-gray-400">Buscando grabación...</p>
+          )}
+          {vodUrl && (
+            <p className="text-sm">
+              <a
+                href={vodUrl}
+                target="_blank"
+                rel="noopener"
+                className="text-[var(--accent)] hover:underline"
+              >
+                Ver VOD
+              </a>
+            </p>
+          )}
           <ul className="space-y-1 text-sm">
             {match.streams.map((s, idx) => (
               <li key={idx}>
