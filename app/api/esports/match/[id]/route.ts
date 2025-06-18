@@ -5,14 +5,15 @@ const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
 
 export async function GET(
   request: Request,
-  context: any
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = context.params;
+  const { id } = await params;
   const res = await fetch(
     `https://api.pandascore.co/matches/${id}?token=${PANDA_SCORE_TOKEN}`,
-    // Cast to allow the non-standard `agent` option which is used only in
-    // the Node.js runtime.
-    { cache: "no-store", agent: getProxyAgent() } as RequestInit & { agent?: any }
+    // Use a proxy when running in environments that require it.
+    { cache: "no-store", dispatcher: getProxyAgent() } as RequestInit & {
+      dispatcher?: any;
+    }
   );
   if (!res.ok) {
     return new NextResponse("Failed to fetch match", { status: res.status });

@@ -1,11 +1,10 @@
-import type { Agent } from "https";
+import type { Dispatcher } from "undici";
 import { createRequire } from "node:module";
 
-// Lazily require "https-proxy-agent" so that it is only loaded in a Node
-// environment. This prevents bundlers from trying to include it in the
-// browser bundle where the module is not available.
+// Lazily import the proxy implementation only when running in Node.js to avoid
+// bundling it for the browser.
 
-export function getProxyAgent(): Agent | undefined {
+export function getProxyAgent(): Dispatcher | undefined {
   const proxyUrl =
     process.env.https_proxy ||
     process.env.HTTPS_PROXY ||
@@ -16,6 +15,6 @@ export function getProxyAgent(): Agent | undefined {
   }
   // Dynamically import the agent implementation only when needed.
   const require = createRequire(import.meta.url);
-  const { HttpsProxyAgent } = require("https-proxy-agent") as typeof import("https-proxy-agent");
-  return new HttpsProxyAgent(proxyUrl);
+  const { ProxyAgent } = require("undici") as typeof import("undici");
+  return new ProxyAgent(proxyUrl);
 }
