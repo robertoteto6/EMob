@@ -11,25 +11,35 @@ interface Match {
 
 export const dynamic = "force-dynamic";
 
+const PANDA_SCORE_TOKEN =
+  "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
+
 async function getMatches(): Promise<Match[]> {
   const res = await fetch(
-    "https://api.opendota.com/api/proMatches?less_than_match_id=9999999999"
+    `https://api.pandascore.co/dota2/matches?per_page=10&token=${PANDA_SCORE_TOKEN}`
   );
   if (!res.ok) {
     console.error("Failed to fetch matches", await res.text());
     return [];
   }
   const data = await res.json();
-  return data.slice(0, 10).map((m: any) => ({
-    id: m.match_id,
-    radiant: m.radiant_name,
-    dire: m.dire_name,
-    radiant_score: m.radiant_score,
-    dire_score: m.dire_score,
-    start_time: m.start_time,
-    league: m.league_name,
-    radiant_win: m.radiant_win,
-  }));
+  return data.map((m: any) => {
+    const team1 = m.opponents?.[0]?.opponent;
+    const team2 = m.opponents?.[1]?.opponent;
+    return {
+      id: m.id,
+      radiant: team1?.name ?? "TBD",
+      dire: team2?.name ?? "TBD",
+      radiant_score: m.results?.[0]?.score ?? 0,
+      dire_score: m.results?.[1]?.score ?? 0,
+      start_time: new Date(m.begin_at ?? m.scheduled_at).getTime() / 1000,
+      league: m.league?.name ?? "",
+      radiant_win:
+        m.winner?.id !== undefined && team1?.id !== undefined
+          ? m.winner.id === team1.id
+          : false,
+    } as Match;
+  });
 }
 
 export default async function EsportsPage() {
