@@ -11,7 +11,7 @@ interface Match {
   dire_score: number;
   start_time: number;
   league: string;
-  radiant_win: boolean;
+  radiant_win: boolean | null;
 }
 
 
@@ -50,7 +50,7 @@ async function fetchMatches(game: string): Promise<Match[]> {
       radiant_win:
         m.winner?.id !== undefined && team1?.id !== undefined
           ? m.winner.id === team1.id
-          : false,
+          : null,
     } as Match;
   });
 }
@@ -137,7 +137,11 @@ export default function EsportsPage() {
                   </div>
                   <div className="text-lg font-bold text-[var(--accent)]">
                     {match.radiant_score}-{match.dire_score}{" "}
-                    {match.radiant_win ? "(Radiant win)" : "(Dire win)"}
+                    {match.radiant_win === null
+                      ? "(Por jugar)"
+                      : match.radiant_win
+                      ? "(Radiant win)"
+                      : "(Dire win)"}
                   </div>
                 </Link>
               </li>
