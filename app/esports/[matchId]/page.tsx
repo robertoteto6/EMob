@@ -15,14 +15,9 @@ interface MatchDetail {
   radiant_win: boolean;
 }
 
-const PANDA_SCORE_TOKEN =
-  "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
 
 async function fetchMatch(id: string): Promise<MatchDetail | null> {
-  const res = await fetch(
-    `https://api.pandascore.co/matches/${id}?token=${PANDA_SCORE_TOKEN}`,
-    { cache: "no-store" }
-  );
+  const res = await fetch(`/api/esports/match/${id}`, { cache: "no-store" });
   if (!res.ok) {
     console.error("Failed to fetch match", await res.text());
     return null;
