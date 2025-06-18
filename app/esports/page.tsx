@@ -18,8 +18,8 @@ const PANDA_SCORE_TOKEN =
 
 const GAMES = [
   { id: "dota2", name: "Dota 2" },
-  { id: "league-of-legends", name: "LoL" },
-  { id: "cs2", name: "CS2" },
+  { id: "lol", name: "LoL" },
+  { id: "csgo", name: "CS2" },
 ];
 
 const DAYS = [
