@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface Match {
   id: number;
@@ -123,23 +124,25 @@ export default function EsportsPage() {
         ) : (
           <ul className="space-y-4">
             {filtered.map((match) => (
-              <li
-                key={match.id}
-                className="card p-4 flex flex-col sm:flex-row sm:items-center gap-2"
-              >
-                <div className="flex-1">
-                  <p className="font-semibold">
-                    {match.radiant} vs {match.dire}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    {new Date(match.start_time * 1000).toLocaleString()}
-                  </p>
-                  <p className="text-sm text-gray-500">{match.league}</p>
-                </div>
-                <div className="text-lg font-bold text-[var(--accent)]">
-                  {match.radiant_score}-{match.dire_score}{" "}
-                  {match.radiant_win ? "(Radiant win)" : "(Dire win)"}
-                </div>
+              <li key={match.id} className="card p-4">
+                <Link
+                  href={`/esports/${match.id}`}
+                  className="flex flex-col sm:flex-row sm:items-center gap-2 hover:opacity-80"
+                >
+                  <div className="flex-1">
+                    <p className="font-semibold">
+                      {match.radiant} vs {match.dire}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {new Date(match.start_time * 1000).toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-500">{match.league}</p>
+                  </div>
+                  <div className="text-lg font-bold text-[var(--accent)]">
+                    {match.radiant_score}-{match.dire_score}{" "}
+                    {match.radiant_win ? "(Radiant win)" : "(Dire win)"}
+                  </div>
+                </Link>
               </li>
             ))}
           </ul>
