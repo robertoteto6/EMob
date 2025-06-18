@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import Link from "next/link";
 
 interface MatchDetail {
@@ -44,9 +44,9 @@ async function fetchMatch(id: string): Promise<MatchDetail | null> {
 export default function MatchPage({
   params,
 }: {
-  params: { matchId: string };
+  params: Promise<{ matchId: string }>;
 }) {
-  const { matchId } = params;
+  const { matchId } = use(params);
   const [match, setMatch] = useState<MatchDetail | null>(null);
 
   useEffect(() => {
