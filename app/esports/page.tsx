@@ -37,25 +37,25 @@ export default async function EsportsPage() {
 
   return (
     <main className="p-4 sm:p-8 font-sans">
-      <h1 className="text-2xl font-bold mb-4">Partidos profesionales Dota 2</h1>
+      <h1 className="text-2xl font-bold text-[var(--accent)] mb-4">
+        Partidos profesionales Dota 2
+      </h1>
       <ul className="space-y-4">
         {matches.map((match) => (
           <li
             key={match.id}
-            className="border rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-2"
+            className="card p-4 flex flex-col sm:flex-row sm:items-center gap-2"
           >
             <div className="flex-1">
               <p className="font-semibold">
                 {match.radiant} vs {match.dire}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-400">
                 {new Date(match.start_time * 1000).toLocaleString()}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                {match.league}
-              </p>
+              <p className="text-sm text-gray-500">{match.league}</p>
             </div>
-            <div className="text-lg font-bold">
+            <div className="text-lg font-bold text-[var(--accent)]">
               {match.radiant_score}-{match.dire_score}{" "}
               {match.radiant_win ? "(Radiant win)" : "(Dire win)"}
             </div>
