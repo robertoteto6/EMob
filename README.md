@@ -3,6 +3,7 @@
 This project aims to provide an application to follow electronic sports competitions with a design inspired by Fotmob. It was bootstrapped with [Next.js](https://nextjs.org) using [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 The dashboard now fetches match data from the [PandaScore API](https://api.pandascore.co), displaying recent professional Dota 2 games.
+It also includes a chatbot powered by the Gemini Flash model to answer eSports questions.
 
 ## Getting Started
 
