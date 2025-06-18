@@ -19,6 +19,7 @@ const GAMES = [
   { id: "dota2", name: "Dota 2" },
   { id: "lol", name: "LoL" },
   { id: "csgo", name: "CS2" },
+  { id: "r6siege", name: "Rainbow Six Siege" },
 ];
 
 const DAYS = [
