@@ -179,11 +179,63 @@ export default function MatchPage({
       )}
       {match.streams.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-xl font-semibold mt-4">Streams</h2>
+          <h2 className="text-xl font-semibold mt-4">
+            {(() => {
+              const now = Date.now() / 1000;
+              const ended = match.end_time !== null && now > match.end_time;
+              const started = match.start_time <= now;
+              return started && !ended
+                ? "Stream en directo"
+                : ended
+                ? "Ver en diferido"
+                : "Dónde ver";
+            })()}
+          </h2>
+          {(() => {
+            const now = Date.now() / 1000;
+            const ended = match.end_time !== null && now > match.end_time;
+            const started = match.start_time <= now;
+            const showEmbed = started || ended;
+            if (!showEmbed) return null;
+            const twitch =
+              match.streams.find(
+                (s) =>
+                  s.embed_url.includes("twitch") || s.raw_url.includes("twitch")
+              ) || match.streams[0];
+            if (!twitch) return null;
+            const embedUrl = (() => {
+              try {
+                const url = new URL(twitch.embed_url);
+                if (typeof window !== "undefined") {
+                  if (!url.searchParams.get("parent")) {
+                    url.searchParams.set("parent", window.location.hostname);
+                  }
+                  return url.toString();
+                }
+              } catch {
+                /* ignore */
+              }
+              return twitch.embed_url;
+            })();
+            return (
+              <div className="w-full h-0 pb-[56.25%] relative">
+                <iframe
+                  src={embedUrl}
+                  allowFullScreen
+                  className="absolute top-0 left-0 w-full h-full"
+                />
+              </div>
+            );
+          })()}
           <ul className="space-y-1 text-sm">
             {match.streams.map((s, idx) => (
               <li key={idx}>
-                <a href={s.raw_url} target="_blank" rel="noopener" className="text-[var(--accent)] hover:underline">
+                <a
+                  href={s.raw_url}
+                  target="_blank"
+                  rel="noopener"
+                  className="text-[var(--accent)] hover:underline"
+                >
                   {s.language.toUpperCase()} Stream
                 </a>
               </li>
