@@ -14,8 +14,6 @@ interface Match {
   radiant_win: boolean;
 }
 
-const PANDA_SCORE_TOKEN =
-  "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
 
 const GAMES = [
   { id: "dota2", name: "Dota 2" },
@@ -30,10 +28,9 @@ const DAYS = [
 ];
 
 async function fetchMatches(game: string): Promise<Match[]> {
-  const res = await fetch(
-    `https://api.pandascore.co/${game}/matches?per_page=50&token=${PANDA_SCORE_TOKEN}`,
-    { cache: "no-store" }
-  );
+  const res = await fetch(`/api/esports/matches?game=${game}`, {
+    cache: "no-store",
+  });
   if (!res.ok) {
     console.error("Failed to fetch matches", await res.text());
     return [];
