@@ -4,16 +4,40 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import Countdown from "../../components/Countdown";
 
+interface GameInfo {
+  id: number;
+  position: number;
+  status: string;
+  begin_at: string | null;
+  end_at: string | null;
+  winner_id: number | null;
+}
+
+interface StreamInfo {
+  embed_url: string;
+  raw_url: string;
+  language: string;
+}
+
 interface MatchDetail {
   id: number;
   name: string;
   radiant: string;
   dire: string;
+  radiant_id: number | null;
+  dire_id: number | null;
   radiant_score: number;
   dire_score: number;
   start_time: number;
+  end_time: number | null;
   league: string;
+  serie: string;
+  tournament: string;
+  match_type: string;
+  number_of_games: number;
   radiant_win: boolean | null;
+  games: GameInfo[];
+  streams: StreamInfo[];
 }
 
 
@@ -31,14 +55,34 @@ async function fetchMatch(id: string): Promise<MatchDetail | null> {
     name: m.name ?? `${team1?.name ?? "TBD"} vs ${team2?.name ?? "TBD"}`,
     radiant: team1?.name ?? "TBD",
     dire: team2?.name ?? "TBD",
+    radiant_id: team1?.id ?? null,
+    dire_id: team2?.id ?? null,
     radiant_score: m.results?.[0]?.score ?? 0,
     dire_score: m.results?.[1]?.score ?? 0,
     start_time: new Date(m.begin_at ?? m.scheduled_at).getTime() / 1000,
+    end_time: m.end_at ? new Date(m.end_at).getTime() / 1000 : null,
     league: m.league?.name ?? "",
+    serie: m.serie?.full_name ?? "",
+    tournament: m.tournament?.name ?? "",
+    match_type: m.match_type ?? "",
+    number_of_games: m.number_of_games ?? m.games?.length ?? 0,
     radiant_win:
       m.winner?.id !== undefined && team1?.id !== undefined
         ? m.winner.id === team1.id
         : null,
+    games: (m.games ?? []).map((g: any) => ({
+      id: g.id,
+      position: g.position,
+      status: g.status,
+      begin_at: g.begin_at,
+      end_at: g.end_at,
+      winner_id: g.winner?.id ?? null,
+    })),
+    streams: (m.streams_list ?? []).map((s: any) => ({
+      embed_url: s.embed_url,
+      raw_url: s.raw_url,
+      language: s.language,
+    })),
   } as MatchDetail;
 }
 
@@ -94,6 +138,55 @@ export default function MatchPage({
             : `Ganó ${match.radiant_win ? match.radiant : match.dire}`}
         </p>
       </div>
+      <section className="space-y-2">
+        <h2 className="text-xl font-semibold mt-4">Detalles</h2>
+        <ul className="text-sm text-gray-300 list-disc list-inside space-y-1">
+          <li>Serie: {match.serie}</li>
+          <li>Torneo: {match.tournament}</li>
+          <li>Tipo de partida: {match.match_type}</li>
+          <li>Bo{match.number_of_games}</li>
+          {match.end_time && (
+            <li>
+              Finalizado: {new Date(match.end_time * 1000).toLocaleString()}
+            </li>
+          )}
+        </ul>
+      </section>
+      {match.games.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-xl font-semibold mt-4">Mapa a mapa</h2>
+          <ul className="space-y-1 text-sm">
+            {match.games.map((g) => (
+              <li key={g.id} className="flex justify-between border-b border-gray-700 py-1">
+                <span>
+                  Juego {g.position}: {g.begin_at ? new Date(g.begin_at).toLocaleString() : ""}
+                </span>
+                <span>
+                  {g.status === "finished" && g.winner_id
+                    ? g.winner_id === match.radiant_id
+                      ? match.radiant
+                      : match.dire
+                    : g.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {match.streams.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-xl font-semibold mt-4">Streams</h2>
+          <ul className="space-y-1 text-sm">
+            {match.streams.map((s, idx) => (
+              <li key={idx}>
+                <a href={s.raw_url} target="_blank" rel="noopener" className="text-[var(--accent)] hover:underline">
+                  {s.language.toUpperCase()} Stream
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   );
 }
