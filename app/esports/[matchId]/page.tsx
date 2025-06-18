@@ -118,7 +118,7 @@ export default function MatchPage({
       <h1 className="text-2xl font-bold">{match.name}</h1>
       <p className="text-sm text-gray-500">{match.league}</p>
       <p className="text-sm text-gray-400">
-        {new Date(match.start_time * 1000).toLocaleString()}
+        {new Date(match.start_time * 1000).toLocaleString("es-ES")}
       </p>
       {match.start_time > Date.now() / 1000 && (
         <Countdown targetTime={match.start_time} />
@@ -151,7 +151,7 @@ export default function MatchPage({
           </li>
           {match.end_time && (
             <li>
-              Finalizado: {new Date(match.end_time * 1000).toLocaleString()}
+              Finalizado: {new Date(match.end_time * 1000).toLocaleString("es-ES")}
             </li>
           )}
         </ul>
@@ -163,7 +163,7 @@ export default function MatchPage({
             {match.games.map((g) => (
               <li key={g.id} className="flex justify-between border-b border-gray-700 py-1">
                 <span>
-                  Juego {g.position}: {g.begin_at ? new Date(g.begin_at).toLocaleString() : ""}
+                  Juego {g.position}: {g.begin_at ? new Date(g.begin_at).toLocaleString("es-ES") : ""}
                 </span>
                 <span>
                   {g.status === "finished" && g.winner_id

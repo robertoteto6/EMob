@@ -3,12 +3,18 @@ import { useEffect, useState } from "react";
 
 export default function Countdown({ targetTime }: { targetTime: number }) {
   const calc = () => Math.floor(targetTime - Date.now() / 1000);
-  const [remaining, setRemaining] = useState(calc());
+  const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
+    // Initialize on mount to avoid mismatches between server and client time
+    setRemaining(calc());
     const id = setInterval(() => setRemaining(calc()), 1000);
     return () => clearInterval(id);
   }, [targetTime]);
+
+  if (remaining === null) {
+    return null;
+  }
 
   if (remaining <= 0) {
     return <span>En vivo</span>;
