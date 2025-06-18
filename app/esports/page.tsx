@@ -16,10 +16,10 @@ interface Match {
 
 
 const GAMES = [
-  { id: "dota2", name: "Dota 2" },
-  { id: "lol", name: "LoL" },
-  { id: "csgo", name: "CS2" },
-  { id: "r6siege", name: "Rainbow Six Siege" },
+  { id: "dota2", name: "Dota 2", icon: "/dota2.svg" },
+  { id: "lol", name: "LoL", icon: "/leagueoflegends.svg" },
+  { id: "csgo", name: "CS2", icon: "/counterstrike.svg" },
+  { id: "r6siege", name: "Rainbow Six Siege", icon: "/ubisoft.svg" },
 ];
 
 const DAYS = [
@@ -87,8 +87,8 @@ export default function EsportsPage() {
 
   return (
     <main className="p-4 sm:p-8 font-sans flex">
-      <aside className="w-36 pr-4 border-r border-[#2a2a2a]">
-        <ul className="space-y-2">
+      <aside className="w-48 pr-4 border-r border-[#2a2a2a]">
+        <ul className="space-y-3">
           {GAMES.map((g) => (
             <li key={g.id}>
               <button
@@ -97,7 +97,10 @@ export default function EsportsPage() {
                   game === g.id ? "text-[var(--accent)] font-semibold" : "text-gray-300"
                 }`}
               >
-                {g.name}
+                <span className="flex items-center gap-3 text-lg">
+                  <img src={g.icon} alt="" className="w-6 h-6" />
+                  {g.name}
+                </span>
               </button>
             </li>
           ))}
