@@ -1,4 +1,5 @@
 import type { Agent } from "https";
+import { createRequire } from "node:module";
 
 // Lazily require "https-proxy-agent" so that it is only loaded in a Node
 // environment. This prevents bundlers from trying to include it in the
@@ -14,6 +15,7 @@ export function getProxyAgent(): Agent | undefined {
     return undefined;
   }
   // Dynamically import the agent implementation only when needed.
-  const { HttpsProxyAgent } = require("https-proxy-agent");
+  const require = createRequire(import.meta.url);
+  const { HttpsProxyAgent } = require("https-proxy-agent") as typeof import("https-proxy-agent");
   return new HttpsProxyAgent(proxyUrl);
 }
