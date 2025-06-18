@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   }
 
   const date = new Date(startTime * 1000).toLocaleDateString("en-US");
-  const prompt = `Find the replay video link on Twitch or elsewhere for the esports match "${matchName}" from channel "${channel}" that took place around ${date}. Respond with only the direct URL if available, otherwise say "Not found".`;
+  const prompt = `Find the highlights video link on Youtube for the esports match "${matchName}" from channel R6 Video Replays: : Unofficial Highlights Library that took place around ${date}. Respond with only the direct URL if available, otherwise say "Not found".`;
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
