@@ -46,13 +46,13 @@ async function fetchMatch(id: string): Promise<MatchDetail | null> {
   } as MatchDetail;
 }
 
-export default function MatchPage({
+export default async function MatchPage({
   params,
 }: {
-  params: { matchId: string };
+  params: Promise<{ matchId: string }>;
 }) {
+  const { matchId } = await params;
   const [match, setMatch] = useState<MatchDetail | null>(null);
-  const { matchId } = params;
 
   useEffect(() => {
     async function load() {
