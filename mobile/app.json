@@ -1,0 +1,9 @@
+{
+  "expo": {
+    "name": "ESports Tracker Mobile",
+    "slug": "esports-tracker-mobile",
+    "version": "1.0.0",
+    "sdkVersion": "53.0.0",
+    "platforms": ["ios", "android", "web"]
+  }
+}
