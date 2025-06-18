@@ -143,8 +143,12 @@ export default function MatchPage({
         <ul className="text-sm text-gray-300 list-disc list-inside space-y-1">
           <li>Serie: {match.serie}</li>
           <li>Torneo: {match.tournament}</li>
-          <li>Tipo de partida: {match.match_type}</li>
-          <li>Bo{match.number_of_games}</li>
+          <li>
+            Tipo de partida:
+            {match.match_type === "best_of"
+              ? `BO${match.number_of_games}`
+              : ` ${match.match_type}`}
+          </li>
           {match.end_time && (
             <li>
               Finalizado: {new Date(match.end_time * 1000).toLocaleString()}
