@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import ChatBot from "../components/ChatBot";
 
 interface Match {
   id: number;
@@ -152,6 +153,7 @@ export default function EsportsPage() {
             ))}
           </ul>
         )}
+        <ChatBot />
       </div>
     </main>
   );
