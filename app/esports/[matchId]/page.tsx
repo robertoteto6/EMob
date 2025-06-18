@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
+import Countdown from "../../components/Countdown";
 
 interface MatchDetail {
   id: number;
@@ -12,7 +13,7 @@ interface MatchDetail {
   dire_score: number;
   start_time: number;
   league: string;
-  radiant_win: boolean;
+  radiant_win: boolean | null;
 }
 
 
@@ -37,7 +38,7 @@ async function fetchMatch(id: string): Promise<MatchDetail | null> {
     radiant_win:
       m.winner?.id !== undefined && team1?.id !== undefined
         ? m.winner.id === team1.id
-        : false,
+        : null,
   } as MatchDetail;
 }
 
@@ -75,6 +76,9 @@ export default function MatchPage({
       <p className="text-sm text-gray-400">
         {new Date(match.start_time * 1000).toLocaleString()}
       </p>
+      {match.start_time > Date.now() / 1000 && (
+        <Countdown targetTime={match.start_time} />
+      )}
       <div className="card p-4 space-y-2">
         <div className="flex justify-between">
           <span>{match.radiant}</span>
@@ -85,7 +89,9 @@ export default function MatchPage({
           <span className="font-semibold">{match.dire_score}</span>
         </div>
         <p className="text-center font-semibold mt-2">
-          Ganó {match.radiant_win ? match.radiant : match.dire}
+          {match.radiant_win === null
+            ? "Partido aún no jugado"
+            : `Ganó ${match.radiant_win ? match.radiant : match.dire}`}
         </p>
       </div>
     </main>
