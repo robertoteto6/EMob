@@ -135,7 +135,7 @@ export default function EsportsPage() {
                       {match.radiant} vs {match.dire}
                     </p>
                     <p className="text-sm text-gray-400">
-                      {new Date(match.start_time * 1000).toLocaleString()}
+                      {new Date(match.start_time * 1000).toLocaleString("es-ES")}
                     </p>
                     <p className="text-sm text-gray-500">{match.league}</p>
                   </div>
