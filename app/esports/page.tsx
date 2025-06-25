@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ChatBot from "../components/ChatBot";
+import Countdown from "../components/Countdown";
 
 interface Match {
   id: number;
@@ -13,6 +14,19 @@ interface Match {
   start_time: number;
   league: string;
   radiant_win: boolean | null;
+}
+
+interface Tournament {
+  id: number;
+  name: string;
+  begin_at: number | null;
+  end_at: number | null;
+  league: string;
+  serie: string;
+  prizepool: string | null;
+  tier: string | null;
+  region: string | null;
+  live_supported: boolean;
 }
 
 
@@ -57,11 +71,36 @@ async function fetchMatches(game: string): Promise<Match[]> {
   });
 }
 
+async function fetchTournaments(game: string): Promise<Tournament[]> {
+  const res = await fetch(`/api/esports/tournaments?game=${game}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    console.error("Failed to fetch tournaments", await res.text());
+    return [];
+  }
+  const data = await res.json();
+  return data.map((t: any) => ({
+    id: t.id,
+    name: t.name ?? "",
+    begin_at: t.begin_at ? new Date(t.begin_at).getTime() / 1000 : null,
+    end_at: t.end_at ? new Date(t.end_at).getTime() / 1000 : null,
+    league: t.league?.name ?? "",
+    serie: t.serie?.full_name ?? "",
+    prizepool: t.prizepool ?? null,
+    tier: t.tier ?? null,
+    region: t.region ?? null,
+    live_supported: !!t.live_supported,
+  })) as Tournament[];
+}
+
 export default function EsportsPage() {
   const [game, setGame] = useState<string>(GAMES[0].id);
   const [dayOffset, setDayOffset] = useState<number>(0);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [loadingTournaments, setLoadingTournaments] = useState<boolean>(true);
 
   useEffect(() => {
     async function load() {
@@ -69,6 +108,24 @@ export default function EsportsPage() {
       const data = await fetchMatches(game);
       setMatches(data);
       setLoading(false);
+    }
+    load();
+  }, [game]);
+
+  useEffect(() => {
+    async function load() {
+      setLoadingTournaments(true);
+      const data = await fetchTournaments(game);
+      const now = Date.now() / 1000;
+      const upcomingOrLive = data.filter((t) => {
+        if (t.begin_at === null) return false;
+        const started = t.begin_at <= now;
+        const ended = t.end_at !== null && t.end_at < now;
+        return !ended && (started || t.begin_at - now < 60 * 60 * 24 * 45);
+      });
+      upcomingOrLive.sort((a, b) => (a.begin_at ?? 0) - (b.begin_at ?? 0));
+      setTournaments(upcomingOrLive);
+      setLoadingTournaments(false);
     }
     load();
   }, [game]);
@@ -107,8 +164,9 @@ export default function EsportsPage() {
           ))}
         </ul>
       </aside>
-      <div className="flex-1 pl-4">
-        <div className="flex justify-center gap-6 mb-4">
+      <div className="flex-1 pl-4 flex gap-4">
+        <div className="flex-1">
+          <div className="flex justify-center gap-6 mb-4">
           {DAYS.map((d) => (
             <button
               key={d.id}
@@ -121,45 +179,80 @@ export default function EsportsPage() {
             </button>
           ))}
         </div>
-        {loading ? (
-          <p>Cargando...</p>
-        ) : (
-          <ul className="space-y-4">
-            {filtered.map((match) => (
-              <li key={match.id} className="card p-4">
-                <Link
-                  href={`/esports/${match.id}`}
-                  className="flex flex-col sm:flex-row sm:items-center gap-2 hover:opacity-80"
-                >
-                  <div className="flex-1">
-                    <p className="font-semibold">
-                      {match.radiant} vs {match.dire}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      {new Date(match.start_time * 1000).toLocaleString("es-ES")}
-                    </p>
-                    <p className="text-sm text-gray-500">{match.league}</p>
+          {loading ? (
+            <p>Cargando...</p>
+          ) : (
+            <ul className="space-y-4">
+              {filtered.map((match) => (
+                <li key={match.id} className="card p-4">
+                  <Link
+                    href={`/esports/${match.id}`}
+                    className="flex flex-col sm:flex-row sm:items-center gap-2 hover:opacity-80"
+                  >
+                    <div className="flex-1">
+                      <p className="font-semibold">
+                        {match.radiant} vs {match.dire}
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        {new Date(match.start_time * 1000).toLocaleString("es-ES")}
+                      </p>
+                      <p className="text-sm text-gray-500">{match.league}</p>
+                    </div>
+                    <div className="text-lg font-bold text-[var(--accent)]">
+                      {match.radiant_score}-{match.dire_score}{" "}
+                      {(() => {
+                        const now = Date.now() / 1000;
+                        const started = match.start_time <= now;
+                        const ended = match.radiant_win !== null;
+                        if (started && !ended) return "(En directo)";
+                        return match.radiant_win === null
+                          ? "(Por jugar)"
+                          : match.radiant_win
+                          ? "(Radiant win)"
+                          : "(Dire win)";
+                      })()}
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <ChatBot />
+        </div>
+        <aside className="w-64 border-l border-[#2a2a2a] pl-4 space-y-4">
+          <h2 className="text-lg font-semibold">Torneos</h2>
+          {loadingTournaments ? (
+            <p>Cargando...</p>
+          ) : (
+            <ul className="space-y-3">
+              {tournaments.map((t) => (
+                <li key={t.id} className="card p-3">
+                  <div className="flex flex-col">
+                    <span className="font-semibold">{t.name}</span>
+                    <span className="text-sm text-gray-400">{t.league}</span>
+                    <span className="text-sm text-gray-500">{t.serie}</span>
+                    {t.begin_at !== null && (
+                      <span className="text-sm text-gray-400">
+                        {(() => {
+                          const now = Date.now() / 1000;
+                          const started = t.begin_at <= now;
+                          const ended = t.end_at !== null && t.end_at < now;
+                          if (started && !ended) return "En directo";
+                          if (!started)
+                            return <Countdown targetTime={t.begin_at} />;
+                          return "Finalizado";
+                        })()}
+                      </span>
+                    )}
+                    {t.prizepool && (
+                      <span className="text-sm text-gray-500">{t.prizepool}</span>
+                    )}
                   </div>
-                  <div className="text-lg font-bold text-[var(--accent)]">
-                    {match.radiant_score}-{match.dire_score}{" "}
-                    {(() => {
-                      const now = Date.now() / 1000;
-                      const started = match.start_time <= now;
-                      const ended = match.radiant_win !== null;
-                      if (started && !ended) return "(En directo)";
-                      return match.radiant_win === null
-                        ? "(Por jugar)"
-                        : match.radiant_win
-                        ? "(Radiant win)"
-                        : "(Dire win)";
-                    })()}
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-        <ChatBot />
+                </li>
+              ))}
+            </ul>
+          )}
+        </aside>
       </div>
     </main>
   );
