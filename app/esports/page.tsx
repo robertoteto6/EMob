@@ -124,7 +124,11 @@ export default function EsportsPage() {
         return !ended && (started || t.begin_at - now < 60 * 60 * 24 * 45);
       });
       upcomingOrLive.sort((a, b) => (a.begin_at ?? 0) - (b.begin_at ?? 0));
-      setTournaments(upcomingOrLive);
+      const important = upcomingOrLive.filter((t) =>
+        ["s", "a"].includes((t.tier ?? "").toLowerCase())
+      );
+      const list = important.length > 0 ? important : upcomingOrLive;
+      setTournaments(list.slice(0, 5));
       setLoadingTournaments(false);
     }
     load();
@@ -227,10 +231,14 @@ export default function EsportsPage() {
             <ul className="space-y-3">
               {tournaments.map((t) => (
                 <li key={t.id} className="card p-3">
-                  <div className="flex flex-col">
-                    <span className="font-semibold">{t.name}</span>
-                    <span className="text-sm text-gray-400">{t.league}</span>
-                    <span className="text-sm text-gray-500">{t.serie}</span>
+                  <Link
+                    href={`/esports/tournament/${t.id}`}
+                    className="flex flex-col hover:opacity-80"
+                  >
+                    <span className="font-semibold">
+                      {t.league} {t.serie}
+                    </span>
+                    <span className="text-sm text-gray-400">{t.name}</span>
                     {t.begin_at !== null && (
                       <span className="text-sm text-gray-400">
                         {(() => {
@@ -247,7 +255,7 @@ export default function EsportsPage() {
                     {t.prizepool && (
                       <span className="text-sm text-gray-500">{t.prizepool}</span>
                     )}
-                  </div>
+                  </Link>
                 </li>
               ))}
             </ul>
