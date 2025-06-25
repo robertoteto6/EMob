@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import TeamSearch from "../../components/TeamSearch";
+import TeamSearch from "../../../components/TeamSearch";
 
 interface TournamentDetail {
   id: number;
