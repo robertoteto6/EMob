@@ -130,9 +130,9 @@ export default function MatchPage({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            matchName: match.name,
+            matchName: match!.name,
             channel,
-            startTime: match.start_time,
+            startTime: match!.start_time,
           }),
         });
         const data = await res.json();
