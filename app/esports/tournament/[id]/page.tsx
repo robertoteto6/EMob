@@ -94,24 +94,35 @@ export default function TournamentPage({ params }: { params: Promise<{ id: strin
       <Link href="/esports" className="text-[var(--accent)] hover:underline">
         ← Volver
       </Link>
-      <h1 className="text-2xl font-bold">
-        {tournament.league} {tournament.serie}
-      </h1>
-      <p className="text-sm text-gray-400">{tournament.name}</p>
-      {tournament.begin_at && (
-        <p className="text-sm text-gray-400">
-          Desde {new Date(tournament.begin_at).toLocaleString("es-ES")} {tournament.end_at ? `hasta ${new Date(tournament.end_at).toLocaleString("es-ES")}` : ""}
-        </p>
-      )}
-      {tournament.prizepool && <p className="text-sm">Premio: {tournament.prizepool}</p>}
-      {tournament.region && <p className="text-sm">Región: {tournament.region}</p>}
-      {tournament.tier && <p className="text-sm">Nivel: {tournament.tier.toUpperCase()}</p>}
+      <div className="card p-4 space-y-2">
+        <h1 className="text-2xl font-bold">
+          {tournament.league} {tournament.serie}
+        </h1>
+        <p className="text-sm text-gray-400">{tournament.name}</p>
+        {tournament.begin_at && (
+          <p className="text-sm text-gray-400">
+            Desde {new Date(tournament.begin_at).toLocaleString("es-ES")} {tournament.end_at ? `hasta ${new Date(tournament.end_at).toLocaleString("es-ES")}` : ""}
+          </p>
+        )}
+        {tournament.prizepool && <p className="text-sm">Premio: {tournament.prizepool}</p>}
+        {tournament.region && <p className="text-sm">Región: {tournament.region}</p>}
+        {tournament.tier && <p className="text-sm">Nivel: {tournament.tier.toUpperCase()}</p>}
+      </div>
       {teams.length > 0 && (
         <section className="space-y-2">
           <h2 className="text-xl font-semibold mt-4">Equipos</h2>
-          <ul className="list-disc list-inside space-y-1 text-sm">
+          <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {teams.map((t) => (
-              <li key={t.id}>{t.name}</li>
+              <li key={t.id} className="card p-2 flex items-center gap-2">
+                {t.image_url && (
+                  <img
+                    src={t.image_url}
+                    alt=""
+                    className="w-6 h-6 object-contain"
+                  />
+                )}
+                <span className="text-sm">{t.name}</span>
+              </li>
             ))}
           </ul>
         </section>
@@ -119,13 +130,20 @@ export default function TournamentPage({ params }: { params: Promise<{ id: strin
       {matches.length > 0 && (
         <section className="space-y-2">
           <h2 className="text-xl font-semibold mt-4">Partidos</h2>
-          <ul className="space-y-1 text-sm">
+          <ul className="space-y-2">
             {matches.map((m) => (
-              <li key={m.id} className="flex justify-between border-b border-gray-700 py-1">
-                <span>
-                  {m.radiant} vs {m.dire}
-                </span>
-                <span>{new Date(m.start_time * 1000).toLocaleString("es-ES")}</span>
+              <li key={m.id} className="card p-3">
+                <Link
+                  href={`/esports/${m.id}`}
+                  className="flex justify-between items-center hover:opacity-80"
+                >
+                  <span>
+                    {m.radiant} vs {m.dire}
+                  </span>
+                  <span className="text-sm text-gray-400">
+                    {new Date(m.start_time * 1000).toLocaleString("es-ES")}
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>
