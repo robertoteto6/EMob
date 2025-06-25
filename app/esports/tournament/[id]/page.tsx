@@ -16,6 +16,19 @@ interface TournamentDetail {
   live_supported: boolean;
 }
 
+interface Team {
+  id: number;
+  name: string;
+  image_url: string | null;
+}
+
+interface MatchInfo {
+  id: number;
+  radiant: string;
+  dire: string;
+  start_time: number;
+}
+
 async function fetchTournament(id: string): Promise<TournamentDetail | null> {
   const res = await fetch(`/api/esports/tournament/${id}`, { cache: "no-store" });
   if (!res.ok) return null;
@@ -37,11 +50,33 @@ async function fetchTournament(id: string): Promise<TournamentDetail | null> {
 export default function TournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [tournament, setTournament] = useState<TournamentDetail | null>(null);
+  const [matches, setMatches] = useState<MatchInfo[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
 
   useEffect(() => {
     async function load() {
       const data = await fetchTournament(id);
       setTournament(data);
+      const res = await fetch(`/api/esports/matches?tournamentId=${id}`, { cache: "no-store" });
+      if (res.ok) {
+        const list = await res.json();
+        const teamMap = new Map<number, Team>();
+        const ms = (list as any[]).map((m) => {
+          const t1 = m.opponents?.[0]?.opponent;
+          const t2 = m.opponents?.[1]?.opponent;
+          if (t1) teamMap.set(t1.id, { id: t1.id, name: t1.name, image_url: t1.image_url });
+          if (t2) teamMap.set(t2.id, { id: t2.id, name: t2.name, image_url: t2.image_url });
+          return {
+            id: m.id,
+            radiant: t1?.name ?? "TBD",
+            dire: t2?.name ?? "TBD",
+            start_time: new Date(m.begin_at ?? m.scheduled_at).getTime() / 1000,
+          } as MatchInfo;
+        });
+        ms.sort((a, b) => a.start_time - b.start_time);
+        setMatches(ms);
+        setTeams(Array.from(teamMap.values()));
+      }
     }
     load();
   }, [id]);
@@ -71,6 +106,31 @@ export default function TournamentPage({ params }: { params: Promise<{ id: strin
       {tournament.prizepool && <p className="text-sm">Premio: {tournament.prizepool}</p>}
       {tournament.region && <p className="text-sm">Región: {tournament.region}</p>}
       {tournament.tier && <p className="text-sm">Nivel: {tournament.tier.toUpperCase()}</p>}
+      {teams.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-xl font-semibold mt-4">Equipos</h2>
+          <ul className="list-disc list-inside space-y-1 text-sm">
+            {teams.map((t) => (
+              <li key={t.id}>{t.name}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {matches.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-xl font-semibold mt-4">Partidos</h2>
+          <ul className="space-y-1 text-sm">
+            {matches.map((m) => (
+              <li key={m.id} className="flex justify-between border-b border-gray-700 py-1">
+                <span>
+                  {m.radiant} vs {m.dire}
+                </span>
+                <span>{new Date(m.start_time * 1000).toLocaleString("es-ES")}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   );
 }
