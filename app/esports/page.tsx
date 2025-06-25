@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import ChatBot from "../components/ChatBot";
 import Countdown from "../components/Countdown";
+import TeamSearch from "../components/TeamSearch";
 
 interface Match {
   id: number;
@@ -170,6 +171,9 @@ export default function EsportsPage() {
       </aside>
       <div className="flex-1 pl-4 flex gap-4">
         <div className="flex-1">
+          <div className="mb-4">
+            <TeamSearch game={game} />
+          </div>
           <div className="flex justify-center gap-6 mb-4">
           {DAYS.map((d) => (
             <button

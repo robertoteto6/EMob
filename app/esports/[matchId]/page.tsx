@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import Countdown from "../../components/Countdown";
+import TeamSearch from "../../components/TeamSearch";
 
 interface GameInfo {
   id: number;
@@ -159,6 +160,7 @@ export default function MatchPage({
       <Link href="/esports" className="text-[var(--accent)] hover:underline">
         ← Volver
       </Link>
+      <TeamSearch />
       <h1 className="text-2xl font-bold">{match.name}</h1>
       <p className="text-sm text-gray-500">{match.league}</p>
       <p className="text-sm text-gray-400">
