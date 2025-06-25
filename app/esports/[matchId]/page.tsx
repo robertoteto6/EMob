@@ -177,9 +177,27 @@ export default function MatchPage({
           <span className="font-semibold">{match.dire_score}</span>
         </div>
         <p className="text-center font-semibold mt-2">
-          {match.radiant_win === null
-            ? "Partido aún no jugado"
-            : `Ganó ${match.radiant_win ? match.radiant : match.dire}`}
+          {(() => {
+            const now = Date.now() / 1000;
+            const started = match.start_time <= now;
+            const live = started && match.radiant_win === null;
+            if (live) {
+              const running = match.games.find((g) => g.status === "running");
+              let minutes = 0;
+              if (running) {
+                const begin = running.begin_at
+                  ? new Date(running.begin_at).getTime()
+                  : match.start_time * 1000;
+                minutes = Math.floor((Date.now() - begin) / 60000);
+                return `Partido en directo - Juego ${running.position} (${minutes}m)`;
+              }
+              minutes = Math.floor((Date.now() - match.start_time * 1000) / 60000);
+              return `Partido en directo (${minutes}m)`;
+            }
+            return match.radiant_win === null
+              ? "Partido aún no jugado"
+              : `Ganó ${match.radiant_win ? match.radiant : match.dire}`;
+          })()}
         </p>
       </div>
       <section className="space-y-2">

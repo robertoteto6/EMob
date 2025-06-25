@@ -142,11 +142,17 @@ export default function EsportsPage() {
                   </div>
                   <div className="text-lg font-bold text-[var(--accent)]">
                     {match.radiant_score}-{match.dire_score}{" "}
-                    {match.radiant_win === null
-                      ? "(Por jugar)"
-                      : match.radiant_win
-                      ? "(Radiant win)"
-                      : "(Dire win)"}
+                    {(() => {
+                      const now = Date.now() / 1000;
+                      const started = match.start_time <= now;
+                      const ended = match.radiant_win !== null;
+                      if (started && !ended) return "(En directo)";
+                      return match.radiant_win === null
+                        ? "(Por jugar)"
+                        : match.radiant_win
+                        ? "(Radiant win)"
+                        : "(Dire win)";
+                    })()}
                   </div>
                 </Link>
               </li>
