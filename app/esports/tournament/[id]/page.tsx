@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import TeamSearch from "../../../components/TeamSearch";
+import Search from "../../../components/Search";
 
 interface TournamentDetail {
   id: number;
@@ -95,7 +95,7 @@ export default function TournamentPage({ params }: { params: Promise<{ id: strin
       <Link href="/esports" className="text-[var(--accent)] hover:underline">
         ← Volver
       </Link>
-      <TeamSearch />
+      <Search />
       <div className="card p-4 space-y-2">
         <h1 className="text-2xl font-bold">
           {tournament.league} {tournament.serie}
