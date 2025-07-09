@@ -5,6 +5,7 @@ import Link from "next/link";
 import ChatBot from "../components/ChatBot";
 import Countdown from "../components/Countdown";
 import Search from "../components/Search";
+import { MatchSkeleton, TournamentSkeleton } from "../components/Skeleton";
 
 interface Match {
   id: number;
@@ -29,7 +30,6 @@ interface Tournament {
   region: string | null;
   live_supported: boolean;
 }
-
 
 const GAMES = [
   { id: "dota2", name: "Dota 2", icon: "/dota2.svg" },
@@ -156,12 +156,13 @@ export default function EsportsPage() {
             <li key={g.id}>
               <button
                 onClick={() => setGame(g.id)}
+                aria-label={`Seleccionar juego ${g.name}`}
                 className={`w-full text-left hover:text-[var(--accent)] ${
                   game === g.id ? "text-[var(--accent)] font-semibold" : "text-gray-300"
                 }`}
               >
                 <span className="flex items-center gap-3 text-lg">
-                  <img src={g.icon} alt="" className="w-6 h-6 invert" />
+                  <img src={g.icon} alt={g.name} title={g.name} className="w-6 h-6 invert" />
                   {g.name}
                 </span>
               </button>
@@ -179,6 +180,7 @@ export default function EsportsPage() {
             <button
               key={d.id}
               onClick={() => setDayOffset(d.offset)}
+              aria-label={`Ver partidos de ${d.label}`}
               className={`hover:text-[var(--accent)] ${
                 dayOffset === d.offset ? "text-[var(--accent)] font-semibold" : "text-gray-300"
               }`}
@@ -188,7 +190,11 @@ export default function EsportsPage() {
           ))}
         </div>
           {loading ? (
-            <p>Cargando...</p>
+            <ul className="space-y-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <MatchSkeleton key={i} />
+              ))}
+            </ul>
           ) : (
             <ul className="space-y-4">
               {filtered.map((match) => (
@@ -206,18 +212,31 @@ export default function EsportsPage() {
                       </p>
                       <p className="text-sm text-gray-500">{match.league}</p>
                     </div>
-                    <div className="text-lg font-bold text-[var(--accent)]">
-                      {match.radiant_score}-{match.dire_score}{" "}
+                    <div className="text-lg font-bold text-[var(--accent)] flex items-center gap-2">
+                      {match.radiant_score}-{match.dire_score}
                       {(() => {
                         const now = Date.now() / 1000;
                         const started = match.start_time <= now;
                         const ended = match.radiant_win !== null;
-                        if (started && !ended) return "(En directo)";
-                        return match.radiant_win === null
-                          ? "(Por jugar)"
-                          : match.radiant_win
-                          ? "(Radiant win)"
-                          : "(Dire win)";
+                        if (started && !ended)
+                          return (
+                            <span className="ml-2 px-2 py-0.5 rounded bg-green-700 text-xs text-white">
+                              En directo
+                            </span>
+                          );
+                        return match.radiant_win === null ? (
+                          <span className="ml-2 px-2 py-0.5 rounded bg-gray-700 text-xs text-white">
+                            Por jugar
+                          </span>
+                        ) : match.radiant_win ? (
+                          <span className="ml-2 px-2 py-0.5 rounded bg-blue-700 text-xs text-white">
+                            Radiant win
+                          </span>
+                        ) : (
+                          <span className="ml-2 px-2 py-0.5 rounded bg-red-700 text-xs text-white">
+                            Dire win
+                          </span>
+                        );
                       })()}
                     </div>
                   </Link>
@@ -230,7 +249,11 @@ export default function EsportsPage() {
         <aside className="w-64 border-l border-[#2a2a2a] pl-4 space-y-4">
           <h2 className="text-lg font-semibold">Torneos</h2>
           {loadingTournaments ? (
-            <p>Cargando...</p>
+            <ul className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <TournamentSkeleton key={i} />
+              ))}
+            </ul>
           ) : (
             <ul className="space-y-3">
               {tournaments.map((t) => (
