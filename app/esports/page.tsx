@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { Fragment } from "react";
 import Link from "next/link";
 import ChatBot from "../components/ChatBot";
 import Countdown from "../components/Countdown";
@@ -11,17 +12,18 @@ import { MatchSkeleton, TournamentSkeleton } from "../components/Skeleton";
 function Star({ filled, ...props }: { filled: boolean; [key: string]: any }) {
   return (
     <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
+      width="22"
+      height="22"
+      viewBox="0 0 22 22"
       fill={filled ? "#FFD700" : "none"}
       stroke="#FFD700"
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
+      style={{ filter: filled ? "drop-shadow(0 0 4px #FFD700)" : "none" }}
       {...props}
     >
-      <polygon points="10,2 12.59,7.36 18.51,7.63 13.97,11.61 15.45,17.37 10,14.13 4.55,17.37 6.03,11.61 1.49,7.63 7.41,7.36" />
+      <polygon points="11,2 13.59,8.36 20.51,8.63 15.97,13.61 17.45,20.37 11,16.13 4.55,20.37 6.03,13.61 1.49,8.63 8.41,8.36" />
     </svg>
   );
 }
@@ -51,16 +53,16 @@ interface Tournament {
 }
 
 const GAMES = [
-  { id: "dota2", name: "Dota 2", icon: "/dota2.svg" },
-  { id: "lol", name: "LoL", icon: "/leagueoflegends.svg" },
-  { id: "csgo", name: "CS2", icon: "/counterstrike.svg" },
-  { id: "r6siege", name: "Rainbow Six Siege", icon: "/ubisoft.svg" },
+  { id: "dota2", name: "Dota 2", icon: "/dota2.svg", color: "#A970FF" },
+  { id: "lol", name: "LoL", icon: "/leagueoflegends.svg", color: "#1E90FF" },
+  { id: "csgo", name: "CS2", icon: "/counterstrike.svg", color: "#FFD700" },
+  { id: "r6siege", name: "Rainbow Six Siege", icon: "/ubisoft.svg", color: "#00CFFF" },
 ];
 
 const DAYS = [
-  { id: "yesterday", label: "Ayer", offset: -1 },
-  { id: "today", label: "Hoy", offset: 0 },
-  { id: "tomorrow", label: "Mañana", offset: 1 },
+  { id: "yesterday", label: "Ayer", offset: -1, emoji: "⏪" },
+  { id: "today", label: "Hoy", offset: 0, emoji: "🟢" },
+  { id: "tomorrow", label: "Mañana", offset: 1, emoji: "⏩" },
 ];
 
 async function fetchMatches(game: string): Promise<Match[]> {
@@ -144,6 +146,9 @@ export default function EsportsPage() {
   // Filtros adicionales
   const [filterLeague, setFilterLeague] = useState<string>("");
   const [filterTeam, setFilterTeam] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterTier, setFilterTier] = useState<string>("");
+  const [compactMode, setCompactMode] = useState<boolean>(false);
   // Paginación
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 8;
@@ -216,8 +221,17 @@ export default function EsportsPage() {
           m.dire.toLowerCase().includes(filterTeam.toLowerCase())
       );
     }
+    if (filterStatus) {
+      res = res.filter((m) => {
+        const now = Date.now() / 1000;
+        if (filterStatus === "live") return m.start_time && m.start_time <= now && m.radiant_win === null;
+        if (filterStatus === "upcoming") return m.radiant_win === null && m.start_time > now;
+        if (filterStatus === "finished") return m.radiant_win !== null;
+        return true;
+      });
+    }
     return res;
-  }, [matches, dayOffset, filterLeague, filterTeam]);
+  }, [matches, dayOffset, filterLeague, filterTeam, filterStatus]);
 
   // Paginación de partidos filtrados
   const paginated = useMemo(() => {
@@ -274,7 +288,7 @@ export default function EsportsPage() {
   // :root { --accent: #00FF80; --accent-dark: #00995c; }
 
   return (
-    <main className={"p-4 sm:p-8 font-sans flex min-h-screen transition-colors duration-300 bg-black text-white"} style={{ background: '#000' }}>
+    <main className={"p-2 sm:p-8 font-sans flex min-h-screen transition-colors duration-300 bg-black text-white"} style={{ background: '#000' }}>
       {/* Botón de ajustes flotante */}
       <button
         aria-label="Abrir ajustes"
@@ -307,11 +321,22 @@ export default function EsportsPage() {
                 {dark ? "☀️ Claro" : "🌙 Oscuro"}
               </button>
             </div>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-sm">Modo compacto:</span>
+              <button
+                aria-label={compactMode ? "Expandir tarjetas" : "Compactar tarjetas"}
+                onClick={() => setCompactMode((c) => !c)}
+                className={`rounded px-3 py-1 text-sm font-semibold border border-[#333] transition-colors ${compactMode ? 'bg-[#181818] text-green-400' : 'bg-[#f7f7f7] text-gray-800'}`}
+                title={compactMode ? "Expandir" : "Compactar"}
+              >
+                {compactMode ? "🔳 Expandido" : "🔲 Compacto"}
+              </button>
+            </div>
             <div className="text-xs text-gray-400 mt-4">Más opciones próximamente...</div>
           </div>
         </div>
       )}
-      <aside className="w-48 pr-4 border-r border-[#222] bg-[#111] rounded-xl shadow-lg">
+      <aside className="w-48 pr-4 border-r border-[#222] bg-[#111] rounded-xl shadow-lg flex-shrink-0">
         <div className="flex justify-between items-center mb-2">
           <span className="font-bold text-base tracking-wide text-[var(--accent,#00FF80)]">Juegos</span>
         </div>
@@ -324,6 +349,8 @@ export default function EsportsPage() {
                 className={`w-full text-left rounded-lg px-2 py-2 transition-colors duration-150 flex items-center gap-3 text-lg border border-transparent hover:border-[var(--accent,#00FF80)] hover:bg-[#181c24] ${
                   game === g.id ? "bg-[var(--accent,#00FF80)] text-black font-semibold shadow-md" : "text-gray-300"
                 }`}
+                style={{ boxShadow: game === g.id ? `0 0 8px ${g.color}` : undefined }}
+                title={g.name}
               >
                 <img src={g.icon} alt={g.name} title={g.name} className="w-6 h-6" style={{ filter: game === g.id ? 'none' : 'invert(1)' }} />
                 {g.name}
@@ -340,8 +367,7 @@ export default function EsportsPage() {
           <div><b>Ligas únicas:</b> {stats.ligas}</div>
         </div>
       </aside>
-      <div className="flex-1 pl-4 flex gap-4">
-        {/* Eliminado fondo decorativo visual */}
+      <div className="flex-1 pl-4 flex gap-4 flex-col md:flex-row">
         <div className="flex-1 relative z-10">
           <div className="mb-4">
             <Search game={game} />
@@ -368,6 +394,20 @@ export default function EsportsPage() {
                 aria-label="Filtrar por equipo"
               />
             </div>
+            <div>
+              <select
+                value={filterStatus}
+                onChange={e => setFilterStatus(e.target.value)}
+                className="input input-sm bg-[#111] border border-[var(--accent,#00FF80)] rounded px-2 py-1 text-sm text-green-400"
+                aria-label="Filtrar por estado"
+                title="Filtrar por estado"
+              >
+                <option value="">Todos</option>
+                <option value="live">En directo</option>
+                <option value="upcoming">Por jugar</option>
+                <option value="finished">Finalizados</option>
+              </select>
+            </div>
           </div>
           <div className="flex justify-center gap-6 mb-4">
             {DAYS.map((d) => (
@@ -378,8 +418,9 @@ export default function EsportsPage() {
                 className={`rounded-full px-4 py-1 border border-transparent transition-colors duration-150 hover:border-[var(--accent,#00FF80)] hover:bg-[#181c24] ${
                   dayOffset === d.offset ? "bg-[var(--accent,#00FF80)] text-black font-semibold shadow" : "text-green-400"
                 }`}
+                title={d.label}
               >
-                {d.label}
+                <span className="mr-1">{d.emoji}</span>{d.label}
               </button>
             ))}
           </div>
@@ -391,11 +432,12 @@ export default function EsportsPage() {
               </h3>
               <ul className="space-y-2">
                 {favoriteList.map((match) => (
-                  <li key={match.id} className="card p-3 flex items-center gap-2 bg-[#181c24] rounded-lg border border-[#222] shadow">
+                  <li key={match.id} className="card p-3 flex items-center gap-2 bg-[#181c24] rounded-lg border border-[#222] shadow animate-fadein">
                     <button
                       aria-label="Quitar de favoritos"
                       onClick={() => setFavoriteMatches(favoriteMatches.filter(id => id !== match.id))}
                       className="hover:scale-110 transition-transform"
+                      title="Quitar de favoritos"
                     >
                       <Star filled={true} />
                     </button>
@@ -416,9 +458,9 @@ export default function EsportsPage() {
             </ul>
           ) : (
             <>
-              <ul className="space-y-4">
+              <ul className={`space-y-4 ${compactMode ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : ''}`}>
                 {paginated.map((match) => (
-                  <li key={match.id} className="card p-4 flex items-center gap-2 bg-[#181c24] rounded-lg border border-[#222] shadow-md hover:scale-[1.015] transition-transform">
+                  <li key={match.id} className={`card ${compactMode ? 'p-2' : 'p-4'} flex items-center gap-2 bg-[#181c24] rounded-lg border border-[#222] shadow-md hover:scale-[1.015] transition-transform animate-fadein`}>
                     <button
                       aria-label={favoriteMatches.includes(match.id) ? "Quitar de favoritos" : "Agregar a favoritos"}
                       onClick={e => {
@@ -431,12 +473,14 @@ export default function EsportsPage() {
                         );
                       }}
                       className="hover:scale-110 transition-transform"
+                      title={favoriteMatches.includes(match.id) ? "Quitar de favoritos" : "Agregar a favoritos"}
                     >
                       <Star filled={favoriteMatches.includes(match.id)} />
                     </button>
                     <Link
                       href={`/esports/${match.id}`}
-                      className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 hover:opacity-80"
+                      className={`flex-1 flex ${compactMode ? 'flex-row items-center gap-2' : 'flex-col sm:flex-row sm:items-center gap-2'} hover:opacity-80`}
+                      title={`Ver detalles de ${match.radiant} vs ${match.dire}`}
                     >
                       <div className="flex-1">
                         <p className="font-semibold text-lg text-green-400">
@@ -458,21 +502,21 @@ export default function EsportsPage() {
                           const ended = match.radiant_win !== null;
                           if (started && !ended)
                             return (
-                              <span className="ml-2 px-2 py-0.5 rounded bg-green-700 text-xs text-white animate-pulse">
-                                En directo
+                              <span className="ml-2 px-2 py-0.5 rounded bg-green-700 text-xs text-white animate-pulse" title="En directo">
+                                🟢 En directo
                               </span>
                             );
                           return match.radiant_win === null ? (
-                            <span className="ml-2 px-2 py-0.5 rounded bg-gray-700 text-xs text-white">
-                              Por jugar
+                            <span className="ml-2 px-2 py-0.5 rounded bg-gray-700 text-xs text-white" title="Por jugar">
+                              ⏳ Por jugar
                             </span>
                           ) : match.radiant_win ? (
-                            <span className="ml-2 px-2 py-0.5 rounded bg-green-800 text-xs text-white">
-                              Radiant win
+                            <span className="ml-2 px-2 py-0.5 rounded bg-green-800 text-xs text-white" title="Ganó Radiant">
+                              🟩 Radiant win
                             </span>
                           ) : (
-                            <span className="ml-2 px-2 py-0.5 rounded bg-green-900 text-xs text-white">
-                              Dire win
+                            <span className="ml-2 px-2 py-0.5 rounded bg-green-900 text-xs text-white" title="Ganó Dire">
+                              🟥 Dire win
                             </span>
                           );
                         })()}
@@ -488,6 +532,7 @@ export default function EsportsPage() {
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
                     className="px-2 py-1 rounded bg-[#222] text-white disabled:opacity-40"
+                    title="Página anterior"
                   >
                     Anterior
                   </button>
@@ -496,6 +541,7 @@ export default function EsportsPage() {
                       key={i}
                       onClick={() => setPage(i + 1)}
                       className={`px-2 py-1 rounded ${page === i + 1 ? 'bg-[var(--accent)] text-black' : 'bg-[#222] text-white'}`}
+                      title={`Ir a página ${i + 1}`}
                     >
                       {i + 1}
                     </button>
@@ -504,6 +550,7 @@ export default function EsportsPage() {
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
                     className="px-2 py-1 rounded bg-[#222] text-white disabled:opacity-40"
+                    title="Página siguiente"
                   >
                     Siguiente
                   </button>
@@ -513,7 +560,7 @@ export default function EsportsPage() {
           )}
           <ChatBot />
         </div>
-        <aside className="w-64 border-l border-[#222] pl-4 space-y-4">
+        <aside className="w-64 border-l border-[#222] pl-4 space-y-4 flex-shrink-0">
           <h2 className="text-lg font-semibold text-green-400">Torneos</h2>
           {loadingTournaments ? (
             <ul className="space-y-3">
@@ -524,10 +571,11 @@ export default function EsportsPage() {
           ) : (
             <ul className="space-y-3">
               {tournaments.map((t) => (
-                <li key={t.id} className="card p-3 bg-[#181c24] rounded-lg border border-[#222] shadow">
+                <li key={t.id} className="card p-3 bg-[#181c24] rounded-lg border border-[#222] shadow animate-fadein">
                   <Link
                     href={`/esports/tournament/${t.id}`}
                     className="flex flex-col hover:opacity-80"
+                    title={`Ver detalles de torneo ${t.name}`}
                   >
                     <span className="font-semibold text-green-400">
                       {t.league} {t.serie}
@@ -539,10 +587,10 @@ export default function EsportsPage() {
                           const now = Date.now() / 1000;
                           const started = t.begin_at <= now;
                           const ended = t.end_at !== null && t.end_at < now;
-                          if (started && !ended) return "En directo";
+                          if (started && !ended) return <span title="En directo">🟢 En directo</span>;
                           if (!started)
                             return <Countdown targetTime={t.begin_at} />;
-                          return "Finalizado";
+                          return <span title="Finalizado">Finalizado</span>;
                         })()}
                       </span>
                     )}
