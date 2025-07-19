@@ -7,11 +7,19 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const game = searchParams.get("game") || "dota2";
   const q = searchParams.get("q") || "";
-  const url = new URL(`https://api.pandascore.co/${game}/teams`);
-  url.searchParams.set("per_page", "5");
+  const search = searchParams.get("search") || q; // Soporte para ambos parámetros
+  
+  // Mapear nombres de juegos
+  let gameSlug = game;
+  if (game === "lol") gameSlug = "league-of-legends";
+  if (game === "csgo") gameSlug = "cs-go";
+  if (game === "r6siege") gameSlug = "rainbow-six-siege";
+  
+  const url = new URL(`https://api.pandascore.co/${gameSlug}/teams`);
+  url.searchParams.set("per_page", search ? "20" : "5"); // Más resultados para búsqueda
   url.searchParams.set("token", PANDA_SCORE_TOKEN);
-  if (q) {
-    url.searchParams.set("search[name]", q);
+  if (search) {
+    url.searchParams.set("search[name]", search);
   }
   const res = await fetch(url.toString(), {
     cache: "no-store",
@@ -24,7 +32,11 @@ export async function GET(req: Request) {
   const list = (data as any[]).map((t) => ({
     id: t.id,
     name: t.name,
+    acronym: t.acronym,
     image_url: t.image_url ?? null,
+    current_videogame: t.current_videogame,
+    players: t.players?.length || 0,
+    modified_at: t.modified_at
   }));
   return NextResponse.json(list);
 }
