@@ -223,16 +223,12 @@ export default function Search({
           className={`
             w-full pl-10 pr-4 py-2 
             bg-gray-800/50 border border-gray-600 
-            rounded-xl text-white placeholder:text-gray-400
+            rounded-xl text-white 
+            placeholder-gray-400
             focus:ring-2 focus:ring-green-500 focus:border-transparent
-            focus:placeholder:text-gray-500
             transition-all duration-300
             ${compact ? 'text-sm' : 'text-base'}
           `}
-          style={{
-            color: 'white',
-            backgroundColor: 'rgba(31, 41, 55, 0.5)'
-          }}
         />
 
         {/* Indicador de carga */}
