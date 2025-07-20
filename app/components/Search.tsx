@@ -213,7 +213,7 @@ export default function Search({
           ref={inputRef}
           type="text"
           value={query}
-          placeholder={placeholder}
+          placeholder={query ? "" : placeholder}
           onChange={(e) => {
             setQuery(e.target.value);
             setShow(true);
