@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+export const dynamic = "force-dynamic";
+
+import { useEffect, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../components/Header";
@@ -435,7 +437,7 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
   );
 }
 
-export default function EsportsPage() {
+function EsportsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -642,7 +644,9 @@ export default function EsportsPage() {
 
   return (
     <>
-      <Header />
+      <Suspense fallback={null}>
+        <Header />
+      </Suspense>
       <LiveScoreTicker currentGame={game} />
       
       <main className="min-h-screen bg-black text-white pt-20">
@@ -1091,5 +1095,13 @@ export default function EsportsPage() {
       
       <ChatBot />
     </>
+  );
+}
+
+export default function EsportsPage() {
+  return (
+    <Suspense fallback={null}>
+      <EsportsPageContent />
+    </Suspense>
   );
 }
