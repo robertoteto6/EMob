@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+export const dynamic = "force-dynamic";
+
+import { useEffect, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import Header from "./components/Header";
 import ChatBot from "./components/ChatBot";
@@ -516,7 +518,9 @@ export default function Home() {
 
   return (
     <>
-      <Header />
+      <Suspense fallback={null}>
+        <Header />
+      </Suspense>
       <LiveScoreTicker currentGame="all" />
       
       <main className="min-h-screen bg-black text-white pt-20">
