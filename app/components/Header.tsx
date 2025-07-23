@@ -72,7 +72,7 @@ export default function Header() {
 
           {/* Search Bar */}
           <div className="hidden md:block w-80">
-            <Search game={currentGame} />
+            <Search globalSearch={true} placeholder="Buscar en todos los juegos..." />
           </div>
 
           {/* CTA Button */}
@@ -107,7 +107,7 @@ export default function Header() {
         {isMobileMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 bg-black/95 backdrop-blur-md border-b border-green-500/20 shadow-lg">
             <div className="p-4">
-              <Search game={currentGame} compact={true} />
+              <Search globalSearch={true} compact={true} placeholder="Buscar en todos los juegos..." />
             </div>
             <nav className="flex flex-col py-4">
               {navigation.map((item) => (

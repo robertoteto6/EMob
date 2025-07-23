@@ -17,12 +17,14 @@ interface SearchProps {
   game?: string;
   placeholder?: string;
   compact?: boolean;
+  globalSearch?: boolean; // Nueva prop para búsqueda global
 }
 
 export default function Search({ 
   game = "dota2", 
   placeholder = "Buscar equipos, jugadores, partidos...",
-  compact = false 
+  compact = false,
+  globalSearch = false // Por defecto false para mantener compatibilidad
 }: SearchProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchItem[]>([]);
@@ -30,6 +32,7 @@ export default function Search({
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [recentSearches, setRecentSearches] = useState<SearchItem[]>([]);
+  const [isFocused, setIsFocused] = useState(false);
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -57,9 +60,14 @@ export default function Search({
     setLoading(true);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      console.log(`Searching for: "${query}" in game: ${game}`);
+      console.log(`Searching for: "${query}"${globalSearch ? ' (global)' : ` in game: ${game}`}`);
       
-      fetch(`/api/esports/search?q=${encodeURIComponent(query)}&game=${game}`, {
+      // URL para búsqueda global o específica por juego
+      const searchUrl = globalSearch 
+        ? `/api/esports/search?q=${encodeURIComponent(query)}`
+        : `/api/esports/search?q=${encodeURIComponent(query)}&game=${game}`;
+      
+      fetch(searchUrl, {
         signal: controller.signal,
       })
         .then((res) => {
@@ -88,7 +96,7 @@ export default function Search({
       controller.abort();
       clearTimeout(timeoutId);
     };
-  }, [query, game]);
+  }, [query, game, globalSearch]);
 
   // Cerrar al hacer clic fuera
   useEffect(() => {
@@ -192,10 +200,13 @@ export default function Search({
   return (
     <div className={`relative ${compact ? 'w-full' : 'w-full max-w-md'}`} ref={containerRef}>
       {/* Campo de búsqueda */}
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <div className="relative group">
+        {/* Icono de búsqueda */}
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
           <svg 
-            className="h-5 w-5 text-gray-400" 
+            className={`h-5 w-5 transition-colors duration-200 ${
+              query ? 'text-green-400' : 'text-gray-400 group-focus-within:text-green-400'
+            }`}
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
@@ -208,27 +219,51 @@ export default function Search({
             />
           </svg>
         </div>
+
+        {/* Placeholder personalizado */}
+        {!query && !isFocused && (
+          <div className="absolute inset-y-0 left-10 flex items-center pointer-events-none z-5">
+            <span className="text-gray-400 text-sm">
+              {globalSearch ? (
+                <span>
+                  Buscar en <span className="text-green-400 font-medium">todos los juegos</span>
+                  <span className="text-gray-500 ml-1">- equipos, jugadores, partidos...</span>
+                </span>
+              ) : (
+                placeholder
+              )}
+            </span>
+          </div>
+        )}
         
         <input
           ref={inputRef}
           type="text"
           value={query}
-          placeholder={query ? "" : placeholder}
           onChange={(e) => {
             setQuery(e.target.value);
             setShow(true);
           }}
-          onFocus={() => setShow(true)}
+          onFocus={() => {
+            setShow(true);
+            setIsFocused(true);
+          }}
+          onBlur={() => {
+            setIsFocused(false);
+          }}
           onKeyDown={handleKeyDown}
           className={`
-            w-full pl-10 pr-4 py-2 
-            bg-gray-800/50 border border-gray-600 
-            rounded-xl text-white 
-            placeholder-gray-400
-            focus:ring-2 focus:ring-green-500 focus:border-transparent
-            transition-all duration-300
-            ${compact ? 'text-sm' : 'text-base'}
+            w-full pl-10 pr-10 py-3
+            bg-gray-800/60 border border-gray-600/50
+            rounded-xl text-white text-sm
+            focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50
+            focus:bg-gray-800/80
+            transition-all duration-300 ease-in-out
+            hover:border-gray-500/70
+            placeholder-transparent
+            ${compact ? 'py-2' : 'py-3'}
           `}
+          placeholder="" // Usamos placeholder personalizado
         />
 
         {/* Indicador de carga */}
@@ -318,9 +353,22 @@ export default function Search({
                     <div className="mt-2 text-xs text-gray-500">
                       Intenta buscar con otros términos o verifica la ortografía
                     </div>
-                    <div className="mt-1 text-xs text-gray-500">
-                      Juego actual: <span className="text-gray-300">{game}</span>
-                    </div>
+                    {!globalSearch && (
+                      <div className="mt-1 text-xs text-gray-500">
+                        Búsqueda en: <span className="text-gray-300">
+                          {game === 'dota2' ? 'Dota 2' :
+                           game === 'lol' ? 'League of Legends' :
+                           game === 'csgo' ? 'Counter-Strike 2' :
+                           game === 'r6siege' ? 'Rainbow Six Siege' :
+                           game}
+                        </span>
+                      </div>
+                    )}
+                    {globalSearch && (
+                      <div className="mt-1 text-xs text-green-400">
+                        Búsqueda en todos los juegos
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -362,6 +410,18 @@ export default function Search({
                              item.type === "player" ? "Jugador" :
                              item.type === "tournament" ? "Torneo" : "Partido"}
                           </span>
+                          {globalSearch && item.game && (
+                            <>
+                              <span>•</span>
+                              <span className="text-blue-400 font-medium">
+                                {item.game === 'dota2' ? 'Dota 2' :
+                                 item.game === 'lol' ? 'League of Legends' :
+                                 item.game === 'csgo' ? 'Counter-Strike 2' :
+                                 item.game === 'r6siege' ? 'Rainbow Six Siege' :
+                                 item.game}
+                              </span>
+                            </>
+                          )}
                           {item.league && (
                             <>
                               <span>•</span>
