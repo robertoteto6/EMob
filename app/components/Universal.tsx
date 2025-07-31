@@ -236,7 +236,7 @@ export const UniversalEmpty: React.FC<UniversalEmptyProps> = ({
 };
 
 // Hook para manejo de estados universales
-export const useUniversalState = <T>(initialData?: T) => {
+export const useUniversalState = <T,>(initialData?: T) => {
   const [data, setData] = useState<T | null>(initialData || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
