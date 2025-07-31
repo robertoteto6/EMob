@@ -175,7 +175,7 @@ function StreamList({ streams }: { streams: StreamInfo[] }) {
         </svg>
         Streams disponibles
       </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {streams.map((s, idx) => (
           <a
             key={idx}
@@ -186,9 +186,9 @@ function StreamList({ streams }: { streams: StreamInfo[] }) {
             title={`Ver stream en ${s.language.toUpperCase()}`}
           >
             <LangFlag code={s.language} />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-white group-hover:text-[var(--accent,#00FF80)] transition-colors">
+                <span className="font-semibold text-white group-hover:text-[var(--accent,#00FF80)] transition-colors text-sm truncate">
                   {s.language.toUpperCase()} Stream
                 </span>
                 <svg 
@@ -198,16 +198,16 @@ function StreamList({ streams }: { streams: StreamInfo[] }) {
                   fill="none" 
                   stroke="currentColor" 
                   strokeWidth="2"
-                  className="text-gray-400 group-hover:text-[var(--accent,#00FF80)] transition-colors"
+                  className="text-gray-400 group-hover:text-[var(--accent,#00FF80)] transition-colors flex-shrink-0"
                 >
                   <path d="M7 17L17 7M17 7H7M17 7V17"/>
                 </svg>
               </div>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-400 mt-1 truncate">
                 {s.raw_url.includes('twitch.tv') ? 'Twitch' : 'Stream externo'}
               </p>
             </div>
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse flex-shrink-0" />
           </a>
         ))}
       </div>
@@ -737,11 +737,11 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
     if (!id || error) {
       return (
         <div 
-          className="bg-gradient-to-br from-gray-700 to-gray-600 rounded-full flex items-center justify-center text-gray-300 border-2 border-gray-500 shadow-lg hover:scale-105 transition-transform duration-300" 
-          style={{ width: size, height: size }}
+          className="bg-gradient-to-br from-gray-700 to-gray-600 rounded-full flex items-center justify-center text-gray-300 border-2 border-gray-500 shadow-lg hover:scale-105 transition-transform duration-300 flex-shrink-0" 
+          style={{ width: size, height: size, minWidth: size, minHeight: size }}
           title={name}
         >
-          <svg width={size * 0.5} height={size * 0.5} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width={size * 0.4} height={size * 0.4} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
             <circle cx="12" cy="7" r="4"/>
           </svg>
@@ -750,7 +750,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
     }
     
     return (
-      <div className="relative group">
+      <div className="relative group flex-shrink-0" style={{ width: size, height: size }}>
         {loading && (
           <div 
             className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-600 rounded-full flex items-center justify-center animate-pulse"
@@ -764,7 +764,8 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
           alt={`Logo de ${name}`}
           width={size}
           height={size}
-          className={`rounded-full border-2 border-gray-500 group-hover:border-[var(--accent,#00FF80)] bg-white shadow-lg hover:shadow-xl hover:shadow-[var(--accent,#00FF80)]/20 transition-all duration-300 hover:scale-105 ${loading ? 'opacity-0' : 'opacity-100'}`}
+          className={`rounded-full border-2 border-gray-500 group-hover:border-[var(--accent,#00FF80)] bg-white shadow-lg hover:shadow-xl hover:shadow-[var(--accent,#00FF80)]/20 transition-all duration-300 hover:scale-105 object-cover ${loading ? 'opacity-0' : 'opacity-100'}`}
+          style={{ width: size, height: size, minWidth: size, minHeight: size }}
           title={name}
           onError={() => setError(true)}
           onLoad={() => setLoading(false)}
@@ -785,7 +786,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
     <main className="p-4 sm:p-8 font-sans min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white" role="main">
       <div className="w-full max-w-6xl mx-auto">
         {/* Header mejorado */}
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+        <header className="flex flex-col sm:flex-row items-center justify-between mb-6 sm:mb-8 gap-4">
           <Link 
             href="/esports" 
             className="group inline-flex items-center gap-2 text-[var(--accent,#00FF80)] hover:text-green-400 text-sm font-semibold transition-all duration-300 hover:scale-105" 
@@ -799,15 +800,17 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
             Volver a partidos
           </Link>
           
-          <div className="flex flex-wrap gap-2 items-center">
-            <Search />
+          <div className="flex flex-wrap gap-2 items-center justify-center sm:justify-end">
+            <div className="order-1 sm:order-1 w-full sm:w-auto">
+              <Search />
+            </div>
             
             {/* Botones de compartir mejorados */}
-            <div className="flex gap-2">
+            <div className="order-2 sm:order-2 flex gap-2">
               <button 
                 onClick={handleShare} 
                 aria-label="Compartir partido" 
-                className="group flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white border border-gray-600 hover:border-gray-500 transition-all duration-300 text-xs font-semibold"
+                className="group flex items-center gap-2 px-2 sm:px-3 py-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white border border-gray-600 hover:border-gray-500 transition-all duration-300 text-xs font-semibold"
                 title="Compartir por enlace"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -821,7 +824,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
               <button 
                 onClick={() => handleShareSocial("twitter")} 
                 aria-label="Compartir en Twitter" 
-                className="group flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition-all duration-300 text-xs font-semibold hover:shadow-lg hover:shadow-blue-500/25"
+                className="group flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition-all duration-300 text-xs font-semibold hover:shadow-lg hover:shadow-blue-500/25"
                 title="Compartir en Twitter"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -833,7 +836,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
               <button 
                 onClick={() => handleShareSocial("whatsapp")} 
                 aria-label="Compartir en WhatsApp" 
-                className="group flex items-center gap-2 px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-500 transition-all duration-300 text-xs font-semibold hover:shadow-lg hover:shadow-green-500/25"
+                className="group flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-500 transition-all duration-300 text-xs font-semibold hover:shadow-lg hover:shadow-green-500/25"
                 title="Compartir en WhatsApp"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -844,7 +847,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
             </div>
             
             {/* Selector de idioma mejorado */}
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 border border-gray-600">
+            <div className="order-3 sm:order-3 flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg bg-gray-800 border border-gray-600">
               <select 
                 value={lang} 
                 onChange={handleLangChange} 
@@ -950,120 +953,121 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
               </button>
             </div>
             
-            <div className="flex flex-col xl:flex-row gap-8">
-              {/* Información del partido */}
-              <div className="flex-1 space-y-6">
-                <div>
-                  <h1 className="text-3xl xl:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent,#00FF80)] to-green-400 mb-4 leading-tight">
-                    {match.name}
-                  </h1>
-                  
-                  <div className="flex flex-wrap gap-3 mb-4">
-                    <span className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold text-sm shadow-lg">
-                      {match.league}
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-gray-700 text-gray-300 text-xs border border-gray-600">
-                      {match.serie}
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-gray-700 text-gray-300 text-xs border border-gray-600">
-                      {match.tournament}
-                    </span>
+            {/* Información del partido y titulo mejorado */}
+            <div className="space-y-6 mb-8">
+              <div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent,#00FF80)] to-green-400 mb-4 leading-tight text-center lg:text-left">
+                  {match.name}
+                </h1>
+                
+                <div className="flex flex-wrap justify-center lg:justify-start gap-2 mb-4">
+                  <span className="px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold text-xs sm:text-sm shadow-lg">
+                    {match.league}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-gray-700 text-gray-300 text-xs border border-gray-600">
+                    {match.serie}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-gray-700 text-gray-300 text-xs border border-gray-600">
+                    {match.tournament}
+                  </span>
+                </div>
+                
+                <div className="flex flex-wrap justify-center lg:justify-start items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-400 mb-6">
+                  <div className="flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12,6 12,12 16,14"/>
+                    </svg>
+                    <span className="break-all">{new Date(match.start_time * 1000).toLocaleString(lang)}</span>
                   </div>
-                  
-                  <div className="flex items-center gap-4 text-sm text-gray-400 mb-4">
+                  {match.end_time && (
                     <div className="flex items-center gap-2">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 12l2 2 4-4"/>
                         <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12,6 12,12 16,14"/>
                       </svg>
-                      {new Date(match.start_time * 1000).toLocaleString(lang)}
-                    </div>
-                    {match.end_time && (
-                      <div className="flex items-center gap-2">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M9 12l2 2 4-4"/>
-                          <circle cx="12" cy="12" r="10"/>
-                        </svg>
-                        Finalizado: {new Date(match.end_time * 1000).toLocaleString(lang)}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {match.start_time > Date.now() / 1000 && (
-                    <div className="mb-6">
-                      <Countdown targetTime={match.start_time} />
+                      <span>Finalizado: {new Date(match.end_time * 1000).toLocaleString(lang)}</span>
                     </div>
                   )}
-                  
-                  <div className="flex flex-wrap gap-4 items-center">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-400">MVP:</span>
-                      <span className="font-bold text-[var(--accent,#00FF80)]">{mvp}</span>
-                    </div>
-                    <CopyButton 
-                      text={`${match.radiant} ${match.radiant_score} - ${match.dire_score} ${match.dire}`} 
-                      label="Copiar resultado" 
-                    />
-                  </div>
                 </div>
+                
+                {match.start_time > Date.now() / 1000 && (
+                  <div className="mb-6 flex justify-center lg:justify-start">
+                    <Countdown targetTime={match.start_time} />
+                  </div>
+                )}
               </div>
-              
-              {/* Marcador */}
-              <div className="flex items-center justify-center xl:justify-end">
-                <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 border border-gray-600 shadow-xl min-w-fit">
-                  <div className="flex items-center gap-6 text-lg font-bold">
-                    {/* Equipo 1 */}
-                    <div className="flex flex-col items-center gap-3 min-w-[100px]">
-                      <Link 
-                        href={`/esports/team/${match.radiant_id}`} 
-                        aria-label={`Ver equipo ${match.radiant}`}
-                        className="group"
-                      >
-                        <TeamLogo id={match.radiant_id} name={match.radiant} size={64} />
-                      </Link>
-                      <div className="text-center">
-                        <p className="text-white font-semibold text-sm mb-1 truncate max-w-[100px]" title={match.radiant}>
-                          {match.radiant}
-                        </p>
-                        <span className={`inline-block px-4 py-2 rounded-xl text-2xl font-bold shadow-lg ${
-                          match.radiant_win === true 
-                            ? 'bg-gradient-to-r from-green-600 to-green-500 text-white' 
-                            : 'bg-gray-700 text-gray-300'
-                        }`}>
-                          {match.radiant_score}
-                        </span>
-                      </div>
+            </div>
+            
+            {/* Marcador principal mejorado */}
+            <div className="flex justify-center mb-8">
+              <div className="w-full max-w-4xl bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-4 sm:p-6 border border-gray-600 shadow-xl">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-lg font-bold">
+                  {/* Equipo 1 */}
+                  <div className="flex flex-col items-center gap-3 min-w-[120px] sm:min-w-[140px]">
+                    <Link 
+                      href={`/esports/team/${match.radiant_id}`} 
+                      aria-label={`Ver equipo ${match.radiant}`}
+                      className="group transition-transform hover:scale-105"
+                    >
+                      <TeamLogo id={match.radiant_id} name={match.radiant} size={72} />
+                    </Link>
+                    <div className="text-center">
+                      <p className="text-white font-semibold text-sm sm:text-base mb-2 truncate max-w-[120px] sm:max-w-[140px]" title={match.radiant}>
+                        {match.radiant}
+                      </p>
+                      <span className={`inline-block px-4 py-2 rounded-xl text-xl sm:text-2xl font-bold shadow-lg transition-all ${
+                        match.radiant_win === true 
+                          ? 'bg-gradient-to-r from-green-600 to-green-500 text-white scale-110' 
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}>
+                        {match.radiant_score}
+                      </span>
                     </div>
-                    
-                    {/* VS */}
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-2xl font-bold text-gray-500">VS</span>
+                  </div>
+                  
+                  {/* VS y Estado */}
+                  <div className="flex flex-col items-center gap-3 px-4">
+                    <span className="text-xl sm:text-2xl font-bold text-gray-400">VS</span>
+                    <div className="flex justify-center">
                       <MatchStatus match={match} />
                     </div>
-                    
-                    {/* Equipo 2 */}
-                    <div className="flex flex-col items-center gap-3 min-w-[100px]">
-                      <Link 
-                        href={`/esports/team/${match.dire_id}`} 
-                        aria-label={`Ver equipo ${match.dire}`}
-                        className="group"
-                      >
-                        <TeamLogo id={match.dire_id} name={match.dire} size={64} />
-                      </Link>
-                      <div className="text-center">
-                        <p className="text-white font-semibold text-sm mb-1 truncate max-w-[100px]" title={match.dire}>
-                          {match.dire}
-                        </p>
-                        <span className={`inline-block px-4 py-2 rounded-xl text-2xl font-bold shadow-lg ${
-                          match.radiant_win === false 
-                            ? 'bg-gradient-to-r from-green-600 to-green-500 text-white' 
-                            : 'bg-gray-700 text-gray-300'
-                        }`}>
-                          {match.dire_score}
-                        </span>
-                      </div>
+                  </div>
+                  
+                  {/* Equipo 2 */}
+                  <div className="flex flex-col items-center gap-3 min-w-[120px] sm:min-w-[140px]">
+                    <Link 
+                      href={`/esports/team/${match.dire_id}`} 
+                      aria-label={`Ver equipo ${match.dire}`}
+                      className="group transition-transform hover:scale-105"
+                    >
+                      <TeamLogo id={match.dire_id} name={match.dire} size={72} />
+                    </Link>
+                    <div className="text-center">
+                      <p className="text-white font-semibold text-sm sm:text-base mb-2 truncate max-w-[120px] sm:max-w-[140px]" title={match.dire}>
+                        {match.dire}
+                      </p>
+                      <span className={`inline-block px-4 py-2 rounded-xl text-xl sm:text-2xl font-bold shadow-lg transition-all ${
+                        match.radiant_win === false 
+                          ? 'bg-gradient-to-r from-green-600 to-green-500 text-white scale-110' 
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}>
+                        {match.dire_score}
+                      </span>
                     </div>
                   </div>
+                </div>
+                
+                {/* Acciones adicionales */}
+                <div className="flex flex-wrap justify-center gap-4 mt-6 pt-4 border-t border-gray-600">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-gray-400">MVP:</span>
+                    <span className="font-bold text-[var(--accent,#00FF80)]">{mvp}</span>
+                  </div>
+                  <CopyButton 
+                    text={`${match.radiant} ${match.radiant_score} - ${match.dire_score} ${match.dire}`} 
+                    label="Copiar resultado" 
+                  />
                 </div>
               </div>
             </div>
@@ -1098,43 +1102,43 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
         </div>
         
         {/* Detalles del partido mejorados */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8">
           {/* Información del partido */}
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 rounded-2xl opacity-25 group-hover:opacity-40 transition-opacity duration-500 blur-sm" />
-            <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 p-6 shadow-xl backdrop-blur-sm">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 mb-4 flex items-center gap-3">
-                <div className="p-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+            <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 p-4 sm:p-6 shadow-xl backdrop-blur-sm">
+              <h2 className="text-lg sm:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 mb-4 flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="sm:w-5 sm:h-5">
                     <circle cx="12" cy="12" r="3"/>
                     <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
                   </svg>
                 </div>
-                Información del partido
+                <span className="text-sm sm:text-base">Información del partido</span>
               </h2>
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                  <span className="text-sm text-gray-400">Serie:</span>
-                  <span className="text-white font-semibold">{match.serie}</span>
+                <div className="flex items-center gap-3 p-2.5 sm:p-3 rounded-lg bg-gray-800/50 border border-gray-700">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm text-gray-400 min-w-0">Serie:</span>
+                  <span className="text-white font-semibold text-xs sm:text-sm truncate">{match.serie}</span>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <span className="text-sm text-gray-400">Torneo:</span>
-                  <span className="text-white font-semibold">{match.tournament}</span>
+                <div className="flex items-center gap-3 p-2.5 sm:p-3 rounded-lg bg-gray-800/50 border border-gray-700">
+                  <div className="w-2 h-2 bg-green-400 rounded-full flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm text-gray-400 min-w-0">Torneo:</span>
+                  <span className="text-white font-semibold text-xs sm:text-sm truncate">{match.tournament}</span>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                  <span className="text-sm text-gray-400">Formato:</span>
-                  <span className="text-white font-semibold">
+                <div className="flex items-center gap-3 p-2.5 sm:p-3 rounded-lg bg-gray-800/50 border border-gray-700">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm text-gray-400 min-w-0">Formato:</span>
+                  <span className="text-white font-semibold text-xs sm:text-sm truncate">
                     {match.match_type === "best_of" ? `Best of ${match.number_of_games}` : match.match_type}
                   </span>
                 </div>
                 {match.end_time && (
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700">
-                    <div className="w-2 h-2 bg-red-400 rounded-full"></div>
-                    <span className="text-sm text-gray-400">Finalizado:</span>
-                    <span className="text-white font-semibold">
+                  <div className="flex items-center gap-3 p-2.5 sm:p-3 rounded-lg bg-gray-800/50 border border-gray-700">
+                    <div className="w-2 h-2 bg-red-400 rounded-full flex-shrink-0"></div>
+                    <span className="text-xs sm:text-sm text-gray-400 min-w-0">Finalizado:</span>
+                    <span className="text-white font-semibold text-xs sm:text-sm truncate">
                       {new Date(match.end_time * 1000).toLocaleString(lang)}
                     </span>
                   </div>
@@ -1146,35 +1150,37 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
           {/* Estadísticas adicionales */}
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 rounded-2xl opacity-25 group-hover:opacity-40 transition-opacity duration-500 blur-sm" />
-            <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 p-6 shadow-xl backdrop-blur-sm">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400 mb-4 flex items-center gap-3">
-                <div className="p-2 rounded-full bg-gradient-to-r from-green-600 to-emerald-600">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+            <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 p-4 sm:p-6 shadow-xl backdrop-blur-sm">
+              <h2 className="text-lg sm:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400 mb-4 flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-full bg-gradient-to-r from-green-600 to-emerald-600">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="sm:w-5 sm:h-5">
                     <path d="M3 3v18h18"/>
                     <path d="M18 17V9"/>
                     <path d="M13 17V5"/>
                     <path d="M8 17v-3"/>
                   </svg>
                 </div>
-                Estadísticas
+                <span className="text-sm sm:text-base">Estadísticas</span>
               </h2>
               <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 rounded-lg bg-gray-800/50 border border-gray-700">
-                  <span className="text-gray-400">Duración estimada</span>
-                  <span className="text-white font-semibold">
+                <div className="flex justify-between items-center p-2.5 sm:p-3 rounded-lg bg-gray-800/50 border border-gray-700">
+                  <span className="text-gray-400 text-xs sm:text-sm">Duración estimada</span>
+                  <span className="text-white font-semibold text-xs sm:text-sm">
                     {match.end_time && match.start_time 
                       ? `${Math.round((match.end_time - match.start_time) / 60)} min`
                       : 'En curso'
                     }
                   </span>
                 </div>
-                <div className="flex justify-between items-center p-3 rounded-lg bg-gray-800/50 border border-gray-700">
-                  <span className="text-gray-400">Juegos totales</span>
-                  <span className="text-white font-semibold">{match.games.length}</span>
+                <div className="flex justify-between items-center p-2.5 sm:p-3 rounded-lg bg-gray-800/50 border border-gray-700">
+                  <span className="text-gray-400 text-xs sm:text-sm">Juegos totales</span>
+                  <span className="text-white font-semibold text-xs sm:text-sm">{match.games.length}</span>
                 </div>
-                <div className="flex justify-between items-center p-3 rounded-lg bg-gray-800/50 border border-gray-700">
-                  <span className="text-gray-400">Estado</span>
-                  <MatchStatus match={match} />
+                <div className="flex justify-between items-center p-2.5 sm:p-3 rounded-lg bg-gray-800/50 border border-gray-700">
+                  <span className="text-gray-400 text-xs sm:text-sm">Estado</span>
+                  <div className="flex justify-end">
+                    <MatchStatus match={match} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -1184,19 +1190,19 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
         {match.games.length > 0 && (
           <div className="relative group mb-8">
             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl opacity-25 group-hover:opacity-40 transition-opacity duration-500 blur-sm" />
-            <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 p-8 shadow-2xl backdrop-blur-sm">
-              <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 mb-6 flex items-center gap-3">
-                <div className="p-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+            <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 p-4 sm:p-6 lg:p-8 shadow-2xl backdrop-blur-sm">
+              <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="sm:w-6 sm:h-6">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                     <line x1="9" y1="9" x2="9" y2="15"/>
                     <line x1="15" y1="9" x2="15" y2="15"/>
                     <line x1="9" y1="12" x2="15" y2="12"/>
                   </svg>
                 </div>
-                Mapa a mapa
+                <span className="text-base sm:text-xl">Mapa a mapa</span>
               </h2>
-              <div className="grid gap-4">
+              <div className="grid gap-3 sm:gap-4">
                 {match.games.map((g, index) => {
                   const isFinished = g.status === "finished";
                   const isRunning = g.status === "running";
@@ -1207,7 +1213,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
                   return (
                     <div 
                       key={g.id} 
-                      className={`p-4 rounded-xl border transition-all duration-300 ${
+                      className={`p-3 sm:p-4 rounded-xl border transition-all duration-300 ${
                         isRunning 
                           ? 'bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border-yellow-500 shadow-lg shadow-yellow-500/20' 
                           : isFinished
@@ -1215,9 +1221,9 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
                           : 'bg-gradient-to-r from-gray-900/50 to-gray-800/50 border-gray-700'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold text-white ${
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                          <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full font-bold text-white text-sm sm:text-base ${
                             isRunning 
                               ? 'bg-gradient-to-r from-yellow-600 to-orange-600 animate-pulse' 
                               : isFinished
@@ -1227,7 +1233,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
                             {g.position}
                           </div>
                           <div>
-                            <p className="font-semibold text-white mb-1">
+                            <p className="font-semibold text-white mb-1 text-sm sm:text-base">
                               Juego {g.position}
                               {isRunning && (
                                 <span className="ml-2 px-2 py-1 rounded-full bg-red-600 text-white text-xs animate-pulse">
@@ -1235,7 +1241,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
                                 </span>
                               )}
                             </p>
-                            <p className="text-sm text-gray-400">
+                            <p className="text-xs sm:text-sm text-gray-400">
                               {g.begin_at 
                                 ? new Date(g.begin_at).toLocaleString(lang)
                                 : 'Hora por determinar'
@@ -1244,11 +1250,11 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
                           </div>
                         </div>
                         
-                        <div className="text-right">
+                        <div className="text-left sm:text-right w-full sm:w-auto">
                           {isFinished && winner ? (
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-400">Ganador:</span>
-                              <span className={`font-bold px-3 py-1 rounded-full text-sm ${
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                              <span className="text-xs sm:text-sm text-gray-400">Ganador:</span>
+                              <span className={`font-bold px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm ${
                                 winner === match.radiant 
                                   ? 'bg-gradient-to-r from-[var(--accent,#00FF80)] to-green-500 text-black' 
                                   : 'bg-gradient-to-r from-blue-600 to-blue-500 text-white'
@@ -1257,7 +1263,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
                               </span>
                             </div>
                           ) : (
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${
+                            <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium capitalize ${
                               isRunning 
                                 ? 'bg-yellow-600 text-white' 
                                 : 'bg-gray-600 text-gray-300'
@@ -1286,24 +1292,26 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
         {match.streams.length > 0 && (
           <div className="relative group mb-8">
             <div className="absolute -inset-1 bg-gradient-to-r from-red-600 via-pink-600 to-purple-600 rounded-2xl opacity-25 group-hover:opacity-40 transition-opacity duration-500 blur-sm" />
-            <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 p-8 shadow-2xl backdrop-blur-sm">
-              <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-pink-400 mb-6 flex items-center gap-3">
-                <div className="p-2 rounded-full bg-gradient-to-r from-red-600 to-pink-600">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+            <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 p-4 sm:p-6 lg:p-8 shadow-2xl backdrop-blur-sm">
+              <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-pink-400 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-full bg-gradient-to-r from-red-600 to-pink-600">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="sm:w-6 sm:h-6">
                     <polygon points="23 7 16 12 23 17 23 7"/>
                     <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
                   </svg>
                 </div>
-                {(() => {
-                  const now = Date.now() / 1000;
-                  const ended = match.end_time !== null && now > match.end_time;
-                  const started = match.start_time <= now;
-                  return started && !ended
-                    ? "Stream en directo"
-                    : ended
-                    ? "Ver en diferido"
-                    : "Dónde ver";
-                })()}
+                <span className="text-base sm:text-xl">
+                  {(() => {
+                    const now = Date.now() / 1000;
+                    const ended = match.end_time !== null && now > match.end_time;
+                    const started = match.start_time <= now;
+                    return started && !ended
+                      ? "Stream en directo"
+                      : ended
+                      ? "Ver en diferido"
+                      : "Dónde ver";
+                  })()}
+                </span>
               </h2>
               
               {/* Stream embed */}
@@ -1320,7 +1328,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
                   ) || match.streams[0];
                 if (!twitch) return null;
                 return (
-                  <div className="mb-6">
+                  <div className="mb-4 sm:mb-6">
                     <StreamEmbed twitch={twitch} vodUrl={vodUrl} />
                   </div>
                 );
@@ -1328,39 +1336,39 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
               
               {/* Estados de búsqueda de VOD */}
               {findingVod && (
-                <div className="flex items-center justify-center gap-3 p-6 rounded-xl bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/30 mb-6">
+                <div className="flex items-center justify-center gap-3 p-4 sm:p-6 rounded-xl bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/30 mb-4 sm:mb-6">
                   <Spinner size={20} color="#3B82F6" />
-                  <span className="text-blue-400 font-medium">Buscando grabación del partido...</span>
+                  <span className="text-blue-400 font-medium text-sm sm:text-base">Buscando grabación del partido...</span>
                 </div>
               )}
               
               {searchedVod && !vodUrl && !findingVod && (
-                <div className="p-4 rounded-xl bg-gradient-to-r from-red-900/30 to-pink-900/30 border border-red-500/30 mb-6 text-center">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto mb-2 text-red-400">
+                <div className="p-4 rounded-xl bg-gradient-to-r from-red-900/30 to-pink-900/30 border border-red-500/30 mb-4 sm:mb-6 text-center">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto mb-2 text-red-400 sm:w-12 sm:h-12">
                     <circle cx="12" cy="12" r="10"/>
                     <path d="M8.5 8.5l7 7"/>
                     <path d="M15.5 8.5l-7 7"/>
                   </svg>
-                  <p className="text-red-400 font-medium">No se encontró grabación del partido</p>
+                  <p className="text-red-400 font-medium text-sm sm:text-base">No se encontró grabación del partido</p>
                 </div>
               )}
               
               {/* Link a VOD si está disponible */}
               {vodUrl && (
-                <div className="p-4 rounded-xl bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-500/30 mb-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-500/30 mb-4 sm:mb-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-400">
                         <path d="M9 12l2 2 4-4"/>
                         <circle cx="12" cy="12" r="10"/>
                       </svg>
-                      <span className="text-green-400 font-medium">Grabación disponible</span>
+                      <span className="text-green-400 font-medium text-sm sm:text-base">Grabación disponible</span>
                     </div>
                     <a
                       href={vodUrl}
                       target="_blank"
                       rel="noopener"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-green-600 to-green-500 text-white font-semibold hover:shadow-lg hover:shadow-green-500/25 transition-all duration-300 transform hover:scale-105"
+                      className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-gradient-to-r from-green-600 to-green-500 text-white font-semibold hover:shadow-lg hover:shadow-green-500/25 transition-all duration-300 transform hover:scale-105 text-sm"
                       title="Ver VOD completo"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

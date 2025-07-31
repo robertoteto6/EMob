@@ -39,9 +39,16 @@ function Star({ filled, ...props }: { filled: boolean; [key: string]: any }) {
 // Componente para mostrar banderas de idioma con mejor diseño
 function LangFlag({ code }: { code: string }) {
   const getFlag = (code: string) => {
+    // Verificar si el código es válido
+    if (!code || typeof code !== 'string') {
+      return { src: "/globe.svg", alt: "Idioma desconocido", emoji: "🌍" };
+    }
+    
     const flags = {
       "es-ES": { src: "/file.svg", alt: "Español", emoji: "🇪🇸" },
       "en-US": { src: "/globe.svg", alt: "English", emoji: "🇺🇸" },
+      "es": { src: "/file.svg", alt: "Español", emoji: "🇪🇸" },
+      "en": { src: "/globe.svg", alt: "English", emoji: "🇺🇸" },
       default: { src: "/globe.svg", alt: code, emoji: "🌍" }
     };
     return flags[code as keyof typeof flags] || flags.default;
@@ -232,9 +239,9 @@ async function fetchMatch(id: string): Promise<MatchDetail | null> {
       winner_id: g.winner?.id ?? null,
     })),
     streams: (m.streams_list ?? []).map((s: any) => ({
-      embed_url: s.embed_url,
-      raw_url: s.raw_url,
-      language: s.language,
+      embed_url: s.embed_url || "",
+      raw_url: s.raw_url || "",
+      language: s.language || "en-US",
     })),
   } as MatchDetail;
 }
@@ -966,7 +973,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
         )}
 
         {/* Información de streams si existen */}
-        {match.streams.length > 0 && (
+        {match.streams.length > 0 && match.streams.some(s => s.raw_url && s.raw_url.trim() !== '') && (
           <div className="relative group mb-8">
             <div className="absolute -inset-1 bg-gradient-to-r from-red-600 via-pink-600 to-purple-600 rounded-2xl opacity-25 group-hover:opacity-40 transition-opacity duration-500 blur-sm" />
             <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 p-8 shadow-2xl backdrop-blur-sm">
@@ -982,20 +989,22 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
               
               {/* Lista de streams */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {match.streams.map((s, idx) => (
+                {match.streams
+                  .filter(s => s.raw_url && s.raw_url.trim() !== '')
+                  .map((s, idx) => (
                   <a
                     key={idx}
                     href={s.raw_url}
                     target="_blank"
                     rel="noopener"
                     className="group flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-gray-900/50 to-gray-800/50 border border-gray-700 hover:border-[var(--accent,#00FF80)] transition-all duration-300 hover:shadow-lg hover:shadow-[var(--accent,#00FF80)]/20"
-                    title={`Ver stream en ${s.language.toUpperCase()}`}
+                    title={`Ver stream en ${(s.language || 'idioma desconocido').toUpperCase()}`}
                   >
                     <LangFlag code={s.language} />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-white group-hover:text-[var(--accent,#00FF80)] transition-colors">
-                          {s.language.toUpperCase()} Stream
+                          {(s.language || 'desconocido').toUpperCase()} Stream
                         </span>
                         <svg 
                           width="14" 
@@ -1010,7 +1019,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
                         </svg>
                       </div>
                       <p className="text-xs text-gray-400 mt-1">
-                        {s.raw_url.includes('twitch.tv') ? 'Twitch' : 'Stream externo'}
+                        {s.raw_url && s.raw_url.includes('twitch.tv') ? 'Twitch' : 'Stream externo'}
                       </p>
                     </div>
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />

@@ -149,6 +149,10 @@ body {
   animation: scaleIn 0.4s ease-out;
 }
 
+.animate-fadeIn {
+  animation: fadein 0.6s ease-out forwards;
+}
+
 .animate-shimmer {
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;

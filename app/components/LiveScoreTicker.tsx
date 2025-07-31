@@ -22,14 +22,16 @@ const GAME_ICONS: Record<string, string> = {
   dota2: "/dota2.svg",
   lol: "/leagueoflegends.svg",
   csgo: "/counterstrike.svg",
-  r6siege: "/ubisoft.svg",
+  r6siege: "/rainbow6siege.svg",
+  overwatch: "/overwatch.svg",
 };
 
 const GAME_COLORS: Record<string, string> = {
   dota2: "from-purple-500/80 to-purple-600/80",
   lol: "from-blue-500/80 to-blue-600/80", 
   csgo: "from-yellow-500/80 to-yellow-600/80",
-  r6siege: "from-cyan-500/80 to-cyan-600/80",
+  r6siege: "from-orange-500/80 to-orange-600/80",
+  overwatch: "from-orange-400/80 to-orange-500/80",
 };
 
 export default function LiveScoreTicker({ currentGame }: LiveScoreTickerProps) {
@@ -41,7 +43,7 @@ export default function LiveScoreTicker({ currentGame }: LiveScoreTickerProps) {
   useEffect(() => {
     async function fetchLiveMatches() {
       try {
-        const games = currentGame === "all" ? ["dota2", "lol", "csgo", "r6siege"] : [currentGame];
+        const games = currentGame === "all" ? ["dota2", "lol", "csgo", "r6siege", "overwatch"] : [currentGame];
         const allMatches: LiveMatch[] = [];
 
         for (const game of games) {

@@ -123,7 +123,8 @@ const GAMES = [
   { id: "dota2", name: "Dota 2", icon: "/dota2.svg", color: "#A970FF", gradient: "from-purple-600 to-purple-800" },
   { id: "lol", name: "League of Legends", icon: "/leagueoflegends.svg", color: "#1E90FF", gradient: "from-blue-600 to-blue-800" },
   { id: "csgo", name: "Counter-Strike 2", icon: "/counterstrike.svg", color: "#FFD700", gradient: "from-yellow-600 to-yellow-800" },
-  { id: "r6siege", name: "Rainbow Six Siege", icon: "/ubisoft.svg", color: "#00CFFF", gradient: "from-cyan-600 to-cyan-800" },
+  { id: "r6siege", name: "Rainbow Six Siege", icon: "/rainbow6siege.svg", color: "#FF6B35", gradient: "from-orange-600 to-orange-800" },
+  { id: "overwatch", name: "Overwatch", icon: "/overwatch.svg", color: "#FF9500", gradient: "from-orange-500 to-orange-700" },
 ];
 
 async function fetchTeams(game: string, search?: string): Promise<Team[]> {
