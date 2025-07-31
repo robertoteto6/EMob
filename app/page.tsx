@@ -136,7 +136,8 @@ async function fetchAllTournaments(): Promise<Tournament[]> {
 // Componente de estadísticas del juego
 function GameStatsCard({ game, stats }: { game: typeof GAMES[0], stats: GameStats }) {
   return (
-    <div className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${game.gradient} p-8 text-white shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 border border-white/10`}>
+    <Link href={`/esports/game/${game.id}`}>
+      <div className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${game.gradient} p-8 text-white shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 border border-white/10 cursor-pointer`}>
       {/* Patrón de fondo */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat"></div>
@@ -145,6 +146,14 @@ function GameStatsCard({ game, stats }: { game: typeof GAMES[0], stats: GameStat
       {/* Icono flotante */}
       <div className="absolute top-4 right-4 opacity-20 group-hover:opacity-30 transition-opacity duration-500">
         <img src={game.icon} alt={game.name} className="w-16 h-16 group-hover:scale-110 transition-transform duration-500" />
+      </div>
+      
+      {/* Indicador de click */}
+      <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+        <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1">
+          <span>👆</span>
+          <span>Explorar</span>
+        </div>
       </div>
       
       {/* Efecto de brillo */}
@@ -223,6 +232,7 @@ function GameStatsCard({ game, stats }: { game: typeof GAMES[0], stats: GameStat
       {/* Efecto de hover en el borde */}
       <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/30 transition-colors duration-500"></div>
     </div>
+    </Link>
   );
 }
 
