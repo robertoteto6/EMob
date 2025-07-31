@@ -786,7 +786,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
     <main className="p-4 sm:p-8 font-sans min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white" role="main">
       <div className="w-full max-w-6xl mx-auto">
         {/* Header mejorado */}
-        <header className="flex flex-col sm:flex-row items-center justify-between mb-6 sm:mb-8 gap-4">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
           <Link 
             href="/esports" 
             className="group inline-flex items-center gap-2 text-[var(--accent,#00FF80)] hover:text-green-400 text-sm font-semibold transition-all duration-300 hover:scale-105" 
@@ -800,13 +800,11 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
             Volver a partidos
           </Link>
           
-          <div className="flex flex-wrap gap-2 items-center justify-center sm:justify-end">
-            <div className="order-1 sm:order-1 w-full sm:w-auto">
-              <Search />
-            </div>
-            
+          <div className="flex flex-wrap gap-2 items-center">
+            <Search />
+
             {/* Botones de compartir mejorados */}
-            <div className="order-2 sm:order-2 flex gap-2">
+            <div className="flex gap-2">
               <button 
                 onClick={handleShare} 
                 aria-label="Compartir partido" 
@@ -847,7 +845,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
             </div>
             
             {/* Selector de idioma mejorado */}
-            <div className="order-3 sm:order-3 flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg bg-gray-800 border border-gray-600">
+            <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg bg-gray-800 border border-gray-600">
               <select 
                 value={lang} 
                 onChange={handleLangChange} 
@@ -1000,25 +998,25 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
             </div>
             
             {/* Marcador principal mejorado */}
-            <div className="flex justify-center mb-8">
-              <div className="w-full max-w-4xl bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-4 sm:p-6 border border-gray-600 shadow-xl">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-lg font-bold">
+            <div className="flex items-center justify-center xl:justify-end mb-8">
+              <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-6 border border-gray-600 shadow-xl min-w-fit">
+                <div className="flex items-center gap-6 text-lg font-bold">
                   {/* Equipo 1 */}
-                  <div className="flex flex-col items-center gap-3 min-w-[120px] sm:min-w-[140px]">
+                  <div className="flex flex-col items-center gap-3 min-w-[100px]">
                     <Link 
                       href={`/esports/team/${match.radiant_id}`} 
                       aria-label={`Ver equipo ${match.radiant}`}
-                      className="group transition-transform hover:scale-105"
+                      className="group"
                     >
-                      <TeamLogo id={match.radiant_id} name={match.radiant} size={72} />
+                      <TeamLogo id={match.radiant_id} name={match.radiant} size={64} />
                     </Link>
                     <div className="text-center">
-                      <p className="text-white font-semibold text-sm sm:text-base mb-2 truncate max-w-[120px] sm:max-w-[140px]" title={match.radiant}>
+                      <p className="text-white font-semibold text-sm mb-2 truncate max-w-[100px]" title={match.radiant}>
                         {match.radiant}
                       </p>
-                      <span className={`inline-block px-4 py-2 rounded-xl text-xl sm:text-2xl font-bold shadow-lg transition-all ${
+                      <span className={`inline-block px-4 py-2 rounded-xl text-2xl font-bold shadow-lg transition-all ${
                         match.radiant_win === true 
-                          ? 'bg-gradient-to-r from-green-600 to-green-500 text-white scale-110' 
+                          ? 'bg-gradient-to-r from-green-600 to-green-500 text-white' 
                           : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                       }`}>
                         {match.radiant_score}
@@ -1027,29 +1025,29 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
                   </div>
                   
                   {/* VS y Estado */}
-                  <div className="flex flex-col items-center gap-3 px-4">
-                    <span className="text-xl sm:text-2xl font-bold text-gray-400">VS</span>
+                  <div className="flex flex-col items-center gap-2">
+                    <span className="text-2xl font-bold text-gray-400">VS</span>
                     <div className="flex justify-center">
                       <MatchStatus match={match} />
                     </div>
                   </div>
                   
                   {/* Equipo 2 */}
-                  <div className="flex flex-col items-center gap-3 min-w-[120px] sm:min-w-[140px]">
+                  <div className="flex flex-col items-center gap-3 min-w-[100px]">
                     <Link 
                       href={`/esports/team/${match.dire_id}`} 
                       aria-label={`Ver equipo ${match.dire}`}
-                      className="group transition-transform hover:scale-105"
+                      className="group"
                     >
-                      <TeamLogo id={match.dire_id} name={match.dire} size={72} />
+                      <TeamLogo id={match.dire_id} name={match.dire} size={64} />
                     </Link>
                     <div className="text-center">
-                      <p className="text-white font-semibold text-sm sm:text-base mb-2 truncate max-w-[120px] sm:max-w-[140px]" title={match.dire}>
+                      <p className="text-white font-semibold text-sm mb-2 truncate max-w-[100px]" title={match.dire}>
                         {match.dire}
                       </p>
-                      <span className={`inline-block px-4 py-2 rounded-xl text-xl sm:text-2xl font-bold shadow-lg transition-all ${
+                      <span className={`inline-block px-4 py-2 rounded-xl text-2xl font-bold shadow-lg transition-all ${
                         match.radiant_win === false 
-                          ? 'bg-gradient-to-r from-green-600 to-green-500 text-white scale-110' 
+                          ? 'bg-gradient-to-r from-green-600 to-green-500 text-white' 
                           : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                       }`}>
                         {match.dire_score}
