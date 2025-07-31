@@ -4,6 +4,16 @@ import { getFallbackTeams } from "../../../lib/fallbackData";
 
 const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
 
+// Mapeo de IDs de juegos a los nombres de la API de PandaScore
+const GAME_MAPPING: Record<string, string> = {
+  "dota2": "dota2",
+  "lol": "lol", 
+  "csgo": "csgo",
+  "r6siege": "r6siege",
+  "ow": "ow", // Overwatch usa "ow" en PandaScore
+  "overwatch": "ow" // Fallback para compatibilidad
+};
+
 // Sistema de cache simple en memoria
 const cache = new Map();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
@@ -50,11 +60,14 @@ async function waitForRateLimit() {
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const game = searchParams.get("game") || "dota2";
+  const gameParam = searchParams.get("game") || "dota2";
   const q = searchParams.get("q") || "";
   const search = searchParams.get("search") || q; // Soporte para ambos parámetros
   
   try {
+    // Mapear el juego al nombre correcto de la API
+    const game = GAME_MAPPING[gameParam] || gameParam;
+    
     // Verificar cache primero
     const cacheKey = getCacheKey(game, search);
     const cachedResult = getCachedData(cacheKey);
@@ -63,18 +76,12 @@ export async function GET(req: Request) {
       return NextResponse.json(cachedResult);
     }
 
-    // Mapear nombres de juegos
-    let gameSlug = game;
-    if (game === "lol") gameSlug = "lol";
-    if (game === "csgo") gameSlug = "csgo";
-    if (game === "r6siege") gameSlug = "r6siege";
-    
-    console.log(`Fetching teams for game: ${game} -> ${gameSlug}`);
+    console.log(`Fetching teams for game: ${gameParam} -> ${game}`);
     
     // Rate limiting
     await waitForRateLimit();
     
-    const url = new URL(`https://api.pandascore.co/${gameSlug}/teams`);
+    const url = new URL(`https://api.pandascore.co/${game}/teams`);
     url.searchParams.set("per_page", search ? "20" : "30");
     url.searchParams.set("token", PANDA_SCORE_TOKEN);
     if (search) {
@@ -97,7 +104,7 @@ export async function GET(req: Request) {
       // Si es rate limit, devolver datos de respaldo
       if (res.status === 429) {
         console.log("Rate limit hit, returning fallback data");
-        const fallbackData = getFallbackTeams(gameSlug);
+        const fallbackData = getFallbackTeams(game);
         if (fallbackData.length > 0) {
           setCachedData(cacheKey, fallbackData);
           return NextResponse.json(fallbackData);
@@ -109,7 +116,7 @@ export async function GET(req: Request) {
     }
     
     const data = await res.json();
-    console.log(`Received ${data.length} teams for ${gameSlug}`);
+    console.log(`Received ${data.length} teams for ${game}`);
     
     if (!Array.isArray(data)) {
       console.error("API did not return an array:", data);

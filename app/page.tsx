@@ -9,6 +9,29 @@ import ChatBot from "./components/ChatBot";
 import LiveScoreTicker from "./components/LiveScoreTicker";
 import NotificationSystem, { useNotifications } from "./components/NotificationSystem";
 import { MatchSkeleton } from "./components/Skeleton";
+import { SUPPORTED_GAMES, type GameConfig } from "./lib/gameConfig";
+
+// Custom hook to handle time consistently between server and client
+function useCurrentTime() {
+  const [currentTime, setCurrentTime] = useState<number>(() => {
+    // Use a fixed time for initial render to avoid hydration mismatch
+    return Math.floor(Date.now() / 1000);
+  });
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    setCurrentTime(Math.floor(Date.now() / 1000));
+    
+    const interval = setInterval(() => {
+      setCurrentTime(Math.floor(Date.now() / 1000));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return { currentTime, isClient };
+}
 
 // Interfaces
 interface Match {
@@ -45,13 +68,7 @@ interface GameStats {
   activeTournaments: number;
 }
 
-const GAMES = [
-  { id: "dota2", name: "Dota 2", icon: "/dota2.svg", color: "#A970FF", gradient: "from-purple-600 to-purple-800" },
-  { id: "lol", name: "League of Legends", icon: "/leagueoflegends.svg", color: "#1E90FF", gradient: "from-blue-600 to-blue-800" },
-  { id: "csgo", name: "Counter-Strike 2", icon: "/counterstrike.svg", color: "#FFD700", gradient: "from-yellow-600 to-yellow-800" },
-  { id: "r6siege", name: "Rainbow Six Siege", icon: "/rainbow6siege.svg", color: "#FF6600", gradient: "from-orange-600 to-orange-800" },
-  { id: "overwatch", name: "Overwatch 2", icon: "/overwatch.svg", color: "#F99E1A", gradient: "from-orange-500 to-orange-700" },
-];
+const GAMES = SUPPORTED_GAMES;
 
 // Función para obtener partidos de múltiples juegos
 async function fetchAllMatches(): Promise<Match[]> {
@@ -134,10 +151,9 @@ async function fetchAllTournaments(): Promise<Tournament[]> {
 }
 
 // Componente de estadísticas del juego
-function GameStatsCard({ game, stats }: { game: typeof GAMES[0], stats: GameStats }) {
+function GameStatsCard({ game, stats }: { game: GameConfig, stats: GameStats }) {
   return (
-    <Link href={`/esports/game/${game.id}`}>
-      <div className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${game.gradient} p-8 text-white shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 border border-white/10 cursor-pointer`}>
+    <Link href={`/esports/game/${game.id}`} className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${game.gradient} p-8 text-white shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 border border-white/10 cursor-pointer block`}>
       {/* Patrón de fondo */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat"></div>
@@ -231,17 +247,15 @@ function GameStatsCard({ game, stats }: { game: typeof GAMES[0], stats: GameStat
 
       {/* Efecto de hover en el borde */}
       <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/30 transition-colors duration-500"></div>
-    </div>
     </Link>
   );
 }
 
 // Componente de partido destacado
-function FeaturedMatch({ match }: { match: Match }) {
+function FeaturedMatch({ match, currentTime }: { match: Match; currentTime: number }) {
   const game = GAMES.find(g => g.id === match.game);
-  const now = Date.now() / 1000;
-  const isLive = match.start_time <= now && match.radiant_win === null;
-  const isUpcoming = match.start_time > now;
+  const isLive = match.start_time <= currentTime && match.radiant_win === null;
+  const isUpcoming = match.start_time > currentTime;
   const isFinished = match.radiant_win !== null;
   
   return (
@@ -380,7 +394,7 @@ function FeaturedMatch({ match }: { match: Match }) {
               {isLive && (
                 <p className="text-xs text-red-400 font-semibold mt-1">
                   {(() => {
-                    const duration = Math.floor(now - match.start_time);
+                    const duration = Math.floor(currentTime - match.start_time);
                     const minutes = Math.floor(duration / 60);
                     return `${minutes} min en curso`;
                   })()}
@@ -423,6 +437,7 @@ export default function Home() {
   const [selectedTimeframe, setSelectedTimeframe] = useState<"today" | "week" | "all">("today");
   const [selectedGame, setSelectedGame] = useState<string>("all");
   
+  const { currentTime, isClient } = useCurrentTime();
   const notificationSystem = useNotifications();
 
   // Cargar datos
@@ -440,23 +455,24 @@ export default function Home() {
     async function loadTournaments() {
       setLoadingTournaments(true);
       const tournamentsData = await fetchAllTournaments();
-      const now = Date.now() / 1000;
       const activeTournaments = tournamentsData.filter(t => {
         if (!t.begin_at) return false;
-        const started = t.begin_at <= now;
-        const ended = t.end_at && t.end_at < now;
+        const started = t.begin_at <= currentTime;
+        const ended = t.end_at && t.end_at < currentTime;
         return started && !ended;
       });
       setTournaments(activeTournaments.slice(0, 6));
       setLoadingTournaments(false);
     }
-    loadTournaments();
-  }, []);
+    
+    if (isClient) {
+      loadTournaments();
+    }
+  }, [currentTime, isClient]);
 
   // Estadísticas por juego
   const gameStats = useMemo(() => {
     const stats: Record<string, GameStats> = {};
-    const now = Date.now() / 1000;
 
     GAMES.forEach(game => {
       const gameMatches = matches.filter(m => m.game === game.id);
@@ -464,19 +480,18 @@ export default function Home() {
       
       stats[game.id] = {
         totalMatches: gameMatches.length,
-        liveMatches: gameMatches.filter(m => m.start_time <= now && m.radiant_win === null).length,
-        upcomingMatches: gameMatches.filter(m => m.start_time > now).length,
+        liveMatches: gameMatches.filter(m => m.start_time <= currentTime && m.radiant_win === null).length,
+        upcomingMatches: gameMatches.filter(m => m.start_time > currentTime).length,
         completedMatches: gameMatches.filter(m => m.radiant_win !== null).length,
         activeTournaments: gameTournaments.length,
       };
     });
 
     return stats;
-  }, [matches, tournaments]);
+  }, [matches, tournaments, currentTime]);
 
   // Partidos filtrados por timeframe y juego
   const filteredMatches = useMemo(() => {
-    const now = Date.now() / 1000;
     let filtered = matches;
 
     // Filtrar por juego
@@ -497,7 +512,7 @@ export default function Home() {
         });
         break;
       case "week":
-        const weekStart = Date.now();
+        const weekStart = currentTime * 1000;
         const weekEnd = weekStart + (7 * 24 * 60 * 60 * 1000);
         filtered = filtered.filter(m => {
           const matchTime = m.start_time * 1000;
@@ -508,24 +523,23 @@ export default function Home() {
 
     return filtered.sort((a, b) => {
       // Priorizar partidos en vivo
-      const aIsLive = a.start_time <= now && a.radiant_win === null;
-      const bIsLive = b.start_time <= now && b.radiant_win === null;
+      const aIsLive = a.start_time <= currentTime && a.radiant_win === null;
+      const bIsLive = b.start_time <= currentTime && b.radiant_win === null;
       
       if (aIsLive && !bIsLive) return -1;
       if (!aIsLive && bIsLive) return 1;
       
       return a.start_time - b.start_time;
     });
-  }, [matches, selectedTimeframe, selectedGame]);
+  }, [matches, selectedTimeframe, selectedGame, currentTime]);
 
   // Partidos destacados (en vivo + próximos importantes)
   const featuredMatches = useMemo(() => {
-    const now = Date.now() / 1000;
-    const live = filteredMatches.filter(m => m.start_time <= now && m.radiant_win === null);
-    const upcoming = filteredMatches.filter(m => m.start_time > now).slice(0, 3);
+    const live = filteredMatches.filter(m => m.start_time <= currentTime && m.radiant_win === null);
+    const upcoming = filteredMatches.filter(m => m.start_time > currentTime).slice(0, 3);
     
     return [...live.slice(0, 2), ...upcoming].slice(0, 4);
-  }, [filteredMatches]);
+  }, [filteredMatches, currentTime]);
 
   return (
     <>
@@ -610,7 +624,7 @@ export default function Home() {
                     return matchTime >= todayStart.getTime() && matchTime <= todayEnd.getTime();
                   }).length },
                   { id: "week", label: "Esta Semana", emoji: "🗓️", description: "Próximos 7 días", count: filteredMatches.filter(m => {
-                    const weekStart = Date.now();
+                    const weekStart = currentTime * 1000;
                     const weekEnd = weekStart + (7 * 24 * 60 * 60 * 1000);
                     const matchTime = m.start_time * 1000;
                     return matchTime >= weekStart && matchTime <= weekEnd;
@@ -823,7 +837,7 @@ export default function Home() {
                   className="animate-fadein"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <FeaturedMatch match={match} />
+                  <FeaturedMatch match={match} currentTime={currentTime} />
                 </div>
               ))}
             </div>

@@ -2,7 +2,17 @@ import { NextResponse } from "next/server";
 import { getProxyAgent } from "../../../lib/proxyAgent";
 
 const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
-const GAMES = ["dota2", "lol", "csgo", "r6siege", "overwatch"];
+const GAMES = ["dota2", "lol", "csgo", "r6siege", "ow"];
+
+// Mapeo de IDs de juegos a los nombres de la API de PandaScore
+const GAME_MAPPING: Record<string, string> = {
+  "dota2": "dota2",
+  "lol": "lol", 
+  "csgo": "csgo",
+  "r6siege": "r6siege",
+  "ow": "ow", // Overwatch usa "ow" en PandaScore
+  "overwatch": "ow" // Fallback para compatibilidad
+};
 
 async function fetchJSON(url: string) {
   const res = await fetch(url, { cache: "no-store", dispatcher: getProxyAgent() } as RequestInit & { dispatcher?: any });
@@ -17,16 +27,19 @@ async function fetchJSON(url: string) {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim();
-  const game = searchParams.get("game") || undefined;
+  const gameParam = searchParams.get("game") || undefined;
 
   if (!q) {
     return NextResponse.json([]);
   }
 
-  const games = game ? [game] : GAMES;
+  const gameList = gameParam ? [gameParam] : Object.keys(GAME_MAPPING);
   const results: any[] = [];
 
-  for (const g of games) {
+  for (const gameParam of gameList) {
+    // Mapear el juego al nombre correcto de la API
+    const g = GAME_MAPPING[gameParam] || gameParam;
+    
     const encoded = encodeURIComponent(q);
     const base = `https://api.pandascore.co/${g}`;
     const params = `per_page=5&search%5Bname%5D=${encoded}&token=${PANDA_SCORE_TOKEN}`;
@@ -46,7 +59,7 @@ export async function GET(req: Request) {
           type: "team",
           image_url: t.image_url ?? null,
           league: t.league?.name ?? undefined,
-          game: g,
+          game: gameParam,
         });
       });
 
@@ -56,7 +69,7 @@ export async function GET(req: Request) {
           name: p.name,
           type: "player",
           image_url: p.image_url ?? null,
-          game: g,
+          game: gameParam,
         });
       });
 
@@ -67,7 +80,7 @@ export async function GET(req: Request) {
           type: "tournament",
           image_url: t.league?.image_url ?? null,
           league: t.league?.name ?? undefined,
-          game: g,
+          game: gameParam,
         });
       });
 
@@ -80,7 +93,7 @@ export async function GET(req: Request) {
           type: "match",
           image_url: null,
           league: m.league?.name ?? undefined,
-          game: g,
+          game: gameParam,
           status: m.status ?? undefined,
         });
       });

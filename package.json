@@ -13,37 +13,38 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.0",
+    "@heroicons/react": "^2.1.5",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "critters": "^0.0.23",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^12.0.0",
     "https-proxy-agent": "^7.0.6",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "undici": "^7.10.0",
-    "@headlessui/react": "^2.2.0",
-    "@heroicons/react": "^2.1.5",
-    "framer-motion": "^12.0.0",
     "react-intersection-observer": "^9.13.1",
     "react-virtualized-auto-sizer": "^1.0.24",
     "react-window": "^1.8.10",
-    "date-fns": "^4.1.0",
-    "clsx": "^2.1.1",
-    "class-variance-authority": "^0.7.1"
+    "undici": "^7.10.0"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^15.3.3",
     "@tailwindcss/postcss": "^4",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-window": "^1.8.8",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
+    "cross-env": "^7.0.3",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.3.3",
     "jest": "^30.0.0",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.0",
-    "typescript": "^5",
-    "cross-env": "^7.0.3",
-    "@next/bundle-analyzer": "^15.3.3",
-    "eslint": "^9.17.0",
-    "eslint-config-next": "^15.3.3",
-    "@typescript-eslint/eslint-plugin": "^8.18.2",
-    "@typescript-eslint/parser": "^8.18.2"
+    "typescript": "^5"
   }
 }

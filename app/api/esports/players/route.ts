@@ -3,6 +3,16 @@ import { getProxyAgent } from "../../../lib/proxyAgent";
 
 const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
 
+// Mapeo de IDs de juegos a los nombres de la API de PandaScore
+const GAME_MAPPING: Record<string, string> = {
+  "dota2": "dota2",
+  "lol": "lol", 
+  "csgo": "csgo",
+  "r6siege": "r6siege",
+  "ow": "ow", // Overwatch usa "ow" en PandaScore
+  "overwatch": "ow" // Fallback para compatibilidad
+};
+
 // Función para calcular puntuación de títulos por importancia
 function calculateTitleScore(player: any): number {
   let score = 0;
@@ -125,11 +135,14 @@ function generateInstagramData(player: any) {
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const game = searchParams.get("game") || "dota2";
+  const gameParam = searchParams.get("game") || "dota2";
   const q = searchParams.get("q") || "";
   
   try {
-    console.log(`Fetching players for game: ${game}`);
+    // Mapear el juego al nombre correcto de la API
+    const game = GAME_MAPPING[gameParam] || gameParam;
+    
+    console.log(`Fetching players for game: ${gameParam} -> ${game}`);
     
     const url = new URL(`https://api.pandascore.co/${game}/players`);
     url.searchParams.set("per_page", q ? "20" : "50");
@@ -143,6 +156,10 @@ export async function GET(req: Request) {
     const res = await fetch(url.toString(), {
       cache: "no-store",
       dispatcher: getProxyAgent(),
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'EMob-Esports/1.0'
+      }
     } as RequestInit & { dispatcher?: any });
     
     console.log(`API Response status: ${res.status}`);
