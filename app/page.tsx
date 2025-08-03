@@ -468,7 +468,7 @@ export default function Home() {
     if (isClient) {
       loadTournaments();
     }
-  }, [currentTime, isClient]);
+  }, [isClient]);
 
   // Estadísticas por juego
   const gameStats = useMemo(() => {

@@ -1,4 +1,5 @@
 // Sistema de analytics y monitoreo para EMob
+import { onCLS, onFCP, onINP, onLCP, onTTFB, type Metric } from 'web-vitals';
 export class Analytics {
   private static instance: Analytics;
   private initialized = false;
@@ -115,15 +116,12 @@ export class Analytics {
   trackWebVitals() {
     if (typeof window === 'undefined') return;
 
-    // Performance observer para Core Web Vitals
     try {
-      import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
-        getCLS((metric) => this.track('web_vital', { name: 'CLS', value: metric.value }));
-        getFID((metric) => this.track('web_vital', { name: 'FID', value: metric.value }));
-        getFCP((metric) => this.track('web_vital', { name: 'FCP', value: metric.value }));
-        getLCP((metric) => this.track('web_vital', { name: 'LCP', value: metric.value }));
-        getTTFB((metric) => this.track('web_vital', { name: 'TTFB', value: metric.value }));
-      });
+      onCLS((metric: Metric) => this.track('web_vital', { name: 'CLS', value: metric.value }));
+      onINP((metric: Metric) => this.track('web_vital', { name: 'INP', value: metric.value }));
+      onFCP((metric: Metric) => this.track('web_vital', { name: 'FCP', value: metric.value }));
+      onLCP((metric: Metric) => this.track('web_vital', { name: 'LCP', value: metric.value }));
+      onTTFB((metric: Metric) => this.track('web_vital', { name: 'TTFB', value: metric.value }));
     } catch (error) {
       console.error('Web vitals tracking error:', error);
     }
