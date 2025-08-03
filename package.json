@@ -13,12 +13,14 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.1.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "critters": "^0.0.23",
     "date-fns": "^4.1.0",
+    "firebase": "^12.0.0",
     "framer-motion": "^12.0.0",
     "https-proxy-agent": "^7.0.6",
     "next": "15.3.3",
