@@ -5,11 +5,11 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import Header from "../../components/Header";
-import ChatBot from "../../components/ChatBot";
-import { PlayerSkeleton } from "../../components/Skeleton";
-import LiveScoreTicker from "../../components/LiveScoreTicker";
-import NotificationSystem, { useNotifications } from "../../components/NotificationSystem";
+import Header from "../components/Header";
+import ChatBot from "../components/ChatBot";
+import { PlayerSkeleton } from "../components/Skeleton";
+import LiveScoreTicker from "../components/LiveScoreTicker";
+import NotificationSystem, { useNotifications } from "../components/NotificationSystem";
 import "./animations.css";
 
 // Icono de favorito (estrella)
@@ -130,7 +130,7 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
   const playerImage = getPlayerImage();
   
   return (
-    <Link href={`/esports/player/${player.id}`}>
+    <Link href={`/jugadores/${player.id}`}>
       <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 hover:border-green-500/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl">
         {/* Efecto de brillo animado */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
@@ -344,23 +344,7 @@ function PlayersPageContent() {
   // Resetear página cuando cambian los filtros (pero mantener scroll)
   useEffect(() => {
     setPage(1);
-    // Scroll suave al contenido de jugadores en lugar de al inicio
-    const scrollToPlayers = () => {
-      if (isTransitioning) return; // No hacer scroll durante transiciones
-      
-      const playersSection = document.querySelector('[data-players-section]');
-      if (playersSection && !loading) {
-        playersSection.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }
-    };
-    
-    // Pequeño delay para que el DOM se actualice
-    const timer = setTimeout(scrollToPlayers, 200);
-    return () => clearTimeout(timer);
-  }, [game, debouncedSearch, isTransitioning, loading]);
+  }, [game, debouncedSearch]);
 
   // Cargar jugadores con mejor manejo de estados y caché
   useEffect(() => {

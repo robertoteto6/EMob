@@ -8,32 +8,45 @@ import Search from "./Search";
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
   // Detectar el juego actual desde la URL o parámetros
   const currentGame = searchParams?.get('game') || 'dota2';
+  
+  // Ocultar header en páginas de detalles de esports que tienen su propio header local
+  const shouldHideHeader = pathname?.includes('/esports/') && pathname?.split('/').length > 2;
+  
+  if (shouldHideHeader) {
+    return null;
+  }
 
   useEffect(() => {
+    setIsClient(true);
+    
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
 
+    // Establecer el estado inicial del scroll
+    handleScroll();
+    
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const navigation = [
     { name: "Inicio", href: "/" },
-    { name: "Partidos", href: "/esports" },
-    { name: "Equipos", href: "/esports/teams" },
-    { name: "Jugadores", href: "/esports/players" },
+    { name: "Partidos", href: "/partidos" },
+    { name: "Equipos", href: "/equipos" },
+    { name: "Jugadores", href: "/jugadores" },
   ];
 
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled 
+        isClient && isScrolled 
           ? "bg-black/95 backdrop-blur-md shadow-lg border-b border-green-500/20" 
           : "bg-transparent"
       }`}

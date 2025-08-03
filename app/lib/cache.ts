@@ -1,69 +1,114 @@
-// Sistema de cache avanzado para EMob
-export class CacheManager {
-  private cache: Map<string, CacheItem> = new Map();
-  private static instance: CacheManager;
-  
-  private readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 minutos
-  private readonly MAX_CACHE_SIZE = 100; // Máximo 100 items en cache
+// Sistema de cache optimizado para EMob
 
-  static getInstance(): CacheManager {
-    if (!CacheManager.instance) {
-      CacheManager.instance = new CacheManager();
+// Tipos para el sistema de cache
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+  hits: number;
+  lastAccessed: number;
+}
+
+interface CacheOptions {
+  ttl?: number; // Time to live en milisegundos
+  maxSize?: number; // Máximo número de entradas
+  strategy?: 'lru' | 'lfu' | 'fifo'; // Estrategia de eliminación
+  serialize?: boolean; // Serializar datos para localStorage
+  prefix?: string; // Prefijo para claves
+}
+
+interface CacheStats {
+  hits: number;
+  misses: number;
+  size: number;
+  hitRate: number;
+}
+
+// Clase principal de cache
+export class OptimizedCache<T = any> {
+  private cache = new Map<string, CacheEntry<T>>();
+  private options: Required<CacheOptions>;
+  private stats = { hits: 0, misses: 0 };
+  private cleanupInterval?: NodeJS.Timeout;
+
+  constructor(options: CacheOptions = {}) {
+    this.options = {
+      ttl: 5 * 60 * 1000, // 5 minutos por defecto
+      maxSize: 100,
+      strategy: 'lru',
+      serialize: false,
+      prefix: 'emob_cache',
+      ...options
+    };
+
+    // Limpiar cache expirado cada minuto
+    this.cleanupInterval = setInterval(() => {
+      this.cleanup();
+    }, 60 * 1000);
+
+    // Cargar desde localStorage si está habilitado
+    if (this.options.serialize && typeof window !== 'undefined') {
+      this.loadFromStorage();
     }
-    return CacheManager.instance;
   }
 
-  // Guardar en cache
-  set<T>(key: string, data: T, ttl?: number): void {
-    const expiresAt = Date.now() + (ttl || this.DEFAULT_TTL);
+  // Obtener valor del cache
+  get(key: string): T | null {
+    const entry = this.cache.get(key);
     
-    // Si el cache está lleno, remover el item más antiguo
-    if (this.cache.size >= this.MAX_CACHE_SIZE) {
-      const oldestKey = this.cache.keys().next().value;
-      if (oldestKey !== undefined) {
-        this.cache.delete(oldestKey);
-      }
-    }
-    
-    this.cache.set(key, {
-      data,
-      expiresAt,
-      createdAt: Date.now(),
-      accessCount: 0
-    });
-  }
-
-  // Obtener del cache
-  get<T>(key: string): T | null {
-    const item = this.cache.get(key);
-    
-    if (!item) {
+    if (!entry) {
+      this.stats.misses++;
       return null;
     }
-    
+
     // Verificar si ha expirado
-    if (Date.now() > item.expiresAt) {
+    if (Date.now() - entry.timestamp > entry.ttl) {
       this.cache.delete(key);
+      this.stats.misses++;
       return null;
     }
-    
-    // Incrementar contador de acceso
-    item.accessCount++;
-    item.lastAccessed = Date.now();
-    
-    return item.data as T;
+
+    // Actualizar estadísticas de acceso
+    entry.hits++;
+    entry.lastAccessed = Date.now();
+    this.stats.hits++;
+
+    return entry.data;
   }
 
-  // Verificar si existe en cache
-  has(key: string): boolean {
-    const item = this.cache.get(key);
-    
-    if (!item) {
-      return false;
+  // Establecer valor en cache
+  set(key: string, data: T, customTtl?: number): void {
+    const ttl = customTtl || this.options.ttl;
+    const now = Date.now();
+
+    // Si el cache está lleno, eliminar según estrategia
+    if (this.cache.size >= this.options.maxSize && !this.cache.has(key)) {
+      this.evict();
     }
+
+    const entry: CacheEntry<T> = {
+      data,
+      timestamp: now,
+      ttl,
+      hits: 0,
+      lastAccessed: now
+    };
+
+    this.cache.set(key, entry);
+
+    // Guardar en localStorage si está habilitado
+    if (this.options.serialize) {
+      this.saveToStorage(key, entry);
+    }
+  }
+
+  // Verificar si existe una clave
+  has(key: string): boolean {
+    const entry = this.cache.get(key);
+    if (!entry) return false;
     
     // Verificar si ha expirado
-    if (Date.now() > item.expiresAt) {
+    if (Date.now() - entry.timestamp > entry.ttl) {
       this.cache.delete(key);
       return false;
     }
@@ -71,195 +116,310 @@ export class CacheManager {
     return true;
   }
 
-  // Eliminar del cache
+  // Eliminar entrada específica
   delete(key: string): boolean {
-    return this.cache.delete(key);
-  }
-
-  // Limpiar cache expirado
-  cleanup(): void {
-    const now = Date.now();
-    for (const [key, item] of this.cache.entries()) {
-      if (now > item.expiresAt) {
-        this.cache.delete(key);
-      }
+    const deleted = this.cache.delete(key);
+    
+    if (this.options.serialize && typeof window !== 'undefined') {
+      localStorage.removeItem(`${this.options.prefix}_${key}`);
     }
+    
+    return deleted;
   }
 
   // Limpiar todo el cache
   clear(): void {
     this.cache.clear();
+    this.stats = { hits: 0, misses: 0 };
+    
+    if (this.options.serialize && typeof window !== 'undefined') {
+      const keys = Object.keys(localStorage).filter(key => 
+        key.startsWith(this.options.prefix)
+      );
+      keys.forEach(key => localStorage.removeItem(key));
+    }
   }
 
   // Obtener estadísticas del cache
   getStats(): CacheStats {
-    const now = Date.now();
-    let validItems = 0;
-    let expiredItems = 0;
-    let totalAccessCount = 0;
-    
-    for (const item of this.cache.values()) {
-      if (now > item.expiresAt) {
-        expiredItems++;
-      } else {
-        validItems++;
-        totalAccessCount += item.accessCount;
-      }
-    }
-    
+    const total = this.stats.hits + this.stats.misses;
     return {
-      totalItems: this.cache.size,
-      validItems,
-      expiredItems,
-      totalAccessCount,
-      hitRate: totalAccessCount / Math.max(validItems, 1)
+      ...this.stats,
+      size: this.cache.size,
+      hitRate: total > 0 ? this.stats.hits / total : 0
     };
   }
 
-  // Cache con respaldo automático
-  async getOrFetch<T>(
-    key: string, 
-    fetcher: () => Promise<T>, 
-    ttl?: number
-  ): Promise<T> {
-    // Intentar obtener del cache primero
-    const cached = this.get<T>(key);
+  // Estrategia de eliminación
+  private evict(): void {
+    if (this.cache.size === 0) return;
+
+    let keyToDelete: string;
+    
+    switch (this.options.strategy) {
+      case 'lru': // Least Recently Used
+        keyToDelete = this.findLRU();
+        break;
+      case 'lfu': // Least Frequently Used
+        keyToDelete = this.findLFU();
+        break;
+      case 'fifo': // First In, First Out
+        keyToDelete = this.cache.keys().next().value;
+        break;
+      default:
+        keyToDelete = this.cache.keys().next().value;
+    }
+    
+    this.delete(keyToDelete);
+  }
+
+  private findLRU(): string {
+    let oldestKey = '';
+    let oldestTime = Date.now();
+    
+    for (const [key, entry] of this.cache) {
+      if (entry.lastAccessed < oldestTime) {
+        oldestTime = entry.lastAccessed;
+        oldestKey = key;
+      }
+    }
+    
+    return oldestKey;
+  }
+
+  private findLFU(): string {
+    let leastUsedKey = '';
+    let leastHits = Infinity;
+    
+    for (const [key, entry] of this.cache) {
+      if (entry.hits < leastHits) {
+        leastHits = entry.hits;
+        leastUsedKey = key;
+      }
+    }
+    
+    return leastUsedKey;
+  }
+
+  // Limpiar entradas expiradas
+  private cleanup(): void {
+    const now = Date.now();
+    const keysToDelete: string[] = [];
+    
+    for (const [key, entry] of this.cache) {
+      if (now - entry.timestamp > entry.ttl) {
+        keysToDelete.push(key);
+      }
+    }
+    
+    keysToDelete.forEach(key => this.delete(key));
+  }
+
+  // Guardar en localStorage
+  private saveToStorage(key: string, entry: CacheEntry<T>): void {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const storageKey = `${this.options.prefix}_${key}`;
+      localStorage.setItem(storageKey, JSON.stringify(entry));
+    } catch (error) {
+      console.warn('Failed to save to localStorage:', error);
+    }
+  }
+
+  // Cargar desde localStorage
+  private loadFromStorage(): void {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const keys = Object.keys(localStorage).filter(key => 
+        key.startsWith(this.options.prefix)
+      );
+      
+      keys.forEach(storageKey => {
+        const cacheKey = storageKey.replace(`${this.options.prefix}_`, '');
+        const data = localStorage.getItem(storageKey);
+        
+        if (data) {
+          const entry: CacheEntry<T> = JSON.parse(data);
+          
+          // Verificar si no ha expirado
+          if (Date.now() - entry.timestamp <= entry.ttl) {
+            this.cache.set(cacheKey, entry);
+          } else {
+            localStorage.removeItem(storageKey);
+          }
+        }
+      });
+    } catch (error) {
+      console.warn('Failed to load from localStorage:', error);
+    }
+  }
+
+  // Destructor
+  destroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
+    this.clear();
+  }
+}
+
+// Cache específico para APIs
+export class APICache extends OptimizedCache<any> {
+  constructor() {
+    super({
+      ttl: 5 * 60 * 1000, // 5 minutos
+      maxSize: 50,
+      strategy: 'lru',
+      serialize: true,
+      prefix: 'emob_api'
+    });
+  }
+
+  // Método específico para cachear respuestas de API
+  cacheResponse(url: string, params: any, response: any, customTtl?: number): void {
+    const key = this.generateKey(url, params);
+    this.set(key, response, customTtl);
+  }
+
+  // Obtener respuesta cacheada
+  getCachedResponse(url: string, params: any): any | null {
+    const key = this.generateKey(url, params);
+    return this.get(key);
+  }
+
+  // Generar clave única para URL y parámetros
+  private generateKey(url: string, params: any): string {
+    const paramString = JSON.stringify(params || {});
+    return `${url}_${btoa(paramString)}`;
+  }
+}
+
+// Cache para imágenes
+export class ImageCache extends OptimizedCache<string> {
+  constructor() {
+    super({
+      ttl: 30 * 60 * 1000, // 30 minutos
+      maxSize: 100,
+      strategy: 'lru',
+      serialize: false,
+      prefix: 'emob_images'
+    });
+  }
+
+  // Precargar imagen y cachear
+  async preloadImage(src: string): Promise<string> {
+    if (this.has(src)) {
+      return this.get(src)!;
+    }
+
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        this.set(src, src);
+        resolve(src);
+      };
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+}
+
+// Cache para componentes React
+export class ComponentCache extends OptimizedCache<React.ComponentType> {
+  constructor() {
+    super({
+      ttl: 60 * 60 * 1000, // 1 hora
+      maxSize: 20,
+      strategy: 'lfu',
+      serialize: false,
+      prefix: 'emob_components'
+    });
+  }
+}
+
+// Instancias globales
+export const apiCache = new APICache();
+export const imageCache = new ImageCache();
+export const componentCache = new ComponentCache();
+
+// Hook para usar cache en componentes React
+import { useCallback, useEffect, useRef } from 'react';
+
+export function useCache<T>(cacheInstance: OptimizedCache<T>) {
+  const cache = useRef(cacheInstance);
+
+  const get = useCallback((key: string) => {
+    return cache.current.get(key);
+  }, []);
+
+  const set = useCallback((key: string, data: T, ttl?: number) => {
+    cache.current.set(key, data, ttl);
+  }, []);
+
+  const remove = useCallback((key: string) => {
+    return cache.current.delete(key);
+  }, []);
+
+  const clear = useCallback(() => {
+    cache.current.clear();
+  }, []);
+
+  const stats = useCallback(() => {
+    return cache.current.getStats();
+  }, []);
+
+  // Limpiar cache al desmontar componente
+  useEffect(() => {
+    return () => {
+      // No limpiar automáticamente para mantener cache entre componentes
+    };
+  }, []);
+
+  return { get, set, remove, clear, stats };
+}
+
+// Decorator para cachear resultados de funciones
+export function cached<T extends (...args: any[]) => any>(
+  fn: T,
+  options: { ttl?: number; keyGenerator?: (...args: Parameters<T>) => string } = {}
+): T {
+  const cache = new OptimizedCache<ReturnType<T>>({
+    ttl: options.ttl || 5 * 60 * 1000,
+    maxSize: 50
+  });
+
+  const keyGenerator = options.keyGenerator || ((...args) => JSON.stringify(args));
+
+  return ((...args: Parameters<T>) => {
+    const key = keyGenerator(...args);
+    const cached = cache.get(key);
+    
     if (cached !== null) {
       return cached;
     }
     
-    // Si no está en cache, fetch y guardar
-    try {
-      const data = await fetcher();
-      this.set(key, data, ttl);
-      return data;
-    } catch (error) {
-      console.error(`Failed to fetch data for key ${key}:`, error);
-      throw error;
-    }
-  }
-
-  // Cache con invalidación por tags
-  private tags: Map<string, Set<string>> = new Map();
-  
-  setWithTags<T>(key: string, data: T, tags: string[], ttl?: number): void {
-    this.set(key, data, ttl);
+    const result = fn(...args);
+    cache.set(key, result);
     
-    // Asociar el key con sus tags
-    tags.forEach(tag => {
-      if (!this.tags.has(tag)) {
-        this.tags.set(tag, new Set());
-      }
-      this.tags.get(tag)!.add(key);
-    });
-  }
+    return result;
+  }) as T;
+}
+
+// Utilidad para invalidar cache por patrón
+export function invalidateByPattern(pattern: RegExp, cacheInstance: OptimizedCache) {
+  const keysToDelete: string[] = [];
   
-  // Invalidar por tag
-  invalidateByTag(tag: string): void {
-    const keys = this.tags.get(tag);
-    if (keys) {
-      keys.forEach(key => this.cache.delete(key));
-      this.tags.delete(tag);
+  // Nota: Map no tiene método para iterar claves directamente
+  // Esta es una implementación simplificada
+  for (const [key] of (cacheInstance as any).cache) {
+    if (pattern.test(key)) {
+      keysToDelete.push(key);
     }
   }
+  
+  keysToDelete.forEach(key => cacheInstance.delete(key));
 }
 
-interface CacheItem {
-  data: any;
-  expiresAt: number;
-  createdAt: number;
-  lastAccessed?: number;
-  accessCount: number;
-}
-
-interface CacheStats {
-  totalItems: number;
-  validItems: number;
-  expiredItems: number;
-  totalAccessCount: number;
-  hitRate: number;
-}
-
-// Implementación específica para APIs de esports
-export class EsportsCache extends CacheManager {
-  
-  // Cache específico para partidos
-  async getMatches(game: string, timeframe?: string): Promise<any[]> {
-    const key = `matches-${game}-${timeframe || 'all'}`;
-    return this.getOrFetch(
-      key, 
-      () => this.fetchMatches(game, timeframe),
-      2 * 60 * 1000 // 2 minutos para partidos (datos más dinámicos)
-    );
-  }
-  
-  // Cache específico para equipos
-  async getTeams(game: string, search?: string): Promise<any[]> {
-    const key = `teams-${game}-${search || 'all'}`;
-    return this.getOrFetch(
-      key,
-      () => this.fetchTeams(game, search),
-      10 * 60 * 1000 // 10 minutos para equipos
-    );
-  }
-  
-  // Cache específico para jugadores
-  async getPlayers(game: string, search?: string): Promise<any[]> {
-    const key = `players-${game}-${search || 'all'}`;
-    return this.getOrFetch(
-      key,
-      () => this.fetchPlayers(game, search),
-      15 * 60 * 1000 // 15 minutos para jugadores
-    );
-  }
-  
-  // Implementaciones de fetch (estos métodos llamarían a las APIs reales)
-  private async fetchMatches(game: string, timeframe?: string): Promise<any[]> {
-    const response = await fetch(`/api/esports/matches?game=${game}&timeframe=${timeframe || ''}`);
-    return response.json();
-  }
-  
-  private async fetchTeams(game: string, search?: string): Promise<any[]> {
-    const response = await fetch(`/api/esports/teams?game=${game}&search=${search || ''}`);
-    return response.json();
-  }
-  
-  private async fetchPlayers(game: string, search?: string): Promise<any[]> {
-    const response = await fetch(`/api/esports/players?game=${game}&search=${search || ''}`);
-    return response.json();
-  }
-  
-  // Invalidar cache cuando hay actualizaciones
-  invalidateMatchData(game?: string): void {
-    if (game) {
-      this.invalidateByTag(`matches-${game}`);
-    } else {
-      // Invalidar todos los partidos
-      ['dota2', 'lol', 'csgo', 'r6siege', 'overwatch'].forEach(g => {
-        this.invalidateByTag(`matches-${g}`);
-      });
-    }
-  }
-}
-
-// Hook de React para usar el cache
-export const useCache = () => {
-  const cache = CacheManager.getInstance();
-  const esportsCache = new EsportsCache();
-  
-  return {
-    get: cache.get.bind(cache),
-    set: cache.set.bind(cache),
-    has: cache.has.bind(cache),
-    delete: cache.delete.bind(cache),
-    clear: cache.clear.bind(cache),
-    getStats: cache.getStats.bind(cache),
-    getOrFetch: cache.getOrFetch.bind(cache),
-    
-    // Métodos específicos para esports
-    getMatches: esportsCache.getMatches.bind(esportsCache),
-    getTeams: esportsCache.getTeams.bind(esportsCache),
-    getPlayers: esportsCache.getPlayers.bind(esportsCache),
-    invalidateMatchData: esportsCache.invalidateMatchData.bind(esportsCache),
-  };
-};
+export default OptimizedCache;

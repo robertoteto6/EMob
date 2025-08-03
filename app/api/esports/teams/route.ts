@@ -126,50 +126,16 @@ export async function GET(req: Request) {
     const enrichedTeams = data.slice(0, 30).map((t: any, index: number) => {
       let gloryScore = 0;
       
-      // Calcular gloria base usando datos existentes del equipo para evitar rate limit
+      // Calcular gloria usando solo datos reales del equipo
       if (t.players && Array.isArray(t.players)) {
         gloryScore += t.players.length * 2; // 2 puntos por jugador
       }
-      
-      // Puntos basados en antigüedad (IDs más bajos = equipos más establecidos)
-      if (t.id < 1000) gloryScore += 25;
-      else if (t.id < 5000) gloryScore += 15;
-      else if (t.id < 10000) gloryScore += 10;
-      else if (t.id < 50000) gloryScore += 5;
       
       // Puntos por tener logo oficial
       if (t.image_url) gloryScore += 8;
       
       // Puntos por tener acrónimo
       if (t.acronym) gloryScore += 5;
-      
-      // Variación basada en ID para evitar empates
-      gloryScore += (t.id % 10); // Variación de 0-9 puntos
-      
-      // Simular algunos torneos básicos para demo
-      const mockTournaments = [];
-      if (gloryScore > 20) {
-        mockTournaments.push({
-          id: t.id + 1000,
-          name: `Championship ${t.name}`,
-          tier: 'a',
-          prizepool: '$100,000',
-          begin_at: '2024-01-01',
-          end_at: '2024-01-15',
-          league: 'Professional League'
-        });
-      }
-      if (gloryScore > 30) {
-        mockTournaments.push({
-          id: t.id + 2000,
-          name: `Major Tournament`,
-          tier: 's',
-          prizepool: '$500,000',
-          begin_at: '2024-06-01',
-          end_at: '2024-06-15',
-          league: 'Elite Series'
-        });
-      }
       
       return {
         id: t.id,
@@ -179,7 +145,6 @@ export async function GET(req: Request) {
         current_videogame: t.current_videogame,
         players: t.players?.length || 0,
         modified_at: t.modified_at,
-        tournaments: mockTournaments,
         gloryScore: Math.max(0, gloryScore)
       };
     });

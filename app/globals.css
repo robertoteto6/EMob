@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+/* Optimizaciones de rendimiento */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
 :root {
   --background: #0a0a0a;
   --foreground: #ededed;
@@ -11,6 +23,14 @@
   --warning: #f59e0b;
   --error: #ef4444;
   --info: #3b82f6;
+  
+  /* Nuevas variables para optimización */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 @media (prefers-color-scheme: light) {
@@ -26,20 +46,52 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), "Inter", Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), "Inter", system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
+  line-height: 1.6;
+  font-display: swap;
+  /* Optimizaciones de rendimiento */
+  will-change: auto;
+  transform: translateZ(0);
 }
 
 .card {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+  /* Optimización de rendimiento */
+  contain: layout style;
+  will-change: transform, box-shadow;
 }
 
 .card:hover {
   border-color: var(--accent);
   box-shadow: 0 10px 25px -3px rgba(0, 255, 128, 0.1), 0 4px 6px -2px rgba(0, 255, 128, 0.05);
+  transform: translateY(-2px);
+}
+
+/* Optimización para imágenes */
+img {
+  max-width: 100%;
+  height: auto;
+  loading: lazy;
+  decoding: async;
+}
+
+/* Optimización para botones */
+button {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  will-change: transform;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
 }
 
 /* Animaciones personalizadas */

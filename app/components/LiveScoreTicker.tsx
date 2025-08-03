@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import Link from "next/link";
+import { apiCache, throttle } from "../lib/utils";
 
 interface LiveMatch {
   id: number;
@@ -34,69 +35,89 @@ const GAME_COLORS: Record<string, string> = {
   overwatch: "from-orange-400/80 to-orange-500/80",
 };
 
-export default function LiveScoreTicker({ currentGame }: LiveScoreTickerProps) {
+const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScoreTickerProps) {
   const [liveMatches, setLiveMatches] = useState<LiveMatch[]>([]);
   const [isVisible, setIsVisible] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    async function fetchLiveMatches() {
-      try {
-        const games = currentGame === "all" ? ["dota2", "lol", "csgo", "r6siege", "overwatch"] : [currentGame];
-        const allMatches: LiveMatch[] = [];
-
-        for (const game of games) {
-          try {
-            const res = await fetch(`/api/esports/matches?game=${game}`, {
-              cache: "no-store",
-            });
-            if (res.ok) {
-              const data = await res.json();
-              const now = Date.now() / 1000;
-              const live = data
-                .filter((m: any) => {
-                  const dateStr = m.begin_at ?? m.scheduled_at;
-                  const startTime = dateStr ? new Date(dateStr).getTime() / 1000 : null;
-                  return startTime && startTime <= now && !m.winner && m.status !== "finished";
-                })
-                .map((m: any) => {
-                  const dateStr = m.begin_at ?? m.scheduled_at;
-                  return {
-                    id: m.id,
-                    team1: m.opponents?.[0]?.opponent?.name ?? "TBD",
-                    team2: m.opponents?.[1]?.opponent?.name ?? "TBD",
-                    team1_score: m.results?.[0]?.score ?? null,
-                    team2_score: m.results?.[1]?.score ?? null,
-                    league: m.league?.name ?? "",
-                    game,
-                    start_time: dateStr ? new Date(dateStr).getTime() / 1000 : undefined,
-                  };
-                })
-                .slice(0, 5); // Reducir a 5 partidos máximo para menos carga visual
-
-              allMatches.push(...live);
-            } else {
-              console.warn(`Error fetching matches for ${game}: ${res.status} ${res.statusText}`);
-            }
-          } catch (gameError) {
-            console.error(`Error fetching matches for ${game}:`, gameError);
-            // Continuar con el siguiente juego en caso de error
-          }
-        }
-        
-        // Ordenar por tiempo de inicio (más recientes primero)
-        allMatches.sort((a, b) => (b.start_time || 0) - (a.start_time || 0));
-        setLiveMatches(allMatches);
-      } catch (error) {
-        console.error("Error fetching live matches:", error);
-      }
+  // Función optimizada para obtener partidos en vivo
+  const fetchLiveMatches = useCallback(async () => {
+    const cacheKey = `live-matches-${currentGame}`;
+    const cached = apiCache.get(cacheKey);
+    
+    if (cached) {
+      setLiveMatches(cached);
+      return;
     }
 
-    fetchLiveMatches();
-    const interval = setInterval(fetchLiveMatches, 45000); // Actualizar cada 45s en lugar de 30s
-    return () => clearInterval(interval);
+    setIsLoading(true);
+    try {
+      const games = currentGame === "all" ? ["dota2", "lol", "csgo", "r6siege", "overwatch"] : [currentGame];
+      const allMatches: LiveMatch[] = [];
+
+      // Procesar juegos en paralelo para mejor rendimiento
+      const promises = games.map(async (game) => {
+        try {
+          const res = await fetch(`/api/esports/matches?game=${game}`, {
+            headers: {
+              'Accept': 'application/json',
+            },
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            const now = Date.now() / 1000;
+            return data
+              .filter((m: any) => {
+                const dateStr = m.begin_at ?? m.scheduled_at;
+                const startTime = dateStr ? new Date(dateStr).getTime() / 1000 : null;
+                return startTime && startTime <= now && !m.winner && m.status !== "finished";
+              })
+              .map((m: any) => {
+                const dateStr = m.begin_at ?? m.scheduled_at;
+                return {
+                  id: m.id,
+                  team1: m.opponents?.[0]?.opponent?.name ?? "TBD",
+                  team2: m.opponents?.[1]?.opponent?.name ?? "TBD",
+                  team1_score: m.results?.[0]?.score ?? null,
+                  team2_score: m.results?.[1]?.score ?? null,
+                  league: m.league?.name ?? "",
+                  game,
+                  start_time: dateStr ? new Date(dateStr).getTime() / 1000 : undefined,
+                };
+              })
+              .slice(0, 3); // Reducir a 3 partidos por juego para mejor rendimiento
+          }
+          return [];
+        } catch (gameError) {
+          console.error(`Error fetching matches for ${game}:`, gameError);
+          return [];
+        }
+      });
+
+      const results = await Promise.all(promises);
+      results.forEach(matches => allMatches.push(...matches));
+      
+      // Ordenar por tiempo de inicio y limitar resultados
+      allMatches.sort((a, b) => (b.start_time || 0) - (a.start_time || 0));
+      const limitedMatches = allMatches.slice(0, 8); // Máximo 8 partidos totales
+      
+      setLiveMatches(limitedMatches);
+      apiCache.set(cacheKey, limitedMatches);
+    } catch (error) {
+      console.error("Error fetching live matches:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [currentGame]);
+
+  useEffect(() => {
+    fetchLiveMatches();
+    const interval = setInterval(fetchLiveMatches, 60000); // Actualizar cada 60s para reducir carga
+    return () => clearInterval(interval);
+  }, [fetchLiveMatches]);
 
   // Auto minimizar después de 8 segundos
   useEffect(() => {
@@ -110,7 +131,7 @@ export default function LiveScoreTicker({ currentGame }: LiveScoreTickerProps) {
 
   if (!isVisible) return null;
 
-  if (liveMatches.length === 0) {
+  if (liveMatches.length === 0 && !isLoading) {
     return null; // No mostrar banner si no hay partidos en vivo
   }
 
@@ -283,4 +304,6 @@ export default function LiveScoreTicker({ currentGame }: LiveScoreTickerProps) {
       </div>
     </div>
   );
-}
+});
+
+export default LiveScoreTicker;

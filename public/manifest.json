@@ -62,17 +62,17 @@
   "shortcuts": [
     {
       "name": "Partidos en Vivo",
-      "url": "/esports?filter=live",
+      "url": "/partidos?filter=live",
       "description": "Ver partidos en vivo"
     },
     {
       "name": "Equipos",
-      "url": "/esports/teams",
+      "url": "/equipos",
       "description": "Explorar equipos"
     },
     {
       "name": "Jugadores",
-      "url": "/esports/players",
+      "url": "/jugadores",
       "description": "Ver jugadores"
     }
   ]

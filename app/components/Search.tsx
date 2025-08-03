@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import { useRouter } from "next/navigation";
+import { debounce } from "../lib/utils";
 
 interface SearchItem {
   id: number;
@@ -49,7 +50,49 @@ export default function Search({
     }
   }, []);
 
-  // Función para buscar
+  // Función de búsqueda optimizada con debounce
+  const debouncedSearch = useCallback(
+    debounce(async (searchQuery: string, searchGame: string, isGlobal: boolean) => {
+      if (searchQuery.length < 2) {
+        setResults([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      const controller = new AbortController();
+      
+      try {
+        const searchUrl = isGlobal 
+          ? `/api/esports/search?q=${encodeURIComponent(searchQuery)}`
+          : `/api/esports/search?q=${encodeURIComponent(searchQuery)}&game=${searchGame}`;
+        
+        const res = await fetch(searchUrl, { 
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        setResults(data || []);
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          console.error("Search error:", error);
+          setResults([]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }, 300),
+    []
+  );
+
+  // Efecto para ejecutar la búsqueda
   useEffect(() => {
     if (query.length < 2) {
       setResults([]);
@@ -57,46 +100,8 @@ export default function Search({
       return;
     }
 
-    setLoading(true);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      console.log(`Searching for: "${query}"${globalSearch ? ' (global)' : ` in game: ${game}`}`);
-      
-      // URL para búsqueda global o específica por juego
-      const searchUrl = globalSearch 
-        ? `/api/esports/search?q=${encodeURIComponent(query)}`
-        : `/api/esports/search?q=${encodeURIComponent(query)}&game=${game}`;
-      
-      fetch(searchUrl, {
-        signal: controller.signal,
-      })
-        .then((res) => {
-          if (res.ok) {
-            return res.json();
-          } else {
-            console.error("Search failed:", res.status, res.statusText);
-            return [];
-          }
-        })
-        .then((data) => {
-          console.log(`Search results for "${query}":`, data);
-          setResults(data || []);
-          setLoading(false);
-          setSelectedIndex(-1);
-        })
-        .catch((error) => {
-          if (error.name !== 'AbortError') {
-            console.error("Search error:", error);
-          }
-          setLoading(false);
-        });
-    }, 300); // Debounce de 300ms
-
-    return () => {
-      controller.abort();
-      clearTimeout(timeoutId);
-    };
-  }, [query, game, globalSearch]);
+    debouncedSearch(query, game, globalSearch);
+  }, [query, game, globalSearch, debouncedSearch]);
 
   // Cerrar al hacer clic fuera
   useEffect(() => {
@@ -132,16 +137,19 @@ export default function Search({
     }
   };
 
-  function select(item: SearchItem) {
+  // Función para seleccionar un resultado (memoizada)
+  const select = useCallback((item: SearchItem) => {
     // Guardar en búsquedas recientes
-    const newRecentSearches = [
-      item,
-      ...recentSearches.filter(r => !(r.id === item.id && r.type === item.type))
-    ].slice(0, 5);
-    
-    setRecentSearches(newRecentSearches);
     if (typeof window !== "undefined") {
-      localStorage.setItem("recentSearches", JSON.stringify(newRecentSearches));
+      try {
+        const recent = JSON.parse(localStorage.getItem("recentSearches") || "[]");
+        const filtered = recent.filter((r: SearchItem) => r.id !== item.id || r.type !== item.type);
+        const updated = [item, ...filtered].slice(0, 10); // Mantener solo 10
+        localStorage.setItem("recentSearches", JSON.stringify(updated));
+        setRecentSearches(updated.slice(0, 5));
+      } catch {
+        // Ignorar errores de localStorage
+      }
     }
 
     // Navegar según el tipo
@@ -153,22 +161,21 @@ export default function Search({
       case "player":
         path = `/esports/player/${item.id}`;
         break;
-      case "tournament":
-        path = `/esports/tournament/${item.id}`;
-        break;
       case "match":
         path = `/esports/${item.id}`;
         break;
+      case "tournament":
+        path = `/esports/tournament/${item.id}`;
+        break;
       default:
-        path = `/esports/${item.id}`;
+        return;
     }
 
-    router.push(path);
-    setQuery("");
     setShow(false);
+    setQuery("");
     setSelectedIndex(-1);
-    inputRef.current?.blur();
-  }
+    router.push(path);
+  }, [router]);
 
   function clearRecentSearches() {
     setRecentSearches([]);

@@ -4,7 +4,12 @@ const nextConfig: NextConfig = {
   // Optimización de rendimiento
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
+    styledComponents: true,
   },
+  
+  // Optimización de bundle
+  swcMinify: true,
+  poweredByHeader: false,
   
   // Optimización de imágenes
   images: {
@@ -12,6 +17,10 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    domains: ['cdn.pandascore.co', 'static.pandascore.co'],
+    unoptimized: false,
   },
   
   // Headers de seguridad y performance
@@ -56,7 +65,46 @@ const nextConfig: NextConfig = {
   // Optimización experimental
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['react', 'react-dom'],
+    optimizePackageImports: ['react', 'react-dom', 'framer-motion'],
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
+    webpackBuildWorker: true,
+    parallelServerCompiles: true,
+    parallelServerBuildTraces: true,
+  },
+  
+  // Configuración de webpack para optimización
+  webpack: (config, { dev, isServer }) => {
+    // Optimizaciones de producción
+    if (!dev && !isServer) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              chunks: 'all',
+            },
+            common: {
+              name: 'common',
+              minChunks: 2,
+              chunks: 'all',
+              enforce: true,
+            },
+          },
+        },
+      };
+    }
+    
+    return config;
   },
 };
 

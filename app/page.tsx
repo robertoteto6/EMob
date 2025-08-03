@@ -13,10 +13,7 @@ import { SUPPORTED_GAMES, type GameConfig } from "./lib/gameConfig";
 
 // Custom hook to handle time consistently between server and client
 function useCurrentTime() {
-  const [currentTime, setCurrentTime] = useState<number>(() => {
-    // Use a fixed time for initial render to avoid hydration mismatch
-    return Math.floor(Date.now() / 1000);
-  });
+  const [currentTime, setCurrentTime] = useState<number>(0);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -543,9 +540,7 @@ export default function Home() {
 
   return (
     <>
-      <Suspense fallback={null}>
-        <Header />
-      </Suspense>
+      <Header />
       <LiveScoreTicker currentGame="all" />
       
       <main className="min-h-screen bg-black text-white pt-20">
