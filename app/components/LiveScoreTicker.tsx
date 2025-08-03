@@ -5,10 +5,10 @@ import Link from "next/link";
 
 interface LiveMatch {
   id: number;
-  radiant: string;
-  dire: string;
-  radiant_score: number | null;
-  dire_score: number | null;
+  team1: string;
+  team2: string;
+  team1_score: number | null;
+  team2_score: number | null;
   league: string;
   game: string;
   start_time?: number;
@@ -47,34 +47,41 @@ export default function LiveScoreTicker({ currentGame }: LiveScoreTickerProps) {
         const allMatches: LiveMatch[] = [];
 
         for (const game of games) {
-          const res = await fetch(`/api/esports/matches?game=${game}`, {
-            cache: "no-store",
-          });
-          if (res.ok) {
-            const data = await res.json();
-            const now = Date.now() / 1000;
-            const live = data
-              .filter((m: any) => {
-                const dateStr = m.begin_at ?? m.scheduled_at;
-                const startTime = dateStr ? new Date(dateStr).getTime() / 1000 : null;
-                return startTime && startTime <= now && !m.winner && m.status !== "finished";
-              })
-              .map((m: any) => {
-                const dateStr = m.begin_at ?? m.scheduled_at;
-                return {
-                  id: m.id,
-                  radiant: m.opponents?.[0]?.opponent?.name ?? "TBD",
-                  dire: m.opponents?.[1]?.opponent?.name ?? "TBD",
-                  radiant_score: m.results?.[0]?.score ?? null,
-                  dire_score: m.results?.[1]?.score ?? null,
-                  league: m.league?.name ?? "",
-                  game,
-                  start_time: dateStr ? new Date(dateStr).getTime() / 1000 : undefined,
-                };
-              })
-              .slice(0, 5); // Reducir a 5 partidos máximo para menos carga visual
+          try {
+            const res = await fetch(`/api/esports/matches?game=${game}`, {
+              cache: "no-store",
+            });
+            if (res.ok) {
+              const data = await res.json();
+              const now = Date.now() / 1000;
+              const live = data
+                .filter((m: any) => {
+                  const dateStr = m.begin_at ?? m.scheduled_at;
+                  const startTime = dateStr ? new Date(dateStr).getTime() / 1000 : null;
+                  return startTime && startTime <= now && !m.winner && m.status !== "finished";
+                })
+                .map((m: any) => {
+                  const dateStr = m.begin_at ?? m.scheduled_at;
+                  return {
+                    id: m.id,
+                    team1: m.opponents?.[0]?.opponent?.name ?? "TBD",
+                    team2: m.opponents?.[1]?.opponent?.name ?? "TBD",
+                    team1_score: m.results?.[0]?.score ?? null,
+                    team2_score: m.results?.[1]?.score ?? null,
+                    league: m.league?.name ?? "",
+                    game,
+                    start_time: dateStr ? new Date(dateStr).getTime() / 1000 : undefined,
+                  };
+                })
+                .slice(0, 5); // Reducir a 5 partidos máximo para menos carga visual
 
-            allMatches.push(...live);
+              allMatches.push(...live);
+            } else {
+              console.warn(`Error fetching matches for ${game}: ${res.status} ${res.statusText}`);
+            }
+          } catch (gameError) {
+            console.error(`Error fetching matches for ${game}:`, gameError);
+            // Continuar con el siguiente juego en caso de error
           }
         }
         
@@ -194,13 +201,13 @@ export default function LiveScoreTicker({ currentGame }: LiveScoreTickerProps) {
                       className="w-4 h-4 opacity-70 group-hover:opacity-100"
                     />
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="font-medium text-gray-200">{match.radiant}</span>
+                      <span className="font-medium text-gray-200">{match.team1}</span>
                       <span className="text-green-400 font-semibold text-xs">
-                        {match.radiant_score !== null && match.dire_score !== null
-                          ? `${match.radiant_score}-${match.dire_score}`
+                        {match.team1_score !== null && match.team2_score !== null
+                          ? `${match.team1_score}-${match.team2_score}`
                           : "vs"}
                       </span>
-                      <span className="font-medium text-gray-200">{match.dire}</span>
+                      <span className="font-medium text-gray-200">{match.team2}</span>
                     </div>
                     <span className="text-xs text-gray-400 ml-1">• {match.league}</span>
                   </div>
@@ -237,9 +244,9 @@ export default function LiveScoreTicker({ currentGame }: LiveScoreTickerProps) {
                     
                     <div className="flex items-center justify-between text-white">
                       <div className="text-center flex-1 min-w-0">
-                        <p className="font-semibold text-sm mb-1 truncate" title={match.radiant}>{match.radiant}</p>
-                        {match.radiant_score !== null && (
-                          <p className="text-xl font-bold text-green-200">{match.radiant_score}</p>
+                        <p className="font-semibold text-sm mb-1 truncate" title={match.team1}>{match.team1}</p>
+                        {match.team1_score !== null && (
+                          <p className="text-xl font-bold text-green-200">{match.team1_score}</p>
                         )}
                       </div>
                       
@@ -248,9 +255,9 @@ export default function LiveScoreTicker({ currentGame }: LiveScoreTickerProps) {
                       </div>
                       
                       <div className="text-center flex-1 min-w-0">
-                        <p className="font-semibold text-sm mb-1 truncate" title={match.dire}>{match.dire}</p>
-                        {match.dire_score !== null && (
-                          <p className="text-xl font-bold text-green-200">{match.dire_score}</p>
+                        <p className="font-semibold text-sm mb-1 truncate" title={match.team2}>{match.team2}</p>
+                        {match.team2_score !== null && (
+                          <p className="text-xl font-bold text-green-200">{match.team2_score}</p>
                         )}
                       </div>
                     </div>

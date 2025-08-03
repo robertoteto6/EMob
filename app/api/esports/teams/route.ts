@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProxyAgent } from "../../../lib/proxyAgent";
+import { pandaScoreFetch } from "../../../lib/pandaScoreFetch";
 import { getFallbackTeams } from "../../../lib/fallbackData";
 
 const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
@@ -83,17 +84,15 @@ export async function GET(req: Request) {
     
     const url = new URL(`https://api.pandascore.co/${game}/teams`);
     url.searchParams.set("per_page", search ? "20" : "30");
-    url.searchParams.set("token", PANDA_SCORE_TOKEN);
     if (search) {
       url.searchParams.set("search[name]", search);
     }
     
     console.log(`API URL: ${url.toString()}`);
     
-    const res = await fetch(url.toString(), {
+    const res = await pandaScoreFetch(url.toString(), url.searchParams, {
       cache: "no-store",
-      dispatcher: getProxyAgent(),
-    } as RequestInit & { dispatcher?: any });
+    });
     
     console.log(`API Response status: ${res.status}`);
     

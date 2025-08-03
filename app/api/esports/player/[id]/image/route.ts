@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { pandaScoreFetch } from "../../../../../lib/pandaScoreFetch";
 import { getProxyAgent } from "../../../../../lib/proxyAgent";
 
 const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
@@ -8,11 +9,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   
   try {
     // Obtener datos del jugador desde PandaScore
-    const playerUrl = `https://api.pandascore.co/players/${id}?token=${PANDA_SCORE_TOKEN}`;
-    const playerRes = await fetch(playerUrl, { 
-      cache: "no-store", 
-      dispatcher: getProxyAgent() 
-    } as RequestInit & { dispatcher?: any });
+    const baseUrl = `https://api.pandascore.co/players/${id}`;
+    const searchParamsApi = new URLSearchParams();
+    const playerRes = await pandaScoreFetch(baseUrl, searchParamsApi, { cache: "no-store" });
     
     if (!playerRes.ok) {
       return new NextResponse("Player not found", { status: 404 });

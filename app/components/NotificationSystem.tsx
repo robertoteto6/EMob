@@ -129,10 +129,10 @@ export default function NotificationSystem({
             </div>
           </div>
 
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-80 overflow-y-auto" role="log" aria-label="Lista de notificaciones">
             {notifications.length === 0 ? (
               <div className="p-4 text-center text-gray-400">
-                <span className="text-2xl">📭</span>
+                <span className="text-2xl" role="img" aria-label="Buzón vacío">📭</span>
                 <p className="mt-2">No tienes notificaciones</p>
               </div>
             ) : (
@@ -142,14 +142,19 @@ export default function NotificationSystem({
                   className={`p-3 border-l-4 ${getPriorityColor(notification.priority)} ${
                     notification.read ? 'bg-[#111]' : 'bg-[#1a1a1a]'
                   } border-b border-[#333] last:border-b-0`}
+                  role="article"
+                  aria-labelledby={`notification-title-${notification.id}`}
                 >
                   <div className="flex items-start gap-3">
-                    <span className="text-lg flex-shrink-0 mt-1">
+                    <span className="text-lg flex-shrink-0 mt-1" role="img" aria-hidden="true">
                       {getTypeIcon(notification.type)}
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <h4 className={`text-sm font-medium ${notification.read ? 'text-gray-300' : 'text-white'}`}>
+                        <h4 
+                          id={`notification-title-${notification.id}`}
+                          className={`text-sm font-medium ${notification.read ? 'text-gray-300' : 'text-white'}`}
+                        >
                           {notification.title}
                         </h4>
                         <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
@@ -164,6 +169,7 @@ export default function NotificationSystem({
                           <button
                             onClick={() => onMarkAsRead(notification.id)}
                             className="text-xs text-blue-400 hover:text-blue-300"
+                            aria-label={`Marcar como leída: ${notification.title}`}
                           >
                             Marcar como leída
                           </button>
@@ -173,6 +179,7 @@ export default function NotificationSystem({
                             href={notification.actionUrl}
                             className="text-xs text-[var(--accent,#00FF80)] hover:opacity-80"
                             onClick={() => setIsOpen(false)}
+                            aria-label={`Ver detalles de: ${notification.title}`}
                           >
                             Ver detalles
                           </a>
@@ -180,6 +187,7 @@ export default function NotificationSystem({
                         <button
                           onClick={() => onDeleteNotification(notification.id)}
                           className="text-xs text-red-400 hover:text-red-300"
+                          aria-label={`Eliminar notificación: ${notification.title}`}
                         >
                           Eliminar
                         </button>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getProxyAgent } from "../../../../../lib/proxyAgent";
+import { pandaScoreFetch } from "../../../../../lib/pandaScoreFetch";
 
-const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
+
 
 interface CareerHighlight {
   match_name: string;
@@ -133,11 +133,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   
   try {
     // Obtener datos del jugador
-    const playerUrl = `https://api.pandascore.co/players/${id}?token=${PANDA_SCORE_TOKEN}`;
-    const playerRes = await fetch(playerUrl, { 
-      cache: "no-store", 
-      dispatcher: getProxyAgent() 
-    } as RequestInit & { dispatcher?: any });
+    const playerRes = await pandaScoreFetch(
+      `https://api.pandascore.co/players/${id}`,
+      new URLSearchParams(),
+      { cache: "no-store" }
+    );
     
     if (!playerRes.ok) {
       return new NextResponse("Failed to fetch player", { status: playerRes.status });
@@ -146,13 +146,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const playerData = await playerRes.json();
     
     // Obtener historial de partidos
-    const matchesUrl = `https://api.pandascore.co/players/${id}/matches?sort=-begin_at&per_page=50&token=${PANDA_SCORE_TOKEN}`;
+    
     let matches = [];
     try {
-      const matchesRes = await fetch(matchesUrl, { 
-        cache: "no-store", 
-        dispatcher: getProxyAgent() 
-      } as RequestInit & { dispatcher?: any });
+      const matchesRes = await pandaScoreFetch(
+        `https://api.pandascore.co/players/${id}/matches`,
+        new URLSearchParams({
+          'sort': '-begin_at',
+          'per_page': '50'
+        }),
+        { cache: "no-store" }
+      );
       if (matchesRes.ok) {
         matches = await matchesRes.json();
       }

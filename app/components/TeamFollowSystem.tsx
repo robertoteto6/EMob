@@ -55,9 +55,13 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
       if (res.ok) {
         const teams = await res.json();
         setSearchResults(teams);
+      } else {
+        console.warn(`Error al buscar equipos: ${res.status} ${res.statusText}`);
+        setSearchResults([]);
       }
     } catch (error) {
       console.error('Error searching teams:', error);
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }
@@ -109,6 +113,7 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
         onClick={() => setShowFollowModal(true)}
         className="flex items-center gap-2 px-3 py-2 bg-[#181c24] border border-[var(--accent,#00FF80)] text-[var(--accent,#00FF80)] rounded-lg hover:bg-[var(--accent,#00FF80)] hover:text-black transition-colors"
         title="Seguir equipos"
+        aria-label="Gestionar equipos seguidos"
       >
         <span>👥</span>
         <span className="text-sm">Seguir Equipos</span>
@@ -136,6 +141,8 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                   onClick={() => toggleNotifications(team.teamId, team.game)}
                   className={`text-xs ${team.notifications ? 'text-green-400' : 'text-gray-500'}`}
                   title={team.notifications ? "Notificaciones activas" : "Notificaciones desactivadas"}
+                  aria-label={team.notifications ? "Desactivar notificaciones para " + team.teamName : "Activar notificaciones para " + team.teamName}
+                  aria-pressed={team.notifications}
                 >
                   {team.notifications ? "🔔" : "🔕"}
                 </button>
@@ -155,13 +162,23 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
 
       {/* Follow Teams Modal */}
       {showFollowModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+          onClick={(e) => {
+            // Cerrar el modal al hacer clic fuera de él
+            if (e.target === e.currentTarget) setShowFollowModal(false);
+          }}
+        >
           <div className="bg-[#1a1a1a] rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden border border-[#333]">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-white">Gestionar Equipos Seguidos</h2>
+              <h2 id="modal-title" className="text-lg font-bold text-white">Gestionar Equipos Seguidos</h2>
               <button
                 onClick={() => setShowFollowModal(false)}
                 className="text-gray-400 hover:text-white text-xl"
+                aria-label="Cerrar modal"
               >
                 ×
               </button>
@@ -209,7 +226,13 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
               )}
 
               {isSearching && (
-                <div className="mt-2 text-center text-gray-400">Buscando...</div>
+                <div className="mt-2 text-center text-gray-400" aria-live="polite">Buscando...</div>
+              )}
+              
+              {!isSearching && searchTerm && searchResults.length === 0 && (
+                <div className="mt-2 text-center text-gray-400" aria-live="polite">
+                  No se encontraron equipos con "{searchTerm}"
+                </div>
               )}
             </div>
 
@@ -232,6 +255,8 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                           onClick={() => toggleNotifications(team.teamId, team.game)}
                           className={`p-1 rounded ${team.notifications ? 'text-green-400' : 'text-gray-500'}`}
                           title={team.notifications ? "Desactivar notificaciones" : "Activar notificaciones"}
+                          aria-label={team.notifications ? "Desactivar notificaciones para " + team.teamName : "Activar notificaciones para " + team.teamName}
+                          aria-pressed={team.notifications}
                         >
                           {team.notifications ? "🔔" : "🔕"}
                         </button>
@@ -239,6 +264,7 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                           onClick={() => unfollowTeam(team.teamId, team.game)}
                           className="text-red-400 hover:text-red-300 p-1"
                           title="Dejar de seguir"
+                          aria-label={"Dejar de seguir a " + team.teamName}
                         >
                           🗑️
                         </button>
@@ -266,6 +292,8 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                           onClick={() => toggleNotifications(team.teamId, team.game)}
                           className={`p-1 rounded ${team.notifications ? 'text-green-400' : 'text-gray-500'}`}
                           title={team.notifications ? "Desactivar notificaciones" : "Activar notificaciones"}
+                          aria-label={team.notifications ? "Desactivar notificaciones para " + team.teamName : "Activar notificaciones para " + team.teamName}
+                          aria-pressed={team.notifications}
                         >
                           {team.notifications ? "🔔" : "🔕"}
                         </button>
@@ -273,6 +301,7 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                           onClick={() => unfollowTeam(team.teamId, team.game)}
                           className="text-red-400 hover:text-red-300 p-1"
                           title="Dejar de seguir"
+                          aria-label={"Dejar de seguir a " + team.teamName}
                         >
                           🗑️
                         </button>

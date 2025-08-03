@@ -77,7 +77,10 @@ export default function Header() {
 
           {/* CTA Button */}
           <div className="hidden md:flex items-center gap-4">
-            <button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
+            <button 
+              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
+              aria-label="Ver notificaciones"
+            >
               🔔 Notificaciones
             </button>
           </div>
@@ -125,7 +128,10 @@ export default function Header() {
                 </Link>
               ))}
               <div className="px-6 py-3">
-                <button className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg">
+                <button 
+                  className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg"
+                  aria-label="Ver notificaciones"
+                >
                   🔔 Notificaciones
                 </button>
               </div>

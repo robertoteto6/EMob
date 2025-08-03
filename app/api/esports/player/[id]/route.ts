@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getProxyAgent } from "../../../../lib/proxyAgent";
+import { pandaScoreFetch } from "../../../../lib/pandaScoreFetch";
 
-const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
+
 
 // Función para generar datos de Instagram simulados basados en el jugador
 function generateInstagramData(player: any) {
@@ -117,11 +117,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   
   try {
     // Obtener datos básicos del jugador
-    const playerUrl = `https://api.pandascore.co/players/${id}?token=${PANDA_SCORE_TOKEN}`;
-    const playerRes = await fetch(playerUrl, { 
-      cache: "no-store", 
-      dispatcher: getProxyAgent() 
-    } as RequestInit & { dispatcher?: any });
+    const playerRes = await pandaScoreFetch(
+      `https://api.pandascore.co/players/${id}`,
+      new URLSearchParams(),
+      { cache: "no-store" }
+    );
     
     if (!playerRes.ok) {
       return new NextResponse("Failed to fetch player", { status: playerRes.status });
@@ -130,16 +130,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const playerData = await playerRes.json();
     
     // Obtener estadísticas de matches del jugador (últimos partidos)
-    const matchesUrl = `https://api.pandascore.co/players/${id}/matches?sort=-begin_at&per_page=10&token=${PANDA_SCORE_TOKEN}`;
+    
     let recentMatches = [];
     let historicalMatches = [];
     let isVeteran = false;
     
     try {
-      const matchesRes = await fetch(matchesUrl, { 
-        cache: "no-store", 
-        dispatcher: getProxyAgent() 
-      } as RequestInit & { dispatcher?: any });
+      const matchesRes = await pandaScoreFetch(
+        `https://api.pandascore.co/players/${id}/matches`,
+        new URLSearchParams({
+          'sort': '-begin_at',
+          'per_page': '10'
+        }),
+        { cache: "no-store" }
+      );
       if (matchesRes.ok) {
         recentMatches = await matchesRes.json();
       }
@@ -154,11 +158,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     // Para veteranos con pocos partidos recientes, buscar partidos históricos importantes
     if (isVeteran && recentMatches.length < 8) {
       try {
-        const historicalUrl = `https://api.pandascore.co/players/${id}/matches?sort=-begin_at&per_page=50&filter[status]=finished&token=${PANDA_SCORE_TOKEN}`;
-        const historicalRes = await fetch(historicalUrl, { 
-          cache: "no-store", 
-          dispatcher: getProxyAgent() 
-        } as RequestInit & { dispatcher?: any });
+        
+        const historicalRes = await pandaScoreFetch(
+          `https://api.pandascore.co/players/${id}/matches`,
+          new URLSearchParams({
+            'sort': '-begin_at',
+            'per_page': '50',
+            'filter[status]': 'finished'
+          }),
+          { cache: "no-store" }
+        );
         
         if (historicalRes.ok) {
           const allMatches = await historicalRes.json();
@@ -203,11 +212,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     let teamData = null;
     if (playerData.current_team?.id) {
       try {
-        const teamUrl = `https://api.pandascore.co/teams/${playerData.current_team.id}?token=${PANDA_SCORE_TOKEN}`;
-        const teamRes = await fetch(teamUrl, { 
-          cache: "no-store", 
-          dispatcher: getProxyAgent() 
-        } as RequestInit & { dispatcher?: any });
+        const teamRes = await pandaScoreFetch(
+        `https://api.pandascore.co/teams/${playerData.current_team.id}`,
+        new URLSearchParams(),
+        { cache: "no-store" }
+      );
         if (teamRes.ok) {
           teamData = await teamRes.json();
         }

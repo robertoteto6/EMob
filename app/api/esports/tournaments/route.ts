@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { getProxyAgent } from "../../../lib/proxyAgent";
+import { pandaScoreFetch } from "../../../lib/pandaScoreFetch";
 import { getGameApiName } from "../../../lib/gameConfig";
-
-const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
 
 export async function GET(req: Request) {
   try {
@@ -12,17 +10,17 @@ export async function GET(req: Request) {
     // Mapear el juego al nombre correcto de la API usando la configuración centralizada
     const game = getGameApiName(gameParam);
     
-    const res = await fetch(
-      `https://api.pandascore.co/${game}/tournaments?per_page=50&token=${PANDA_SCORE_TOKEN}`,
-      { 
-        cache: "no-store", 
-        dispatcher: getProxyAgent(),
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'EMob-Esports/1.0'
-        }
-      } as RequestInit & { dispatcher?: any }
-    );
+    const baseUrl = `https://api.pandascore.co/${game}/tournaments`;
+    const searchParamsApi = new URLSearchParams();
+    searchParamsApi.set('per_page', '50');
+    
+    const res = await pandaScoreFetch(baseUrl, searchParamsApi, { 
+      cache: "no-store",
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'EMob-Esports/1.0'
+      }
+    });
     
     if (!res.ok) {
       console.error(`API Error for game ${game}: ${res.status} ${res.statusText}`);

@@ -7,18 +7,17 @@ import Header from "../../../components/Header";
 import ChatBot from "../../../components/ChatBot";
 import NotificationSystem, { useNotifications } from "../../../components/NotificationSystem";
 import { MatchSkeleton } from "../../../components/Skeleton";
-import { SUPPORTED_GAMES, type GameConfig } from "../../../lib/gameConfig";
 
 // Interfaces
 interface Match {
   id: number;
-  radiant: string;
-  dire: string;
-  radiant_score: number;
-  dire_score: number;
+  team1: string;
+  team2: string;
+  team1_score: number;
+  team2_score: number;
   start_time: number;
   league: string;
-  radiant_win: boolean | null;
+  team1_win: boolean | null;
   game: string;
 }
 
@@ -59,111 +58,24 @@ interface Team {
   current_roster?: Player[];
 }
 
-const GAMES = SUPPORTED_GAMES;
-
-// Función para obtener datos del juego con rate limiting y manejo de errores
-async function fetchGameData(gameId: string) {
-  const data = {
-    matches: [] as Match[],
-    tournaments: [] as Tournament[],
-    teams: [] as Team[],
-    players: [] as Player[]
-  };
-
-  try {
-    // Realizar todas las llamadas en paralelo pero con manejo de errores individual
-    const [matchesRes, tournamentsRes, teamsRes, playersRes] = await Promise.allSettled([
-      fetch(`/api/esports/matches?game=${gameId}`, { 
-        cache: "no-store",
-        next: { revalidate: 60 }
-      }),
-      fetch(`/api/esports/tournaments?game=${gameId}`, { 
-        cache: "no-store",
-        next: { revalidate: 300 }
-      }),
-      fetch(`/api/esports/teams?game=${gameId}`, { 
-        cache: "no-store",
-        next: { revalidate: 600 }
-      }),
-      fetch(`/api/esports/players?game=${gameId}`, { 
-        cache: "no-store",
-        next: { revalidate: 600 }
-      })
-    ]);
-
-    // Procesar matches
-    if (matchesRes.status === 'fulfilled' && matchesRes.value.ok) {
-      const matchesData = await matchesRes.value.json();
-      data.matches = matchesData.map((m: any) => {
-        const team1 = m.opponents?.[0]?.opponent;
-        const team2 = m.opponents?.[1]?.opponent;
-        const dateStr = m.begin_at ?? m.scheduled_at;
-        const date = dateStr ? new Date(dateStr) : null;
-        const start_time = date && !isNaN(date.getTime()) ? date.getTime() / 1000 : null;
-        const radiant_score = Array.isArray(m.results) && m.results[0]?.score != null ? m.results[0].score : null;
-        const dire_score = Array.isArray(m.results) && m.results[1]?.score != null ? m.results[1].score : null;
-        
-        return {
-          id: m.id,
-          radiant: team1?.name ?? "TBD",
-          dire: team2?.name ?? "TBD",
-          radiant_score,
-          dire_score,
-          start_time,
-          league: m.league?.name ?? "",
-          radiant_win: m.winner?.id !== undefined && team1?.id !== undefined ? m.winner.id === team1.id : null,
-          game: gameId,
-        };
-      }).filter((m: Match) => m.start_time !== null);
-    }
-
-    // Procesar tournaments
-    if (tournamentsRes.status === 'fulfilled' && tournamentsRes.value.ok) {
-      const tournamentsData = await tournamentsRes.value.json();
-      data.tournaments = tournamentsData.map((t: any) => ({
-        id: t.id,
-        name: t.name ?? "",
-        begin_at: t.begin_at ? new Date(t.begin_at).getTime() / 1000 : null,
-        end_at: t.end_at ? new Date(t.end_at).getTime() / 1000 : null,
-        league: t.league?.name ?? "",
-        serie: t.serie?.full_name ?? "",
-        prizepool: t.prizepool ?? null,
-        tier: t.tier ?? null,
-        region: t.region ?? null,
-        live_supported: !!t.live_supported,
-        game: gameId,
-      }));
-    }
-
-    // Procesar teams
-    if (teamsRes.status === 'fulfilled' && teamsRes.value.ok) {
-      const teamsData = await teamsRes.value.json();
-      data.teams = teamsData.slice(0, 12); // Limitar a 12 equipos
-    }
-
-    // Procesar players
-    if (playersRes.status === 'fulfilled' && playersRes.value.ok) {
-      const playersData = await playersRes.value.json();
-      data.players = playersData.slice(0, 12); // Limitar a 12 jugadores
-    }
-
-  } catch (error) {
-    console.error('Error fetching game data:', error);
-  }
-
-  return data;
-}
+const GAMES = [
+  { id: "dota2", name: "Dota 2", icon: "/dota2.svg", color: "#A970FF", gradient: "from-purple-600 to-purple-800", description: "El MOBA más competitivo del mundo" },
+  { id: "lol", name: "League of Legends", icon: "/leagueoflegends.svg", color: "#1E90FF", gradient: "from-blue-600 to-blue-800", description: "El juego más popular de esports" },
+  { id: "csgo", name: "Counter-Strike 2", icon: "/counterstrike.svg", color: "#FFD700", gradient: "from-yellow-600 to-yellow-800", description: "El FPS táctico por excelencia" },
+  { id: "r6siege", name: "Rainbow Six Siege", icon: "/rainbow6siege.svg", color: "#FF6B35", gradient: "from-orange-600 to-orange-800", description: "Combate táctico intenso" },
+  { id: "overwatch", name: "Overwatch", icon: "/overwatch.svg", color: "#FF9500", gradient: "from-orange-500 to-orange-700", description: "Acción de héroes en equipo" },
+];
 
 // Componente de estadísticas principales
 function GameOverview({ game, matches, tournaments, teams, players }: {
-  game: GameConfig;
+  game: typeof GAMES[0];
   matches: Match[];
   tournaments: Tournament[];
   teams: Team[];
   players: Player[];
 }) {
   const now = Date.now() / 1000;
-  const liveMatches = matches.filter(m => m.start_time <= now && m.radiant_win === null);
+  const liveMatches = matches.filter(m => m.start_time <= now && m.team1_win === null);
   const upcomingMatches = matches.filter(m => m.start_time > now);
   const activeTournaments = tournaments.filter(t => {
     if (!t.begin_at) return false;
@@ -226,7 +138,7 @@ function GameOverview({ game, matches, tournaments, teams, players }: {
 // Componente de partido compacto
 function CompactMatch({ match }: { match: Match }) {
   const now = Date.now() / 1000;
-  const isLive = match.start_time <= now && match.radiant_win === null;
+  const isLive = match.start_time <= now && match.team1_win === null;
   const isUpcoming = match.start_time > now;
 
   return (
@@ -251,10 +163,10 @@ function CompactMatch({ match }: { match: Match }) {
         <div className="flex items-center justify-between">
           <div className="flex-1 text-center">
             <p className="font-semibold text-white group-hover:text-green-400 transition-colors duration-300 truncate">
-              {match.radiant}
+              {match.team1}
             </p>
-            {typeof match.radiant_score === "number" && (
-              <p className="text-2xl font-bold text-green-400 mt-1">{match.radiant_score}</p>
+            {typeof match.team1_score === "number" && (
+              <p className="text-2xl font-bold text-green-400 mt-1">{match.team1_score}</p>
             )}
           </div>
           
@@ -264,10 +176,10 @@ function CompactMatch({ match }: { match: Match }) {
           
           <div className="flex-1 text-center">
             <p className="font-semibold text-white group-hover:text-green-400 transition-colors duration-300 truncate">
-              {match.dire}
+              {match.team2}
             </p>
-            {typeof match.dire_score === "number" && (
-              <p className="text-2xl font-bold text-green-400 mt-1">{match.dire_score}</p>
+            {typeof match.team2_score === "number" && (
+              <p className="text-2xl font-bold text-green-400 mt-1">{match.team2_score}</p>
             )}
           </div>
         </div>
@@ -389,66 +301,305 @@ function GamePageContent({ gameId }: { gameId: string }) {
       return;
     }
 
+    let isMounted = true;
+
     async function loadData() {
+      if (!isMounted) return;
+      
       setLoading(true);
       setError(null);
+      
       try {
-        const gameData = await fetchGameData(gameId);
-        setData(gameData);
-      } catch (error) {
-        console.error('Error loading game data:', error);
-        setError('No se pudieron cargar los datos del juego. Inténtalo de nuevo más tarde.');
-        notificationSystem.addNotification({
-          title: "Error de carga",
-          message: "No se pudieron cargar los datos del juego",
-          type: "team_update",
-          priority: "medium"
-        });
-      } finally {
-        setLoading(false);
+        // Usar datos de fallback si hay problemas con la API
+        const fallbackData = {
+          matches: [],
+          tournaments: [],
+          teams: [
+            { id: 1, name: "Team Liquid", acronym: "TL", slug: "team-liquid", image_url: null, location: "Netherlands" },
+            { id: 2, name: "Evil Geniuses", acronym: "EG", slug: "evil-geniuses", image_url: null, location: "United States" },
+            { id: 3, name: "OG", acronym: "OG", slug: "og", image_url: null, location: "Europe" },
+          ],
+          players: [
+            { id: 1, name: "Miracle-", slug: "miracle", image_url: null, first_name: "Amer", last_name: "Al-Barkawi", role: "Core", nationality: "JO", current_team: { name: "Team Liquid" } },
+            { id: 2, name: "Arteezy", slug: "arteezy", image_url: null, first_name: "Artour", last_name: "Babaev", role: "Core", nationality: "CA", current_team: { name: "Evil Geniuses" } },
+          ]
+        };
+
+        // Intentar cargar datos reales con rate limiting
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+        
+        // Cargar matches
+        try {
+          await delay(200);
+          const matchesRes = await fetch(`/api/esports/matches?game=${gameId}`, { 
+            cache: "force-cache",
+            next: { revalidate: 300 }
+          });
+          if (matchesRes.ok) {
+            const matchesData = await matchesRes.json();
+            if (isMounted) {
+              fallbackData.matches = matchesData.slice(0, 10).map((m: any) => {
+                const team1 = m.opponents?.[0]?.opponent;
+                const team2 = m.opponents?.[1]?.opponent;
+                const dateStr = m.begin_at ?? m.scheduled_at;
+                const date = dateStr ? new Date(dateStr) : null;
+                const start_time = date && !isNaN(date.getTime()) ? date.getTime() / 1000 : Date.now() / 1000;
+                
+                return {
+                  id: m.id,
+                  team1: team1?.name ?? "TBD",
+                  team2: team2?.name ?? "TBD",
+                  team1_score: m.results?.[0]?.score ?? null,
+                  team2_score: m.results?.[1]?.score ?? null,
+                  start_time,
+                  league: m.league?.name ?? "",
+                  team1_win: m.winner?.id === team1?.id ? true : m.winner?.id === team2?.id ? false : null,
+                  game: gameId,
+                };
+              });
+            }
+          }
+        } catch (err) {
+          console.error('Error loading matches:', err);
+        }
+
+        // Cargar tournaments
+        try {
+          await delay(200);
+          const tournamentsRes = await fetch(`/api/esports/tournaments?game=${gameId}`, { 
+            cache: "force-cache",
+            next: { revalidate: 300 }
+          });
+          if (tournamentsRes.ok) {
+            const tournamentsData = await tournamentsRes.json();
+            if (isMounted) {
+              fallbackData.tournaments = tournamentsData.slice(0, 8).map((t: any) => ({
+                id: t.id,
+                name: t.name ?? "Torneo",
+                begin_at: t.begin_at ? new Date(t.begin_at).getTime() / 1000 : null,
+                end_at: t.end_at ? new Date(t.end_at).getTime() / 1000 : null,
+                league: t.league?.name ?? "",
+                serie: t.serie?.full_name ?? "",
+                prizepool: t.prizepool ?? null,
+                tier: t.tier ?? null,
+                region: t.region ?? null,
+                live_supported: !!t.live_supported,
+                game: gameId,
+              }));
+            }
+          }
+        } catch (err) {
+          console.error('Error loading tournaments:', err);
+        }
+
+        if (isMounted) {
+          setData(fallbackData);
+        }
       }
     }
 
     loadData();
-  }, [gameId, game, router, notificationSystem]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [gameId, game, router]);
+
+
+              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                Partidos
+              </h2>
+                <Link 
+                  href={`/esports?game=${game.id}`}
+                  className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors duration-300"
+                >
+                  Ver todos →
+                </Link>
+              </div>
+              
+              <div className="space-y-4">
+                {data.matches.slice(0, 6).map((match, index) => (
+                  <div 
+                    key={match.id}
+                    className="animate-fadein"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <CompactMatch match={match} />
+                  </div>
+                ))}
+                
+                {data.matches.length === 0 && (
+                  <div className="text-center py-8 text-gray-400">
+                    <div className="text-4xl mb-2">📅</div>
+                    <p>No hay partidos disponibles</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Torneos activos */}
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  Torneos
+                </h2>
+                <Link 
+                  href={`/esports?view=tournaments&game=${game.id}`}
+                  className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors duration-300"
+                >
+                  Ver todos →
+                </Link>
+              </div>
+              
+              <div className="space-y-4">
+                {data.tournaments.slice(0, 6).map((tournament, index) => (
+                  <div 
+                    key={tournament.id}
+                    className="animate-fadein"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <CompactTournament tournament={tournament} />
+                  </div>
+                ))}
+                
+                {data.tournaments.length === 0 && (
+                  <div className="text-center py-8 text-gray-400">
+                    <div className="text-4xl mb-2"></div>
+                    <p>No hay torneos activos</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Equipos y Jugadores */}
+        <section className="container mx-auto px-6 pb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Equipos destacados */}
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  👥 Equipos
+                </h2>
+                <Link 
+                  href={`/esports/teams?game=${game.id}`}
+                  className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors duration-300"
+                >
+                  Ver todos →
+                </Link>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {data.teams.slice(0, 6).map((team, index) => (
+                  <div 
+                    key={team.id}
+                    className="animate-fadein"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <CompactTeam team={team} />
+                  </div>
+                ))}
+                
+                {data.teams.length === 0 && (
+                  <div className="col-span-2 text-center py-8 text-gray-400">
+                    <div className="text-4xl mb-2">👥</div>
+                    <p>No hay equipos disponibles</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Jugadores destacados */}
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  ⭐ Jugadores
+                </h2>
+                <Link 
+                  href={`/esports/players?game=${game.id}`}
+                  className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors duration-300"
+                >
+                  Ver todos →
+                </Link>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {data.players.slice(0, 6).map((player, index) => (
+                  <div 
+                    key={player.id}
+                    className="animate-fadein"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <CompactPlayer player={player} />
+                  </div>
+                ))}
+                
+                {data.players.length === 0 && (
+                  <div className="col-span-2 text-center py-8 text-gray-400">
+                    <div className="text-4xl mb-2">⭐</div>
+                    <p>No hay jugadores disponibles</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Call to Action */}
+        <section className="container mx-auto px-6 pb-16">
+          <div className={`bg-gradient-to-r ${game.gradient} rounded-2xl p-8 text-center`}>
+            <h2 className="text-3xl font-bold mb-4">¿Quieres saber más sobre {game.name}?</h2>
+            <p className="text-lg mb-6 opacity-90">
+              Explora todos los partidos, equipos, jugadores y estadísticas detalladas
+            </p>
+            
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link 
+                href={`/esports?game=${game.id}`}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+              >
+                Ver Todos los Partidos
+              </Link>
+              <Link 
+                href={`/esports/teams?game=${game.id}`}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+              >
+                Explorar Equipos
+              </Link>
+              <Link 
+                href={`/esports/players?game=${game.id}`}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+              >
+                Ver Jugadores
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Sistemas adicionales */}
+      <NotificationSystem
+        notifications={notificationSystem.notifications}
+        onMarkAsRead={notificationSystem.markAsRead}
+        onClearAll={notificationSystem.clearAll}
+        onDeleteNotification={notificationSystem.deleteNotification}
+      />
+      
+      <ChatBot />
+    </>
+  );
+
+
 
   if (!game) {
     return null;
   }
 
-  if (error) {
-    return (
-      <>
-        <Suspense fallback={null}>
-          <Header />
-        </Suspense>
-        <main className="min-h-screen bg-black text-white pt-20">
-          <div className="container mx-auto px-6 py-16">
-            <div className="text-center">
-              <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-12 border border-gray-700 max-w-md mx-auto">
-                <div className="text-6xl mb-4">⚠️</div>
-                <h2 className="text-2xl font-bold text-white mb-4">Error de Carga</h2>
-                <p className="text-gray-400 mb-6">{error}</p>
-                <button 
-                  onClick={() => window.location.reload()}
-                  className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
-                >
-                  Reintentar
-                </button>
-              </div>
-            </div>
-          </div>
-        </main>
-      </>
-    );
-  }
-
   if (loading) {
     return (
       <>
-        <Suspense fallback={null}>
-          <Header />
-        </Suspense>
+        <Header />
         <main className="min-h-screen bg-black text-white pt-20">
           <div className="container mx-auto px-6 py-8">
             <div className="animate-pulse">
@@ -466,11 +617,32 @@ function GamePageContent({ gameId }: { gameId: string }) {
     );
   }
 
+  if (error) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-black text-white pt-20">
+          <div className="container mx-auto px-6 py-8">
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h2 className="text-2xl font-bold mb-4">Error al cargar</h2>
+              <p className="text-gray-400 mb-8">{error}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-300"
+              >
+                Intentar de nuevo
+              </button>
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
-      <Suspense fallback={null}>
-        <Header />
-      </Suspense>
+      <Header />
       
       <main className="min-h-screen bg-black text-white pt-20">
         {/* Hero Section del Juego */}
@@ -729,8 +901,517 @@ function GamePageContent({ gameId }: { gameId: string }) {
   );
 }
 
+/* Removed duplicate components - start
+function CompactTeam({ team }: { team: Team }) {
+  return (
+    <Link href={`/esports/team/${team.id}`}>
+      <div className="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl p-4 border border-gray-700 hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02]">
+        <div className="flex items-center gap-3 mb-3">
+          {team.image_url ? (
+            <img 
+              src={team.image_url} 
+              alt={team.name}
+              className="w-10 h-10 rounded-lg object-cover bg-gray-600"
+            />
+          ) : (
+            <div className="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center">
+              <span className="text-sm font-bold text-gray-300">
+                {team.acronym || team.name.charAt(0)}
+              </span>
+            </div>
+          )}
+          <div className="flex-1">
+            <h4 className="font-bold text-white group-hover:text-purple-400 transition-colors duration-300 truncate">
+              {team.name}
+            </h4>
+            {team.location && (
+              <p className="text-xs text-gray-400">{team.location}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// Componente de jugador compacto
+function CompactPlayer({ player }: { player: Player }) {
+  return (
+    <Link href={`/esports/player/${player.id}`}>
+      <div className="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl p-4 border border-gray-700 hover:border-green-500/50 transition-all duration-300 hover:scale-[1.02]">
+        <div className="flex items-center gap-3">
+          {player.image_url ? (
+            <img 
+              src={player.image_url} 
+              alt={player.name}
+              className="w-10 h-10 rounded-full object-cover bg-gray-600"
+            />
+          ) : (
+            <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
+              <span className="text-sm font-bold text-gray-300">
+                {player.name.charAt(0)}
+              </span>
+            </div>
+          )}
+          <div className="flex-1">
+            <h4 className="font-bold text-white group-hover:text-green-400 transition-colors duration-300 truncate">
+              {player.name}
+            </h4>
+            <p className="text-xs text-gray-400">
+              {player.current_team?.name || player.role || "Jugador"}
+            </p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// Componente principal de la página del juego
+function GamePageContent({ gameId }: { gameId: string }) {
+  const [data, setData] = useState<{
+    matches: Match[];
+    tournaments: Tournament[];
+    teams: Team[];
+    players: Player[];
+  }>({ matches: [], tournaments: [], teams: [], players: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const notificationSystem = useNotifications();
+  const router = useRouter();
+
+  const game = GAMES.find(g => g.id === gameId);
+
+  useEffect(() => {
+    if (!game) {
+      router.push('/esports');
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadData() {
+      if (!isMounted) return;
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Usar datos de fallback si hay problemas con la API
+        const fallbackData = {
+          matches: [],
+          tournaments: [],
+          teams: [
+            { id: 1, name: "Team Liquid", acronym: "TL", slug: "team-liquid", image_url: null, location: "Netherlands" },
+            { id: 2, name: "Evil Geniuses", acronym: "EG", slug: "evil-geniuses", image_url: null, location: "United States" },
+            { id: 3, name: "OG", acronym: "OG", slug: "og", image_url: null, location: "Europe" },
+          ],
+          players: [
+            { id: 1, name: "Miracle-", slug: "miracle", image_url: null, first_name: "Amer", last_name: "Al-Barkawi", role: "Core", nationality: "JO", current_team: { name: "Team Liquid" } },
+            { id: 2, name: "Arteezy", slug: "arteezy", image_url: null, first_name: "Artour", last_name: "Babaev", role: "Core", nationality: "CA", current_team: { name: "Evil Geniuses" } },
+          ]
+        };
+
+        // Intentar cargar datos reales con rate limiting
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+        
+        // Cargar matches
+        try {
+          await delay(200);
+          const matchesRes = await fetch(`/api/esports/matches?game=${gameId}`, { 
+            cache: "force-cache",
+            next: { revalidate: 300 }
+          });
+          if (matchesRes.ok) {
+            const matchesData = await matchesRes.json();
+            if (isMounted) {
+              fallbackData.matches = matchesData.slice(0, 10).map((m: any) => {
+                const team1 = m.opponents?.[0]?.opponent;
+                const team2 = m.opponents?.[1]?.opponent;
+                const dateStr = m.begin_at ?? m.scheduled_at;
+                const date = dateStr ? new Date(dateStr) : null;
+                const start_time = date && !isNaN(date.getTime()) ? date.getTime() / 1000 : Date.now() / 1000;
+                
+                return {
+                  id: m.id,
+                  team1: team1?.name ?? "TBD",
+                  team2: team2?.name ?? "TBD",
+                  team1_score: m.results?.[0]?.score ?? null,
+                  team2_score: m.results?.[1]?.score ?? null,
+                  start_time,
+                  league: m.league?.name ?? "",
+                  team1_win: m.winner?.id === team1?.id ? true : m.winner?.id === team2?.id ? false : null,
+                  game: gameId,
+                };
+              });
+            }
+          }
+        } catch (err) {
+          console.error('Error loading matches:', err);
+        }
+
+        // Cargar tournaments
+        try {
+          await delay(200);
+          const tournamentsRes = await fetch(`/api/esports/tournaments?game=${gameId}`, { 
+            cache: "force-cache",
+            next: { revalidate: 300 }
+          });
+          if (tournamentsRes.ok) {
+            const tournamentsData = await tournamentsRes.json();
+            if (isMounted) {
+              fallbackData.tournaments = tournamentsData.slice(0, 8).map((t: any) => ({
+                id: t.id,
+                name: t.name ?? "Torneo",
+                begin_at: t.begin_at ? new Date(t.begin_at).getTime() / 1000 : null,
+                end_at: t.end_at ? new Date(t.end_at).getTime() / 1000 : null,
+                league: t.league?.name ?? "",
+                serie: t.serie?.full_name ?? "",
+                prizepool: t.prizepool ?? null,
+                tier: t.tier ?? null,
+                region: t.region ?? null,
+                live_supported: !!t.live_supported,
+                game: gameId,
+              }));
+            }
+          }
+        } catch (err) {
+          console.error('Error loading tournaments:', err);
+        }
+
+        if (isMounted) {
+          setData(fallbackData);
+        }
+      }
+    }
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [gameId, game, router]);
+
+
+              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                🏆 Partidos
+              </h2>
+                <Link 
+                  href={`/esports?game=${game.id}`}
+                  className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors duration-300"
+                >
+                  Ver todos →
+                </Link>
+              </div>
+              
+              <div className="space-y-4">
+                {data.matches.slice(0, 6).map((match, index) => (
+                  <div 
+                    key={match.id}
+                    className="animate-fadein"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <CompactMatch match={match} />
+                  </div>
+                ))}
+                
+                {data.matches.length === 0 && (
+                  <div className="text-center py-8 text-gray-400">
+                    <div className="text-4xl mb-2">📅</div>
+                    <p>No hay partidos disponibles</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Torneos activos */}
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  🏆 Torneos
+                </h2>
+                <Link 
+                  href={`/esports?view=tournaments&game=${game.id}`}
+                  className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors duration-300"
+                >
+                  Ver todos →
+                </Link>
+              </div>
+              
+              <div className="space-y-4">
+                {data.tournaments.slice(0, 6).map((tournament, index) => (
+                  <div 
+                    key={tournament.id}
+                    className="animate-fadein"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <CompactTournament tournament={tournament} />
+                  </div>
+                ))}
+                
+                {data.tournaments.length === 0 && (
+                  <div className="text-center py-8 text-gray-400">
+                    <div className="text-4xl mb-2">🏆</div>
+                    <p>No hay torneos activos</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Equipos y Jugadores */}
+        <section className="container mx-auto px-6 pb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Equipos destacados */}
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  👥 Equipos
+                </h2>
+                <Link 
+                  href={`/esports/teams?game=${game.id}`}
+                  className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors duration-300"
+                >
+                  Ver todos →
+                </Link>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {data.teams.slice(0, 6).map((team, index) => (
+                  <div 
+                    key={team.id}
+                    className="animate-fadein"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <CompactTeam team={team} />
+                  </div>
+                ))}
+                
+                {data.teams.length === 0 && (
+                  <div className="col-span-2 text-center py-8 text-gray-400">
+                    <div className="text-4xl mb-2">👥</div>
+                    <p>No hay equipos disponibles</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Jugadores destacados */}
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  ⭐ Jugadores
+                </h2>
+                <Link 
+                  href={`/esports/players?game=${game.id}`}
+                  className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors duration-300"
+                >
+                  Ver todos →
+                </Link>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {data.players.slice(0, 6).map((player, index) => (
+                  <div 
+                    key={player.id}
+                    className="animate-fadein"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <CompactPlayer player={player} />
+                  </div>
+                ))}
+                
+                {data.players.length === 0 && (
+                  <div className="col-span-2 text-center py-8 text-gray-400">
+                    <div className="text-4xl mb-2">⭐</div>
+                    <p>No hay jugadores disponibles</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Call to Action */}
+        <section className="container mx-auto px-6 pb-16">
+          <div className={`bg-gradient-to-r ${game.gradient} rounded-2xl p-8 text-center`}>
+            <h2 className="text-3xl font-bold mb-4">¿Quieres saber más sobre {game.name}?</h2>
+            <p className="text-lg mb-6 opacity-90">
+              Explora todos los partidos, equipos, jugadores y estadísticas detalladas
+            </p>
+            
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link 
+                href={`/esports?game=${game.id}`}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+              >
+                Ver Todos los Partidos
+              </Link>
+              <Link 
+                href={`/esports/teams?game=${game.id}`}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+              >
+                Explorar Equipos
+              </Link>
+              <Link 
+                href={`/esports/players?game=${game.id}`}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+              >
+                Ver Jugadores
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Sistemas adicionales */}
+      <NotificationSystem
+        notifications={notificationSystem.notifications}
+        onMarkAsRead={notificationSystem.markAsRead}
+        onClearAll={notificationSystem.clearAll}
+        onDeleteNotification={notificationSystem.deleteNotification}
+      />
+      
+      <ChatBot />
+    </>
+  );
+}
+
+*/
 export default function GamePage({ params }: { params: Promise<{ gameId: string }> }) {
   const { gameId } = use(params);
   
   return <GamePageContent gameId={gameId} />;
 }
+
+// Modificar CompactTournament para enfatizar nombre y agregar región
+function CompactTournament({ tournament }: { tournament: Tournament }) {
+  return (
+    <Link href={`/esports/tournament/${tournament.id}`}>
+      <div className="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl p-4 border border-gray-700 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.02]">
+        <div className="flex items-start justify-between mb-3">
+          <span className="text-xs text-gray-400 font-medium">{tournament.league}</span>
+          <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+            ACTIVO
+          </span>
+        </div>
+        
+        <h4 className="font-bold text-white group-hover:text-blue-400 transition-colors duration-300 mb-2 line-clamp-2">
+          {tournament.name}
+        </h4>
+        
+        {tournament.prizepool && (
+          <div className="bg-yellow-600/20 text-yellow-400 text-xs px-2 py-1 rounded-lg inline-block">
+            💰 {tournament.prizepool}
+          </div>
+        )}
+      </div>
+    </Link>
+  );
+}
+
+// Componente de equipo compacto
+function CompactTeam({ team }: { team: Team }) {
+  return (
+    <Link href={`/esports/team/${team.id}`}>
+      <div className="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl p-4 border border-gray-700 hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02]">
+        <div className="flex items-center gap-3 mb-3">
+          {team.image_url ? (
+            <img 
+              src={team.image_url} 
+              alt={team.name}
+              className="w-10 h-10 rounded-lg object-cover bg-gray-600"
+            />
+          ) : (
+            <div className="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center">
+              <span className="text-sm font-bold text-gray-300">
+                {team.acronym || team.name.charAt(0)}
+              </span>
+            </div>
+          )}
+          <div className="flex-1">
+            <h4 className="font-bold text-white group-hover:text-purple-400 transition-colors duration-300 truncate">
+              {team.name}
+            </h4>
+            {team.location && (
+              <p className="text-xs text-gray-400">{team.location}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// Componente de jugador compacto
+function CompactPlayer({ player }: { player: Player }) {
+  return (
+    <Link href={`/esports/player/${player.id}`}>
+      <div className="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl p-4 border border-gray-700 hover:border-green-500/50 transition-all duration-300 hover:scale-[1.02]">
+        <div className="flex items-center gap-3">
+          {player.image_url ? (
+            <img 
+              src={player.image_url} 
+              alt={player.name}
+              className="w-10 h-10 rounded-full object-cover bg-gray-600"
+            />
+          ) : (
+            <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
+              <span className="text-sm font-bold text-gray-300">
+                {player.name.charAt(0)}
+              </span>
+            </div>
+          )}
+          <div className="flex-1">
+            <h4 className="font-bold text-white group-hover:text-green-400 transition-colors duration-300 truncate">
+              {player.name}
+            </h4>
+            <p className="text-xs text-gray-400">
+              {player.current_team?.name || player.role || "Jugador"}
+            </p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// Componente principal de la página del juego
+function GamePageContent({ gameId }: { gameId: string }) {
+  const [data, setData] = useState<{
+    matches: Match[];
+    tournaments: Tournament[];
+    teams: Team[];
+    players: Player[];
+  }>({ matches: [], tournaments: [], teams: [], players: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const notificationSystem = useNotifications();
+  const router = useRouter();
+
+  const game = GAMES.find(g => g.id === gameId);
+
+  useEffect(() => {
+    if (!game) {
+      router.push('/esports');
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadData() {
+      if (!isMounted) return;
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Usar datos de fallback si hay problemas con la API
+        const fallbackData = {
+          matches: [],
+          tournaments: [],
+          teams: [
+            { id: 1, name: "Team Liquid", acronym: "TL", slug: "team-liquid", image_url: null, location: "Netherlands" },
+            { id: 2, name: "Evil Geniuses", acronym: "EG", slug: "evil-geniuses", image_url: null, location: "United States" },
+            { id: 3, name: "OG",

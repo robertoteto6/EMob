@@ -32,13 +32,17 @@ export default function ChatBot() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: question }),
       });
+      if (!res.ok) {
+        throw new Error(`Error ${res.status}: ${res.statusText}`);
+      }
       const data = await res.json();
       const text = data.text || "";
       setMessages((msgs) => [...msgs, { sender: "bot", text }]);
     } catch (e) {
+      console.error("Error en ChatBot:", e);
       setMessages((msgs) => [
         ...msgs,
-        { sender: "bot", text: "Error al obtener respuesta." },
+        { sender: "bot", text: "Error al obtener respuesta. Por favor, intenta de nuevo más tarde." },
       ]);
     } finally {
       setLoading(false);

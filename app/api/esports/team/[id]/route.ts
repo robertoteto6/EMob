@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { getProxyAgent } from "../../../../lib/proxyAgent";
-
-const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
+import { pandaScoreFetch } from "../../../../lib/pandaScoreFetch";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const url = `https://api.pandascore.co/teams/${id}?token=${PANDA_SCORE_TOKEN}`;
-  const res = await fetch(url, { cache: "no-store", dispatcher: getProxyAgent() } as RequestInit & { dispatcher?: any });
+  const baseUrl = `https://api.pandascore.co/teams/${id}`;
+  const searchParamsApi = new URLSearchParams();
+  
+  const res = await pandaScoreFetch(baseUrl, searchParamsApi, { cache: "no-store" });
   if (!res.ok) {
     return new NextResponse("Failed to fetch team", { status: res.status });
   }

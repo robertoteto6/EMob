@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProxyAgent } from "../../../lib/proxyAgent";
+import { pandaScoreFetch } from "../../../lib/pandaScoreFetch";
 
 const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
 const GAMES = ["dota2", "lol", "csgo", "r6siege", "ow"];
@@ -14,10 +15,11 @@ const GAME_MAPPING: Record<string, string> = {
   "overwatch": "ow" // Fallback para compatibilidad
 };
 
-async function fetchJSON(url: string) {
-  const res = await fetch(url, { cache: "no-store", dispatcher: getProxyAgent() } as RequestInit & { dispatcher?: any });
-  if (!res.ok) return [];
+async function fetchJSON(base: string, params: string) {
   try {
+    const searchParams = new URLSearchParams(params);
+    searchParams.delete('token'); // Remove token since handled in pandaScoreFetch
+    const res = await pandaScoreFetch(base, searchParams, { cache: "no-store" });
     return await res.json();
   } catch {
     return [];
@@ -42,7 +44,7 @@ export async function GET(req: Request) {
     
     const encoded = encodeURIComponent(q);
     const base = `https://api.pandascore.co/${g}`;
-    const params = `per_page=5&search%5Bname%5D=${encoded}&token=${PANDA_SCORE_TOKEN}`;
+    const params = `per_page=5&search%5Bname%5D=${encoded}`;
 
     try {
       const [teams, players, tournaments, matches] = await Promise.all([

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getProxyAgent } from "../../../lib/proxyAgent";
+import { pandaScoreFetch } from "../../../lib/pandaScoreFetch";
 
-const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
+
 
 // Mapeo de IDs de juegos a los nombres de la API de PandaScore
 const GAME_MAPPING: Record<string, string> = {
@@ -146,21 +146,29 @@ export async function GET(req: Request) {
     
     const url = new URL(`https://api.pandascore.co/${game}/players`);
     url.searchParams.set("per_page", q ? "20" : "50");
-    url.searchParams.set("token", PANDA_SCORE_TOKEN);
+    
     if (q) {
       url.searchParams.set("search[name]", q);
     }
     
     console.log(`API URL: ${url.toString()}`);
     
-    const res = await fetch(url.toString(), {
-      cache: "no-store",
-      dispatcher: getProxyAgent(),
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'EMob-Esports/1.0'
+    const searchParamsApi = new URLSearchParams();
+    searchParamsApi.set("per_page", q ? "20" : "50");
+    if (q) {
+      searchParamsApi.set("search[name]", q);
+    }
+    const res = await pandaScoreFetch(
+      url.toString(),
+      searchParamsApi,
+      {
+        cache: "no-store",
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'EMob-Esports/1.0'
+        }
       }
-    } as RequestInit & { dispatcher?: any });
+    );
     
     console.log(`API Response status: ${res.status}`);
     
@@ -173,6 +181,8 @@ export async function GET(req: Request) {
     const data = await res.json();
     console.log(`Received ${data.length} players for ${game}`);
     
+    
+
     if (!Array.isArray(data)) {
       console.error("API did not return an array:", data);
       return new NextResponse("Invalid API response format", { status: 500 });

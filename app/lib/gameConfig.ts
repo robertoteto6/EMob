@@ -53,7 +53,7 @@ export const SUPPORTED_GAMES: GameConfig[] = [
     apiName: "r6siege"
   },
   {
-    id: "ow",
+    id: "overwatch",
     name: "Overwatch 2",
     icon: "/overwatch.svg",
     color: "#F99E1A",
