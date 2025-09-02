@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { debounce } from "../lib/utils";
+import { debounce, apiCache } from "../lib/utils";
 
 interface SearchItem {
   id: number;
@@ -37,6 +37,7 @@ export default function Search({
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const controllerRef = useRef<AbortController | null>(null);
 
   // Cargar búsquedas recientes del localStorage
   useEffect(() => {
@@ -50,6 +51,11 @@ export default function Search({
     }
   }, []);
 
+  // Cancelar peticiones pendientes al desmontar
+  useEffect(() => {
+    return () => controllerRef.current?.abort();
+  }, []);
+
   // Función de búsqueda optimizada con debounce
   const debouncedSearch = useCallback(
     debounce(async (searchQuery: string, searchGame: string, isGlobal: boolean) => {
@@ -59,26 +65,37 @@ export default function Search({
         return;
       }
 
+      const cacheKey = `${isGlobal ? 'all' : searchGame}:${searchQuery}`;
+      const cached = apiCache.get(cacheKey);
+      if (cached) {
+        setResults(cached);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
+      controllerRef.current?.abort();
       const controller = new AbortController();
-      
+      controllerRef.current = controller;
+
       try {
-        const searchUrl = isGlobal 
+        const searchUrl = isGlobal
           ? `/api/esports/search?q=${encodeURIComponent(searchQuery)}`
           : `/api/esports/search?q=${encodeURIComponent(searchQuery)}&game=${searchGame}`;
-        
-        const res = await fetch(searchUrl, { 
+
+        const res = await fetch(searchUrl, {
           signal: controller.signal,
           headers: {
             'Accept': 'application/json',
           }
         });
-        
+
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
-        
+
         const data = await res.json();
+        apiCache.set(cacheKey, data || []);
         setResults(data || []);
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
