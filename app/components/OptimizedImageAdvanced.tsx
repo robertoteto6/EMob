@@ -9,7 +9,7 @@ import React, {
   forwardRef,
   ImgHTMLAttributes
 } from 'react';
-import Image from 'next/image';
+import NextImage from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 
@@ -147,9 +147,7 @@ const OptimizedImageAdvanced = memo(forwardRef<HTMLDivElement, OptimizedImagePro
     webp = true,
     avif = true,
     ...props
-  },
-  ref
-)) => {
+  }, ref) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [currentSrc, setCurrentSrc] = useState(src);
@@ -276,7 +274,7 @@ const OptimizedImageAdvanced = memo(forwardRef<HTMLDivElement, OptimizedImagePro
                 className="w-full h-full"
               />
             ) : placeholder === 'blur' && blurDataURL ? (
-              <Image
+              <NextImage
                 src={blurDataURL}
                 alt=""
                 fill
@@ -310,7 +308,7 @@ const OptimizedImageAdvanced = memo(forwardRef<HTMLDivElement, OptimizedImagePro
                 {...props}
               />
             ) : (
-              <Image
+              <NextImage
                 src={optimizedSrc}
                 alt={alt}
                 fill
