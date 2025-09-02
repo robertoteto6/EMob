@@ -8,6 +8,7 @@ import Header from "./components/Header";
 import ChatBot from "./components/ChatBot";
 import LiveScoreTicker from "./components/LiveScoreTicker";
 import NotificationSystem, { useNotifications } from "./components/NotificationSystem";
+import ScrollToTop from "./components/ScrollToTop";
 import { MatchSkeleton } from "./components/Skeleton";
 import { SUPPORTED_GAMES, type GameConfig } from "./lib/gameConfig";
 
@@ -1031,6 +1032,7 @@ export default function Home() {
       />
       
       <ChatBot />
+      <ScrollToTop />
     </>
   );
 }
