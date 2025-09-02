@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import { getProxyAgent } from "../../../lib/proxyAgent";
 import { pandaScoreFetch } from "../../../lib/pandaScoreFetch";
 import { getFallbackTeams } from "../../../lib/fallbackData";
-
-const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
 
 // Mapeo de IDs de juegos a los nombres de la API de PandaScore
 const GAME_MAPPING: Record<string, string> = {
@@ -99,7 +96,7 @@ export async function GET(req: Request) {
     if (!res.ok) {
       const errorText = await res.text();
       console.error(`API Error: ${res.status} - ${errorText}`);
-      
+
       // Si es rate limit, devolver datos de respaldo
       if (res.status === 429) {
         console.log("Rate limit hit, returning fallback data");
@@ -110,8 +107,9 @@ export async function GET(req: Request) {
         }
         return NextResponse.json([]);
       }
-      
-      return new NextResponse(`Failed to fetch teams: ${res.status} - ${errorText}`, { status: res.status });
+
+      // En caso de error devolver array vacío para evitar 404 en el cliente
+      return NextResponse.json([]);
     }
     
     const data = await res.json();
@@ -119,7 +117,7 @@ export async function GET(req: Request) {
     
     if (!Array.isArray(data)) {
       console.error("API did not return an array:", data);
-      return new NextResponse("Invalid API response format", { status: 500 });
+      return NextResponse.json([]);
     }
     
     // Enriquecer los datos de equipos con información básica (sin muchas requests para evitar rate limit)
@@ -158,7 +156,6 @@ export async function GET(req: Request) {
     return NextResponse.json(sortedTeams);
   } catch (error) {
     console.error("Error fetching teams:", error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new NextResponse(`Server error: ${errorMessage}`, { status: 500 });
+    return NextResponse.json([]);
   }
 }
