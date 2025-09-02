@@ -1,9 +1,16 @@
 import { getProxyAgent } from './proxyAgent';
 
-export async function pandaScoreFetch(baseUrl: string, searchParams: URLSearchParams = new URLSearchParams(), options: RequestInit = {}) {
-  const keys = [process.env.PANDA_SCORE_TOKEN, process.env.PANDA_SCORE_TOKEN_FALLBACK];
+export async function pandaScoreFetch(
+  baseUrl: string,
+  searchParams: URLSearchParams = new URLSearchParams(),
+  options: RequestInit = {}
+) {
+  const keys = [
+    process.env.PANDA_SCORE_TOKEN,
+    process.env.PANDA_SCORE_TOKEN_FALLBACK,
+  ].filter(Boolean) as string[];
 
-  if (!keys[0] || !keys[1]) {
+  if (keys.length === 0) {
     throw new Error('Missing PandaScore API keys in environment variables');
   }
 
@@ -16,9 +23,9 @@ export async function pandaScoreFetch(baseUrl: string, searchParams: URLSearchPa
 
     try {
       const res = await fetch(url.toString(), {
-        ...options,
+        ...(options as RequestInit),
         dispatcher: getProxyAgent(),
-      });
+      } as any);
 
       if (res.ok) {
         return res;

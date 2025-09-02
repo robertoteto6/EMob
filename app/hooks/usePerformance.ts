@@ -82,7 +82,7 @@ export const usePerformance = (options: UsePerformanceOptions = {}) => {
         if (!clsEntry.hadRecentInput) {
           metrics.cls = (metrics.cls || 0) + clsEntry.value;
           if (enableLogging) {
-            console.log(`📐 Cumulative Layout Shift: ${metrics.cls.toFixed(4)}`);
+            console.log(`📐 Cumulative Layout Shift: ${(metrics.cls ?? 0).toFixed(4)}`);
           }
         }
         break;

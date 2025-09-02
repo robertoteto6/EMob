@@ -134,11 +134,11 @@ const initialState: AppState = {
 };
 
 // Store principal con middleware
-export const useAppStore = create<AppStore>()()
-  (devtools(
+export const useAppStore = create<AppStore>()(
+  devtools(
     persist(
       subscribeWithSelector(
-        immer((set, get) => ({
+        immer<AppStore>((set, get) => ({
           ...initialState,
           
           // Acciones de usuario
@@ -159,11 +159,11 @@ export const useAppStore = create<AppStore>()()
             }
           }),
           
-          removeFavoriteTeam: (teamId) => set((state) => {
-            if (state.user) {
-              state.user.favoriteTeams = state.user.favoriteTeams.filter(id => id !== teamId);
-            }
-          }),
+            removeFavoriteTeam: (teamId) => set((state) => {
+              if (state.user) {
+                state.user.favoriteTeams = state.user.favoriteTeams.filter((id: string) => id !== teamId);
+              }
+            }),
           
           addFavoritePlayer: (playerId) => set((state) => {
             if (state.user && !state.user.favoritePlayers.includes(playerId)) {
@@ -171,11 +171,11 @@ export const useAppStore = create<AppStore>()()
             }
           }),
           
-          removeFavoritePlayer: (playerId) => set((state) => {
-            if (state.user) {
-              state.user.favoritePlayers = state.user.favoritePlayers.filter(id => id !== playerId);
-            }
-          }),
+            removeFavoritePlayer: (playerId) => set((state) => {
+              if (state.user) {
+                state.user.favoritePlayers = state.user.favoritePlayers.filter((id: string) => id !== playerId);
+              }
+            }),
           
           // Acciones de datos
           setMatches: (matches) => set((state) => {
@@ -183,8 +183,8 @@ export const useAppStore = create<AppStore>()()
             state.lastUpdated = Date.now();
           }),
           
-          updateMatch: (matchId, updates) => set((state) => {
-            const matchIndex = state.matches.findIndex(m => m.id === matchId);
+            updateMatch: (matchId, updates) => set((state) => {
+            const matchIndex = state.matches.findIndex((m: Match) => m.id === matchId);
             if (matchIndex !== -1) {
               state.matches[matchIndex] = { ...state.matches[matchIndex], ...updates };
             }
@@ -296,7 +296,8 @@ export const useAppStore = create<AppStore>()()
     {
       name: 'emob-store'
     }
-  ));
+  )
+);
 
 // Selectores optimizados
 export const useUser = () => useAppStore((state) => state.user);

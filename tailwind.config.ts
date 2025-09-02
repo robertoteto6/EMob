@@ -60,21 +60,15 @@ const config: Config = {
     },
   },
   plugins: [],
-  // Optimizaciones de rendimiento
-  corePlugins: {
-    // Deshabilitar plugins no utilizados
-    preflight: true,
-    container: false,
-  },
   // Purge optimizado para producción
-  safelist: [
-    // Clases dinámicas que podrían ser purgadas incorrectamente
-    'animate-pulse',
-    'animate-spin',
-    'bg-green-500/10',
-    'border-green-500',
-    'text-green-400',
-  ],
+  // safelist: [
+  //   // Clases dinámicas que podrían ser purgadas incorrectamente
+  //   'animate-pulse',
+  //   'animate-spin',
+  //   'bg-green-500/10',
+  //   'border-green-500',
+  //   'text-green-400',
+  // ],
 }
 
 export default config
