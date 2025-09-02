@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import { getProxyAgent } from "../../../lib/proxyAgent";
 import { pandaScoreFetch } from "../../../lib/pandaScoreFetch";
-
-const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
-const GAMES = ["dota2", "lol", "csgo", "r6siege", "ow"];
+import { apiCache } from "../../../lib/utils";
 
 // Mapeo de IDs de juegos a los nombres de la API de PandaScore
 const GAME_MAPPING: Record<string, string> = {
@@ -33,6 +30,12 @@ export async function GET(req: Request) {
 
   if (!q) {
     return NextResponse.json([]);
+  }
+
+  const cacheKey = `search:${gameParam || 'all'}:${q}`;
+  const cached = apiCache.get(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached);
   }
 
   const gameList = gameParam ? [gameParam] : Object.keys(GAME_MAPPING);
@@ -104,5 +107,7 @@ export async function GET(req: Request) {
     }
   }
 
-  return NextResponse.json(results.slice(0, 50));
+  const sliced = results.slice(0, 50);
+  apiCache.set(cacheKey, sliced);
+  return NextResponse.json(sliced);
 }
