@@ -11,6 +11,7 @@ import Countdown from "../components/Countdown";
 import { MatchSkeleton, TournamentSkeleton } from "../components/Skeleton";
 import LiveScoreTicker from "../components/LiveScoreTicker";
 import NotificationSystem, { useNotifications } from "../components/NotificationSystem";
+import ScrollToTop from "../components/ScrollToTop";
 
 // Icono de favorito (estrella)
 function Star({ filled, ...props }: { filled: boolean; [key: string]: any }) {
@@ -1095,6 +1096,7 @@ function EsportsPageContent() {
       />
       
       <ChatBot />
+      <ScrollToTop />
     </>
   );
 }
