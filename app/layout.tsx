@@ -6,6 +6,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Suspense } from "react";
 import Script from "next/script";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -190,6 +191,7 @@ export default function RootLayout({
               }
             `
           }} />
+          <SpeedInsights />
         </ErrorBoundary>
       </body>
     </html>
