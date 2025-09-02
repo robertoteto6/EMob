@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import Search from "./Search";
 
-export default function Header() {
+function HeaderContent() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -44,10 +44,10 @@ export default function Header() {
   ];
 
   return (
-    <header 
+    <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isClient && isScrolled 
-          ? "bg-black/95 backdrop-blur-md shadow-lg border-b border-green-500/20" 
+        isClient && isScrolled
+          ? "bg-black/95 backdrop-blur-md shadow-lg border-b border-green-500/20"
           : "bg-transparent"
       }`}
     >
@@ -153,5 +153,13 @@ export default function Header() {
         )}
       </div>
     </header>
+  );
+}
+
+export default function Header() {
+  return (
+    <Suspense fallback={null}>
+      <HeaderContent />
+    </Suspense>
   );
 }
