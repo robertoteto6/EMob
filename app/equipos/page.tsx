@@ -5,11 +5,11 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import Header from "../../components/Header";
-import ChatBot from "../../components/ChatBot";
-import { TeamSkeleton } from "../../components/Skeleton";
-import LiveScoreTicker from "../../components/LiveScoreTicker";
-import NotificationSystem, { useNotifications } from "../../components/NotificationSystem";
+import Header from "../components/Header";
+import ChatBot from "../components/ChatBot";
+import { TeamSkeleton } from "../components/Skeleton";
+import LiveScoreTicker from "../components/LiveScoreTicker";
+import NotificationSystem, { useNotifications } from "../components/NotificationSystem";
 
 // Icono de favorito (estrella)
 function Star({ filled, ...props }: { filled: boolean; [key: string]: any }) {

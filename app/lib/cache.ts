@@ -163,11 +163,11 @@ export class OptimizedCache<T = any> {
       case 'lfu': // Least Frequently Used
         keyToDelete = this.findLFU();
         break;
-      case 'fifo': // First In, First Out
-        keyToDelete = this.cache.keys().next().value;
-        break;
-      default:
-        keyToDelete = this.cache.keys().next().value;
+        case 'fifo': // First In, First Out
+          keyToDelete = this.cache.keys().next().value as string;
+          break;
+        default:
+          keyToDelete = this.cache.keys().next().value as string;
     }
     
     this.delete(keyToDelete);

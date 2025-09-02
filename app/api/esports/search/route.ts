@@ -48,10 +48,10 @@ export async function GET(req: Request) {
 
     try {
       const [teams, players, tournaments, matches] = await Promise.all([
-        fetchJSON(`${base}/teams?${params}`),
-        fetchJSON(`${base}/players?${params}`),
-        fetchJSON(`${base}/tournaments?${params}`),
-        fetchJSON(`${base}/matches?${params}`),
+        fetchJSON(`${base}/teams`, params),
+        fetchJSON(`${base}/players`, params),
+        fetchJSON(`${base}/tournaments`, params),
+        fetchJSON(`${base}/matches`, params),
       ]);
 
       teams.forEach((t: any) => {
