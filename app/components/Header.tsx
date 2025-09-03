@@ -38,7 +38,7 @@ function HeaderContent() {
 
   const navigation = [
     { name: "Inicio", href: "/" },
-    { name: "Partidos", href: "/partidos" },
+    { name: "Partidos", href: "/esports" },
     { name: "Equipos", href: "/equipos" },
     { name: "Jugadores", href: "/jugadores" },
   ];

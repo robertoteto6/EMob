@@ -375,7 +375,7 @@ function TeamsPageContent() {
     setGame(newGame);
     const params = new URLSearchParams(searchParams?.toString());
     params.set('game', newGame);
-    router.push(`/esports/teams?${params.toString()}`);
+    router.push(`/equipos?${params.toString()}`);
   };
 
   const [teams, setTeams] = useState<Team[]>([]);
