@@ -8,6 +8,11 @@ describe('formatNumber', () => {
     expect(formatNumber(1_500)).toBe('1.5K');
     expect(formatNumber(500)).toBe('500');
   });
+
+  it('formats whole millions and thousands without trailing .0', () => {
+    expect(formatNumber(1_000_000)).toBe('1M');
+    expect(formatNumber(2_000)).toBe('2K');
+  });
 });
 
 describe('cn', () => {
