@@ -579,7 +579,7 @@ export default function Home() {
             </p>
             <div className="w-24 h-1 bg-gradient-to-r from-green-500 to-blue-500 mx-auto mt-4 rounded-full"></div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
             {GAMES.map((game, index) => (
               <div 
                 key={game.id} 
@@ -670,7 +670,7 @@ export default function Home() {
                 <span className="text-green-400">🎮</span>
                 Seleccionar Juegos
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
                 {/* Opción "Todos los juegos" */}
                 <button
                   onClick={() => setSelectedGame("all")}
