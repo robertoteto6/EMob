@@ -31,8 +31,8 @@ export default function OptimizedImage({
   className,
   fallbackSrc = '/placeholder-image.svg',
   priority = false,
-  quality = 75,
-  placeholder = 'empty',
+  quality = 85,
+  placeholder = 'blur',
   blurDataURL,
   sizes,
   fill = false,
@@ -44,10 +44,19 @@ export default function OptimizedImage({
   const [imageSrc, setImageSrc] = useState(src);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const imgRef = useRef<HTMLImageElement>(null);
+  const maxRetries = 3;
 
   // Generar blur placeholder automáticamente si no se proporciona
   const defaultBlurDataURL = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=';
+
+  // Optimizar sizes automáticamente basado en el viewport
+  const optimizedSizes = sizes || (
+    width && height 
+      ? `(max-width: 640px) ${Math.min(width, 640)}px, (max-width: 1024px) ${Math.min(width, 1024)}px, ${width}px`
+      : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+  );
 
   useEffect(() => {
     setImageSrc(src);
@@ -61,10 +70,18 @@ export default function OptimizedImage({
   };
 
   const handleError = () => {
-    setHasError(true);
-    setIsLoading(false);
-    setImageSrc(fallbackSrc);
-    onError?.();
+    if (retryCount < maxRetries && imageSrc !== fallbackSrc) {
+      // Intentar recargar la imagen original
+      setTimeout(() => {
+        setRetryCount(prev => prev + 1);
+        setImageSrc(src + `?retry=${retryCount + 1}`);
+      }, 1000 * (retryCount + 1)); // Backoff exponencial
+    } else {
+      setHasError(true);
+      setIsLoading(false);
+      setImageSrc(fallbackSrc);
+      onError?.();
+    }
   };
 
   const imageProps = {
@@ -76,7 +93,7 @@ export default function OptimizedImage({
     loading,
     placeholder,
     blurDataURL: blurDataURL || defaultBlurDataURL,
-    sizes: sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw',
+    sizes: optimizedSizes,
     onLoad: handleLoad,
     onError: handleError,
     className: cn(

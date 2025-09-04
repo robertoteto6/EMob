@@ -134,7 +134,7 @@ const initialState: AppState = {
 };
 
 // Store principal con middleware
-export const useAppStore = create<AppStore>()(
+export const useAppStore = create<AppStore>()()
   devtools(
     persist(
       subscribeWithSelector(
@@ -278,7 +278,8 @@ export const useAppStore = create<AppStore>()(
         partialize: (state) => ({
           user: state.user,
           isAuthenticated: state.isAuthenticated,
-          sidebarOpen: state.sidebarOpen
+          sidebarOpen: state.sidebarOpen,
+          // Solo persistir preferencias del usuario, no datos temporales
         }),
         version: 1,
         migrate: (persistedState: any, version) => {
@@ -385,17 +386,25 @@ useAppStore.subscribe(
   }
 );
 
-// Limpieza automática de cache
+// Optimización: Limpiar cache automáticamente cada 5 minutos
 setInterval(() => {
-  const state = useAppStore.getState();
+  const store = useAppStore.getState();
   const now = Date.now();
-  const cache = state.cache;
   
-  for (const [key, value] of cache.entries()) {
-    if (now - value.timestamp > value.ttl) {
-      cache.delete(key);
-    }
+  // Usar requestIdleCallback si está disponible para no bloquear el hilo principal
+  const cleanupCache = () => {
+    store.cache.forEach((value, key) => {
+      if (now - value.timestamp > value.ttl) {
+        store.clearCache(key);
+      }
+    });
+  };
+  
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    window.requestIdleCallback(cleanupCache);
+  } else {
+    cleanupCache();
   }
-}, 60000); // Cada minuto
+}, 300000); // Cada 5 minutos
 
 export type { User, Match, Team, Player, AppState, AppActions, AppStore };

@@ -1,10 +1,14 @@
 import type { Dispatcher } from "undici";
-import { createRequire } from "node:module";
 
 // Lazily import the proxy implementation only when running in Node.js to avoid
 // bundling it for the browser.
 
 export function getProxyAgent(): Dispatcher | undefined {
+  // Solo ejecutar en el servidor
+  if (typeof window !== 'undefined') {
+    return undefined;
+  }
+  
   const proxyUrl =
     process.env.https_proxy ||
     process.env.HTTPS_PROXY ||
@@ -13,8 +17,13 @@ export function getProxyAgent(): Dispatcher | undefined {
   if (!proxyUrl) {
     return undefined;
   }
-  // Dynamically import the agent implementation only when needed.
-  const require = createRequire(import.meta.url);
-  const { ProxyAgent } = require("undici") as typeof import("undici");
-  return new ProxyAgent(proxyUrl);
+  
+  try {
+    // Usar dynamic import para evitar problemas de bundling
+    const undici = require("undici");
+    return new undici.ProxyAgent(proxyUrl);
+  } catch (error) {
+    console.warn('Failed to create proxy agent:', error);
+    return undefined;
+  }
 }

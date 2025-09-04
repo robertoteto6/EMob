@@ -40,32 +40,66 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ');
 }
 
-// Cache simple para resultados de API
-class SimpleCache {
-  private cache = new Map<string, { data: any; timestamp: number }>();
+// Cache optimizado para resultados de API
+class OptimizedCache {
+  private cache = new Map<string, { data: any; timestamp: number; accessCount: number; lastAccess: number }>();
   private ttl: number;
+  private maxSize: number;
 
-  constructor(ttlMinutes: number = 5) {
+  constructor(ttlMinutes: number = 5, maxSize: number = 100) {
     this.ttl = ttlMinutes * 60 * 1000; // Convertir a milisegundos
+    this.maxSize = maxSize;
   }
 
   get(key: string): any | null {
     const item = this.cache.get(key);
     if (!item) return null;
-
-    if (Date.now() - item.timestamp > this.ttl) {
+    
+    const now = Date.now();
+    if (now - item.timestamp > this.ttl) {
       this.cache.delete(key);
       return null;
     }
-
+    
+    // Actualizar estadísticas de acceso
+    item.accessCount++;
+    item.lastAccess = now;
+    
     return item.data;
   }
 
   set(key: string, data: any): void {
+    // Si el cache está lleno, eliminar el elemento menos usado
+    if (this.cache.size >= this.maxSize) {
+      this.evictLeastUsed();
+    }
+    
+    const now = Date.now();
     this.cache.set(key, {
       data,
-      timestamp: Date.now()
+      timestamp: now,
+      accessCount: 1,
+      lastAccess: now
     });
+  }
+
+  private evictLeastUsed(): void {
+    let leastUsedKey = '';
+    let leastUsedCount = Infinity;
+    let oldestAccess = Infinity;
+    
+    for (const [key, item] of this.cache.entries()) {
+      if (item.accessCount < leastUsedCount || 
+          (item.accessCount === leastUsedCount && item.lastAccess < oldestAccess)) {
+        leastUsedKey = key;
+        leastUsedCount = item.accessCount;
+        oldestAccess = item.lastAccess;
+      }
+    }
+    
+    if (leastUsedKey) {
+      this.cache.delete(leastUsedKey);
+    }
   }
 
   clear(): void {
@@ -78,7 +112,7 @@ class SimpleCache {
 }
 
 // Instancia global del cache
-export const apiCache = new SimpleCache(5); // 5 minutos de TTL
+export const apiCache = new OptimizedCache(5, 50); // 5 minutos de TTL, máximo 50 elementos
 
 // Función para throttle (limitar frecuencia de ejecución)
 export function throttle<T extends (...args: any[]) => any>(

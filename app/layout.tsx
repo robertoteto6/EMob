@@ -4,6 +4,8 @@ import "./globals.css";
 import Header from "./components/Header";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AuthProvider } from "./contexts/AuthContext";
+import { AccessibilityProvider, AccessibilityButton, SkipToContent } from "./components/AccessibilityEnhancer";
+import { UXProvider, NotificationContainer, GlobalLoader } from "./components/UXEnhancer";
 import { Suspense } from "react";
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -85,11 +87,17 @@ export const metadata: Metadata = {
   },
   verification: {
     google: 'your-google-verification-code',
+    yandex: 'your-yandex-verification-code',
   },
   other: {
     'theme-color': '#00FF80',
     'color-scheme': 'dark',
     'format-detection': 'telephone=no',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+    'msapplication-TileColor': '#00FF80',
+    'application-name': 'EMob',
+    'apple-mobile-web-app-title': 'EMob',
   },
 };
 
@@ -150,25 +158,27 @@ export default function RootLayout({
       
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white min-h-screen`}>
         <ErrorBoundary>
-          <AuthProvider>
-            {/* Skip to main content for accessibility */}
-            <a 
-              href="#main-content" 
-              className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-green-500 text-black px-4 py-2 rounded z-50 transition-all duration-200"
-            >
-              Saltar al contenido principal
-            </a>
-            
-            <Suspense fallback={
-              <div className="animate-pulse bg-gray-800 h-16 w-full"></div>
-            }>
-              <Header />
-            </Suspense>
-            
-            <main id="main-content" className="focus:outline-none">
-              {children}
-            </main>
-          </AuthProvider>
+          <UXProvider>
+            <AccessibilityProvider>
+              <AuthProvider>
+                <SkipToContent />
+                
+                <Suspense fallback={
+                  <div className="animate-pulse bg-gray-800 h-16 w-full" role="status" aria-label="Cargando navegación"></div>
+                }>
+                  <Header />
+                </Suspense>
+                
+                <main id="main-content" className="focus:outline-none" role="main">
+                  {children}
+                </main>
+                
+                <AccessibilityButton />
+                <NotificationContainer />
+                <GlobalLoader />
+              </AuthProvider>
+            </AccessibilityProvider>
+          </UXProvider>
           
           {/* Performance monitoring */}
           <script dangerouslySetInnerHTML={{

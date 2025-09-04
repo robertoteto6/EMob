@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState, useMemo, Suspense } from "react";
+import { useEffect, useState, useMemo, useCallback, Suspense, memo } from "react";
 import Link from "next/link";
 import Header from "./components/Header";
 import ChatBot from "./components/ChatBot";
@@ -14,7 +14,10 @@ import { SUPPORTED_GAMES, type GameConfig } from "./lib/gameConfig";
 
 // Custom hook to handle time consistently between server and client
 function useCurrentTime() {
-  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [currentTime, setCurrentTime] = useState<number>(() => {
+    // Initialize with a consistent value for SSR
+    return typeof window !== 'undefined' ? Math.floor(Date.now() / 1000) : 0;
+  });
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -36,8 +39,8 @@ interface Match {
   id: number;
   radiant: string;
   dire: string;
-  radiant_score: number;
-  dire_score: number;
+  radiant_score: number | null;
+  dire_score: number | null;
   start_time: number;
   league: string;
   radiant_win: boolean | null;
@@ -72,23 +75,55 @@ const GAMES = SUPPORTED_GAMES;
 async function fetchAllMatches(): Promise<Match[]> {
   const allMatches: Match[] = [];
   
-  for (const game of GAMES) {
-    try {
-      const res = await fetch(`/api/esports/matches?game=${game.id}`, {
-        cache: "no-store",
-      });
-      if (!res.ok) continue;
+  // Usar consultas en lote para mejor rendimiento
+  const batchConfigs = GAMES.map(game => ({
+    endpoint: `/api/esports/matches`,
+    params: { game: game.id },
+    cacheTTL: 2 * 60 * 1000, // 2 minutos
+    priority: 'high' as const,
+  }));
+  
+  try {
+    const { batchQuery } = await import('./lib/queryOptimizer');
+    const results = await batchQuery(batchConfigs);
+    
+    for (let i = 0; i < GAMES.length; i++) {
+      const game = GAMES[i];
+      const result = results[i];
       
-      const data = await res.json();
+      if (result.error) {
+        console.warn(`Failed to fetch matches for ${game.id}:`, result.error);
+        continue;
+      }
+      
+      const data = result.data;
+      
+      // Validar que data es un array
+      if (!Array.isArray(data)) {
+        console.warn(`Invalid data format for ${game.id}:`, data);
+        continue;
+      }
+      
       const gameMatches = data
         .map((m: any) => {
+          // Validar datos requeridos
+          if (!m || typeof m.id !== 'number') {
+            return null;
+          }
+          
           const team1 = m.opponents?.[0]?.opponent;
           const team2 = m.opponents?.[1]?.opponent;
           const dateStr = m.begin_at ?? m.scheduled_at;
           const date = dateStr ? new Date(dateStr) : null;
           const start_time = date && !isNaN(date.getTime()) ? date.getTime() / 1000 : null;
-          const radiant_score = Array.isArray(m.results) && m.results[0]?.score != null ? m.results[0].score : null;
-          const dire_score = Array.isArray(m.results) && m.results[1]?.score != null ? m.results[1].score : null;
+          
+          // Validar que tenemos un tiempo válido
+          if (start_time === null) {
+            return null;
+          }
+          
+          const radiant_score = Array.isArray(m.results) && m.results[0]?.score != null ? Number(m.results[0].score) : null;
+          const dire_score = Array.isArray(m.results) && m.results[1]?.score != null ? Number(m.results[1].score) : null;
           
           return {
             id: m.id,
@@ -102,12 +137,12 @@ async function fetchAllMatches(): Promise<Match[]> {
             game: game.id,
           } as Match;
         })
-        .filter((m: Match) => m.start_time !== null);
+        .filter((m: Match | null): m is Match => m !== null);
         
       allMatches.push(...gameMatches);
-    } catch (error) {
-      console.error(`Error fetching matches for ${game.id}:`, error);
     }
+  } catch (error) {
+    console.error('Error fetching matches:', error);
   }
   
   return allMatches.sort((a, b) => a.start_time - b.start_time);
@@ -117,39 +152,72 @@ async function fetchAllMatches(): Promise<Match[]> {
 async function fetchAllTournaments(): Promise<Tournament[]> {
   const allTournaments: Tournament[] = [];
   
-  for (const game of GAMES) {
-    try {
-      const res = await fetch(`/api/esports/tournaments?game=${game.id}`, {
-        cache: "no-store",
-      });
-      if (!res.ok) continue;
+  // Usar consultas en lote optimizadas
+  const batchConfigs = GAMES.map(game => ({
+    endpoint: `/api/esports/tournaments`,
+    params: { game: game.id },
+    cacheTTL: 5 * 60 * 1000, // 5 minutos (los torneos cambian menos frecuentemente)
+    priority: 'medium' as const,
+  }));
+  
+  try {
+    const { batchQuery } = await import('./lib/queryOptimizer');
+    const results = await batchQuery(batchConfigs);
+    
+    for (let i = 0; i < GAMES.length; i++) {
+      const game = GAMES[i];
+      const result = results[i];
       
-      const data = await res.json();
-      const gameTournaments = data.map((t: any) => ({
-        id: t.id,
-        name: t.name ?? "",
-        begin_at: t.begin_at ? new Date(t.begin_at).getTime() / 1000 : null,
-        end_at: t.end_at ? new Date(t.end_at).getTime() / 1000 : null,
-        league: t.league?.name ?? "",
-        serie: t.serie?.full_name ?? "",
-        prizepool: t.prizepool ?? null,
-        tier: t.tier ?? null,
-        region: t.region ?? null,
-        live_supported: !!t.live_supported,
-        game: game.id,
-      })) as Tournament[];
+      if (result.error) {
+        console.warn(`Failed to fetch tournaments for ${game.id}:`, result.error);
+        continue;
+      }
+      
+      const data = result.data;
+      
+      // Validar que data es un array
+      if (!Array.isArray(data)) {
+        console.warn(`Invalid tournament data format for ${game.id}:`, data);
+        continue;
+      }
+      
+      const gameTournaments = data
+        .map((t: any) => {
+          // Validar datos requeridos
+          if (!t || typeof t.id !== 'number') {
+            return null;
+          }
+          
+          const beginAt = t.begin_at ? new Date(t.begin_at) : null;
+          const endAt = t.end_at ? new Date(t.end_at) : null;
+          
+          return {
+            id: t.id,
+            name: t.name ?? "",
+            begin_at: beginAt && !isNaN(beginAt.getTime()) ? beginAt.getTime() / 1000 : null,
+            end_at: endAt && !isNaN(endAt.getTime()) ? endAt.getTime() / 1000 : null,
+            league: t.league?.name ?? "",
+            serie: t.serie?.full_name ?? "",
+            prizepool: t.prizepool ?? null,
+            tier: t.tier ?? null,
+            region: t.region ?? null,
+            live_supported: !!t.live_supported,
+            game: game.id,
+          } as Tournament;
+        })
+        .filter((t: Tournament | null): t is Tournament => t !== null);
       
       allTournaments.push(...gameTournaments);
-    } catch (error) {
-      console.error(`Error fetching tournaments for ${game.id}:`, error);
     }
+  } catch (error) {
+    console.error('Error fetching tournaments:', error);
   }
   
   return allTournaments;
 }
 
-// Componente de estadísticas del juego
-function GameStatsCard({ game, stats }: { game: GameConfig, stats: GameStats }) {
+// Componente de estadísticas del juego (memoizado)
+const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameConfig, stats: GameStats }) {
   return (
     <Link href={`/esports/game/${game.id}`} className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${game.gradient} p-8 text-white shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 border border-white/10 cursor-pointer block`}>
       {/* Patrón de fondo */}
@@ -158,8 +226,8 @@ function GameStatsCard({ game, stats }: { game: GameConfig, stats: GameStats }) 
       </div>
       
       {/* Icono flotante */}
-      <div className="absolute top-4 right-4 opacity-20 group-hover:opacity-30 transition-opacity duration-500">
-        <img src={game.icon} alt={game.name} className="w-16 h-16 group-hover:scale-110 transition-transform duration-500" />
+      <div className="absolute top-4 right-4 opacity-20 group-hover:opacity-30 transition-opacity duration-500" aria-hidden="true">
+        <img src={game.icon} alt="" className="w-16 h-16 group-hover:scale-110 transition-transform duration-500" />
       </div>
       
       {/* Indicador de click */}
@@ -177,8 +245,8 @@ function GameStatsCard({ game, stats }: { game: GameConfig, stats: GameStats }) 
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="relative">
-            <img src={game.icon} alt={game.name} className="w-8 h-8 group-hover:scale-110 transition-transform duration-300" />
-            <div className="absolute inset-0 bg-white/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <img src={game.icon} alt={`Icono de ${game.name}`} className="w-8 h-8 group-hover:scale-110 transition-transform duration-300" />
+            <div className="absolute inset-0 bg-white/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true"></div>
           </div>
           <div>
             <h3 className="text-xl font-bold group-hover:text-white transition-colors duration-300">
@@ -247,10 +315,10 @@ function GameStatsCard({ game, stats }: { game: GameConfig, stats: GameStats }) 
       <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/30 transition-colors duration-500"></div>
     </Link>
   );
-}
+});
 
-// Componente de partido destacado
-function FeaturedMatch({ match, currentTime }: { match: Match; currentTime: number }) {
+// Componente de partido destacado (memoizado)
+const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { match: Match; currentTime: number }) {
   const game = GAMES.find(g => g.id === match.game);
   const isLive = match.start_time <= currentTime && match.radiant_win === null;
   const isUpcoming = match.start_time > currentTime;
@@ -277,10 +345,10 @@ function FeaturedMatch({ match, currentTime }: { match: Match; currentTime: numb
                 <div className="relative">
                   <img 
                     src={game.icon} 
-                    alt={game.name} 
+                    alt={`Icono de ${game.name}`} 
                     className="w-8 h-8 group-hover:scale-110 transition-transform duration-300" 
                   />
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-green-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-green-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true"></div>
                 </div>
               )}
               <div>
@@ -401,13 +469,19 @@ function FeaturedMatch({ match, currentTime }: { match: Match; currentTime: numb
             </div>
             
             <div className="flex items-center gap-2">
-              <button className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600/50 text-gray-400 hover:text-white transition-all duration-300 group/btn">
-                <svg className="w-4 h-4 group-hover/btn:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button 
+                className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600/50 text-gray-400 hover:text-white transition-all duration-300 group/btn"
+                aria-label="Agregar a favoritos"
+              >
+                <svg className="w-4 h-4 group-hover/btn:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </button>
-              <button className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600/50 text-gray-400 hover:text-white transition-all duration-300 group/btn">
-                <svg className="w-4 h-4 group-hover/btn:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button 
+                className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600/50 text-gray-400 hover:text-white transition-all duration-300 group/btn"
+                aria-label="Compartir partido"
+              >
+                <svg className="w-4 h-4 group-hover/btn:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                 </svg>
               </button>
@@ -425,9 +499,9 @@ function FeaturedMatch({ match, currentTime }: { match: Match; currentTime: numb
       </div>
     </Link>
   );
-}
+});
 
-export default function Home() {
+const Home = memo(function Home() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
@@ -438,19 +512,36 @@ export default function Home() {
   const { currentTime, isClient } = useCurrentTime();
   const notificationSystem = useNotifications();
 
-  // Cargar datos
-  useEffect(() => {
-    async function loadData() {
+  // Callbacks memoizados para evitar re-renders
+  const handleGameChange = useCallback((game: string) => {
+    setSelectedGame(game);
+  }, []);
+
+  const handleTimeframeChange = useCallback((timeframe: "today" | "week" | "all") => {
+    setSelectedTimeframe(timeframe);
+  }, []);
+
+  // Función de carga de datos memoizada
+  const loadData = useCallback(async () => {
+    try {
       setLoading(true);
       const matchesData = await fetchAllMatches();
       setMatches(matchesData);
+    } catch (error) {
+      console.error('Error loading matches:', error);
+      notificationSystem.addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Error al cargar partidos',
+        priority: 'medium'
+      });
+    } finally {
       setLoading(false);
     }
-    loadData();
-  }, []);
+  }, [notificationSystem.addNotification]);
 
-  useEffect(() => {
-    async function loadTournaments() {
+  const loadTournaments = useCallback(async () => {
+    try {
       setLoadingTournaments(true);
       const tournamentsData = await fetchAllTournaments();
       const activeTournaments = tournamentsData.filter(t => {
@@ -460,13 +551,29 @@ export default function Home() {
         return started && !ended;
       });
       setTournaments(activeTournaments.slice(0, 6));
+    } catch (error) {
+      console.error('Error loading tournaments:', error);
+      notificationSystem.addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Error al cargar torneos',
+        priority: 'medium'
+      });
+    } finally {
       setLoadingTournaments(false);
     }
-    
+  }, [currentTime, notificationSystem.addNotification]);
+
+  // Cargar datos
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
     if (isClient) {
       loadTournaments();
     }
-  }, [isClient]);
+  }, [isClient, loadTournaments]);
 
   // Estadísticas por juego
   const gameStats = useMemo(() => {
@@ -490,6 +597,8 @@ export default function Home() {
 
   // Partidos filtrados por timeframe y juego
   const filteredMatches = useMemo(() => {
+    if (!matches.length) return [];
+    
     let filtered = matches;
 
     // Filtrar por juego
@@ -498,23 +607,25 @@ export default function Home() {
     }
 
     // Filtrar por tiempo
+    const currentTimeMs = currentTime * 1000;
     switch (selectedTimeframe) {
       case "today":
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
+        const todayStartMs = todayStart.getTime();
+        const todayEndMs = todayEnd.getTime();
         filtered = filtered.filter(m => {
           const matchTime = m.start_time * 1000;
-          return matchTime >= todayStart.getTime() && matchTime <= todayEnd.getTime();
+          return matchTime >= todayStartMs && matchTime <= todayEndMs;
         });
         break;
       case "week":
-        const weekStart = currentTime * 1000;
-        const weekEnd = weekStart + (7 * 24 * 60 * 60 * 1000);
+        const weekEnd = currentTimeMs + (7 * 24 * 60 * 60 * 1000);
         filtered = filtered.filter(m => {
           const matchTime = m.start_time * 1000;
-          return matchTime >= weekStart && matchTime <= weekEnd;
+          return matchTime >= currentTimeMs && matchTime <= weekEnd;
         });
         break;
     }
@@ -533,10 +644,12 @@ export default function Home() {
 
   // Partidos destacados (en vivo + próximos importantes)
   const featuredMatches = useMemo(() => {
-    const live = filteredMatches.filter(m => m.start_time <= currentTime && m.radiant_win === null);
-    const upcoming = filteredMatches.filter(m => m.start_time > currentTime).slice(0, 3);
+    if (!filteredMatches.length) return [];
     
-    return [...live.slice(0, 2), ...upcoming].slice(0, 4);
+    const live = filteredMatches.filter(m => m.start_time <= currentTime && m.radiant_win === null);
+    const upcoming = filteredMatches.filter(m => m.start_time > currentTime);
+    
+    return [...live.slice(0, 2), ...upcoming.slice(0, 3)].slice(0, 4);
   }, [filteredMatches, currentTime]);
 
   return (
@@ -719,7 +832,7 @@ export default function Home() {
                         <div className="mb-3">
                           <img 
                             src={game.icon} 
-                            alt={game.name} 
+                            alt={`Icono de ${game.name}`} 
                             className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300" 
                           />
                         </div>
@@ -766,8 +879,9 @@ export default function Home() {
                     setSelectedGame("all");
                   }}
                   className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2"
+                  aria-label="Restablecer filtros a valores por defecto"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                   Restablecer
@@ -867,10 +981,16 @@ export default function Home() {
                   >
                     🎯 Ver Todos los Partidos
                   </Link>
-                  <button className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2">
+                  <button 
+                    className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"
+                    aria-label="Ver mis equipos favoritos"
+                  >
                     ⭐ Mis Favoritos
                   </button>
-                  <button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2">
+                  <button 
+                    className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"
+                    aria-label="Filtrar solo partidos en vivo"
+                  >
                     🔴 Solo En Vivo
                   </button>
                 </div>
@@ -931,10 +1051,10 @@ export default function Home() {
                                 <div className="relative">
                                   <img 
                                     src={game.icon} 
-                                    alt={game.name} 
+                                    alt={`Icono de ${game.name}`} 
                                     className="w-10 h-10 group-hover:scale-110 transition-transform duration-300" 
                                   />
-                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-green-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-green-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true"></div>
                                 </div>
                               )}
                               <div className="flex-1">
@@ -1035,4 +1155,6 @@ export default function Home() {
       <ScrollToTop />
     </>
   );
-}
+});
+
+export default Home;

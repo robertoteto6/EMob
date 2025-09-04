@@ -73,6 +73,7 @@ function transformApiDataToMatchDetail(apiData: any): MatchDetail {
         match_type: apiData.match_type ?? "",
         number_of_games: apiData.number_of_games ?? apiData.games?.length ?? 0,
         radiant_win: apiData.winner?.id !== undefined && team1?.id !== undefined ? apiData.winner.id === team1.id : null,
+        game: apiData.videogame?.slug ?? "unknown",
         games: (apiData.games ?? []).map((g: any) => ({ id: g.id, position: g.position, status: g.status, begin_at: g.begin_at, end_at: g.end_at, winner_id: g.winner?.id ?? null })),
         streams: (apiData.streams_list ?? []).map((s: any) => ({ embed_url: s.embed_url || "", raw_url: s.raw_url || "", language: s.language || "en-US" })),
     };
@@ -120,7 +121,16 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
 
   const showNotification = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     const id = Date.now().toString();
-    setNotifications(prev => [...prev, { id, message, type }]);
+    const notification: Notification = {
+      id,
+      type: type as any,
+      title: type === 'success' ? 'Éxito' : type === 'error' ? 'Error' : 'Información',
+      message,
+      timestamp: Date.now(),
+      read: false,
+      priority: 'medium'
+    };
+    setNotifications(prev => [...prev, notification]);
     setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 5000);
   }, []);
 
