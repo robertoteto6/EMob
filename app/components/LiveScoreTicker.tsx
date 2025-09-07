@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, memo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { apiCache, throttle } from "../lib/utils";
 
 interface LiveMatch {
@@ -216,9 +217,11 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
                   className="flex-shrink-0 text-white hover:text-green-200 transition-all duration-300 hover:scale-105 group"
                 >
                   <div className="flex items-center gap-2 bg-gray-800/30 hover:bg-gray-700/40 px-3 py-1.5 rounded-lg border border-gray-600/20 group-hover:border-green-500/30 transition-all duration-300">
-                    <img 
-                      src={GAME_ICONS[match.game]} 
-                      alt={match.game} 
+                    <Image
+                      src={GAME_ICONS[match.game]}
+                      alt={match.game}
+                      width={16}
+                      height={16}
                       className="w-4 h-4 opacity-70 group-hover:opacity-100"
                     />
                     <div className="flex items-center gap-2 text-sm">
@@ -250,9 +253,11 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
                 >
                   <div className={`bg-gradient-to-r ${GAME_COLORS[match.game]} p-3 rounded-lg hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border border-white/10 group-hover:border-white/20`}>
                     <div className="flex items-center gap-2 mb-2">
-                      <img 
-                        src={GAME_ICONS[match.game]} 
-                        alt={match.game} 
+                      <Image
+                        src={GAME_ICONS[match.game]}
+                        alt={match.game}
+                        width={20}
+                        height={20}
                         className="w-5 h-5"
                       />
                       <span className="text-xs text-white/90 font-medium truncate flex-1">

@@ -36,6 +36,7 @@ export class FirestoreService<T extends FirestoreDocument> {
   // Crear documento
   async create(data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     try {
+  if (!db) throw new Error('Firestore no disponible');
       const docRef = await addDoc(collection(db, this.collectionName), {
         ...data,
         createdAt: new Date(),
@@ -51,6 +52,7 @@ export class FirestoreService<T extends FirestoreDocument> {
   // Obtener documento por ID
   async getById(id: string): Promise<T | null> {
     try {
+  if (!db) throw new Error('Firestore no disponible');
       const docRef = doc(db, this.collectionName, id);
       const docSnap = await getDoc(docRef);
       
@@ -70,6 +72,7 @@ export class FirestoreService<T extends FirestoreDocument> {
   // Obtener todos los documentos
   async getAll(limitCount?: number): Promise<T[]> {
     try {
+  if (!db) throw new Error('Firestore no disponible');
       let q = query(collection(db, this.collectionName), orderBy('createdAt', 'desc'));
       
       if (limitCount) {
@@ -90,6 +93,7 @@ export class FirestoreService<T extends FirestoreDocument> {
   // Obtener documentos con filtro
   async getWhere(field: string, operator: any, value: any, limitCount?: number): Promise<T[]> {
     try {
+  if (!db) throw new Error('Firestore no disponible');
       let q = query(
         collection(db, this.collectionName), 
         where(field, operator, value),
@@ -114,6 +118,7 @@ export class FirestoreService<T extends FirestoreDocument> {
   // Actualizar documento
   async update(id: string, data: Partial<Omit<T, 'id' | 'createdAt'>>): Promise<void> {
     try {
+  if (!db) throw new Error('Firestore no disponible');
       const docRef = doc(db, this.collectionName, id);
       await updateDoc(docRef, {
         ...data,
@@ -128,6 +133,7 @@ export class FirestoreService<T extends FirestoreDocument> {
   // Eliminar documento
   async delete(id: string): Promise<void> {
     try {
+  if (!db) throw new Error('Firestore no disponible');
       const docRef = doc(db, this.collectionName, id);
       await deleteDoc(docRef);
     } catch (error) {
@@ -138,6 +144,10 @@ export class FirestoreService<T extends FirestoreDocument> {
 
   // Escuchar cambios en tiempo real
   onSnapshot(callback: (documents: T[]) => void, errorCallback?: (error: Error) => void): Unsubscribe {
+    if (!db) {
+      // Devuelve un no-op unsubscribe
+      return () => {};
+    }
     const q = query(collection(db, this.collectionName), orderBy('createdAt', 'desc'));
     
     return onSnapshot(q, 
@@ -154,6 +164,9 @@ export class FirestoreService<T extends FirestoreDocument> {
 
   // Escuchar cambios de un documento específico
   onDocumentSnapshot(id: string, callback: (document: T | null) => void, errorCallback?: (error: Error) => void): Unsubscribe {
+    if (!db) {
+      return () => {};
+    }
     const docRef = doc(db, this.collectionName, id);
     
     return onSnapshot(docRef,

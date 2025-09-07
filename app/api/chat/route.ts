@@ -10,12 +10,12 @@ interface ChatRequest {
 }
 
 // Validate and sanitize input
-function validateChatRequest(body: any): { isValid: boolean; error?: string; data?: ChatRequest } {
+function validateChatRequest(body: unknown): { isValid: boolean; error?: string; data?: ChatRequest } {
   if (!body || typeof body !== 'object') {
     return { isValid: false, error: 'Invalid request body' };
   }
 
-  const { prompt } = body;
+  const { prompt } = body as Record<string, unknown>;
 
   if (!prompt || typeof prompt !== 'string') {
     return { isValid: false, error: 'Prompt is required and must be a string' };
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     let body;
     try {
       body = await req.json();
-    } catch (error) {
+    } catch {
       return new NextResponse('Invalid JSON in request body', { status: 400 });
     }
 
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
           }),
           dispatcher: getProxyAgent(),
           signal: controller.signal
-        } as RequestInit & { dispatcher?: any }
+        } as RequestInit & { dispatcher?: ReturnType<typeof getProxyAgent> }
       );
 
       clearTimeout(timeoutId);

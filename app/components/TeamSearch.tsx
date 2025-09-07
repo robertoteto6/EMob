@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 interface Team {
@@ -69,10 +70,12 @@ export default function TeamSearch({ game = "dota2" }: { game?: string }) {
                 className="flex items-center gap-2 w-full text-left p-2 hover:bg-[#1a1a1a]"
               >
                 {t.image_url && (
-                  <img
+                  <Image
                     src={t.image_url}
-                    alt=""
-                    className="w-5 h-5 object-contain"
+                    alt={`Logotipo de ${t.name}`}
+                    width={20}
+                    height={20}
+                    className="object-contain"
                   />
                 )}
                 <span>{t.name}</span>

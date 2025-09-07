@@ -2,11 +2,10 @@
 
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useFirebaseAuth, AuthState } from '../hooks/useFirebaseAuth';
-import { User } from 'firebase/auth';
 
 interface AuthContextType extends AuthState {
-  signIn: (email: string, password: string) => Promise<any>;
-  signUp: (email: string, password: string) => Promise<any>;
+  signIn: (email: string, password: string) => Promise<unknown>;
+  signUp: (email: string, password: string) => Promise<unknown>;
   logout: () => Promise<void>;
 }
 

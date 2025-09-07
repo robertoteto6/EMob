@@ -5,7 +5,9 @@ import { getSecurityMiddleware } from './app/lib/securityMiddleware';
 const securityMiddleware = getSecurityMiddleware({
   enableCSRF: true,
   enableRateLimit: true,
-  enableInputValidation: true,
+  // Nota: No es posible leer/modificar el body en Middleware Edge.
+  // Realiza la validación de input dentro de los handlers de API.
+  enableInputValidation: false,
   maxRequestSize: 2 * 1024 * 1024, // 2MB
   allowedOrigins: [
     'http://localhost:3000',

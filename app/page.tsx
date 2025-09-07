@@ -2,14 +2,14 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState, useMemo, useCallback, Suspense, memo } from "react";
+import { useEffect, useState, useMemo, useCallback, memo } from "react";
 import Link from "next/link";
 import Header from "./components/Header";
+import Image from "next/image";
 import ChatBot from "./components/ChatBot";
 import LiveScoreTicker from "./components/LiveScoreTicker";
 import NotificationSystem, { useNotifications } from "./components/NotificationSystem";
 import ScrollToTop from "./components/ScrollToTop";
-import { MatchSkeleton } from "./components/Skeleton";
 import { SUPPORTED_GAMES, type GameConfig } from "./lib/gameConfig";
 
 // Custom hook to handle time consistently between server and client
@@ -227,7 +227,7 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
       
       {/* Icono flotante */}
       <div className="absolute top-4 right-4 opacity-20 group-hover:opacity-30 transition-opacity duration-500" aria-hidden="true">
-        <img src={game.icon} alt="" className="w-16 h-16 group-hover:scale-110 transition-transform duration-500" />
+  <Image src={game.icon} alt="" width={64} height={64} className="w-16 h-16 group-hover:scale-110 transition-transform duration-500" />
       </div>
       
       {/* Indicador de click */}
@@ -245,7 +245,7 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="relative">
-            <img src={game.icon} alt={`Icono de ${game.name}`} className="w-8 h-8 group-hover:scale-110 transition-transform duration-300" />
+            <Image src={game.icon} alt={`Icono de ${game.name}`} width={32} height={32} className="w-8 h-8 group-hover:scale-110 transition-transform duration-300" />
             <div className="absolute inset-0 bg-white/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true"></div>
           </div>
           <div>
@@ -343,10 +343,12 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
             <div className="flex items-center gap-3">
               {game && (
                 <div className="relative">
-                  <img 
-                    src={game.icon} 
-                    alt={`Icono de ${game.name}`} 
-                    className="w-8 h-8 group-hover:scale-110 transition-transform duration-300" 
+                  <Image
+                    src={game.icon}
+                    alt={`Icono de ${game.name}`}
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent to-green-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true"></div>
                 </div>
@@ -830,10 +832,12 @@ const Home = memo(function Home() {
                       
                       <div className="relative z-10 text-center">
                         <div className="mb-3">
-                          <img 
-                            src={game.icon} 
-                            alt={`Icono de ${game.name}`} 
-                            className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300" 
+                          <Image
+                            src={game.icon}
+                            alt={`Icono de ${game.name}`}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300"
                           />
                         </div>
                         <div className="font-bold text-sm mb-2 line-clamp-1" title={game.name}>
@@ -1049,10 +1053,12 @@ const Home = memo(function Home() {
                             <div className="flex items-center gap-3 mb-6">
                               {game && (
                                 <div className="relative">
-                                  <img 
-                                    src={game.icon} 
-                                    alt={`Icono de ${game.name}`} 
-                                    className="w-10 h-10 group-hover:scale-110 transition-transform duration-300" 
+                                  <Image
+                                    src={game.icon}
+                                    alt={`Icono de ${game.name}`}
+                                    width={40}
+                                    height={40}
+                                    className="w-10 h-10 group-hover:scale-110 transition-transform duration-300"
                                   />
                                   <div className="absolute inset-0 bg-gradient-to-r from-transparent to-green-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true"></div>
                                 </div>

@@ -18,8 +18,36 @@ interface VeteranAnalysis {
   ai_insights: string[];
 }
 
+interface PlayerData {
+  id: number;
+  name: string;
+  role?: string;
+  current_team?: {
+    id: number;
+    name: string;
+  };
+  nationality?: string;
+}
+
+interface MatchData {
+  id: number;
+  name?: string;
+  begin_at?: string;
+  winner?: {
+    id: number;
+  };
+  tournament?: {
+    name?: string;
+  };
+  opponents?: Array<{
+    opponent?: {
+      id: number;
+    };
+  }>;
+}
+
 // Simulación de análisis de IA tipo Gemini para jugadores veteranos
-function generateVeteranAnalysis(playerData: any, matches: any[]): VeteranAnalysis {
+function generateVeteranAnalysis(playerData: PlayerData, matches: MatchData[]): VeteranAnalysis {
   const analysis: VeteranAnalysis = {
     career_highlights: [],
     playing_style: "",
@@ -31,21 +59,19 @@ function generateVeteranAnalysis(playerData: any, matches: any[]): VeteranAnalys
   // Análisis de carrera basado en datos
   if (matches.length > 0) {
     const recentMatches = matches.slice(0, 10);
-    const wins = recentMatches.filter(m => m.winner && m.opponents?.some((opp: any) => 
+    const wins = recentMatches.filter(m => m.winner && m.opponents?.some(opp => 
       opp.opponent?.id === playerData.id && opp.opponent?.id === m.winner?.id
     )).length;
     
-    const winRate = recentMatches.length > 0 ? (wins / recentMatches.length * 100).toFixed(1) : "0";
-
     // Detectar momentos destacados
-    const importantMatches = matches.filter((match: any) => {
+    const importantMatches = matches.filter((match) => {
       const matchName = match.name?.toLowerCase() || '';
       const tournamentName = match.tournament?.name?.toLowerCase() || '';
       return matchName.includes('final') || tournamentName.includes('championship') || 
              tournamentName.includes('major') || matchName.includes('playoff');
     });
 
-    analysis.career_highlights = importantMatches.slice(0, 5).map((match: any): CareerHighlight => ({
+    analysis.career_highlights = importantMatches.slice(0, 5).map((match): CareerHighlight => ({
       match_name: match.name || 'Partido importante',
       tournament: match.tournament?.name || 'Torneo destacado',
       date: match.begin_at || '',
@@ -106,7 +132,7 @@ function generateVeteranAnalysis(playerData: any, matches: any[]): VeteranAnalys
   return analysis;
 }
 
-function calculateTitleScore(player: any): number {
+function calculateTitleScore(player: PlayerData): number {
   let score = 0;
   
   if (player.current_team) {
@@ -160,7 +186,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       if (matchesRes.ok) {
         matches = await matchesRes.json();
       }
-    } catch (e) {
+    } catch {
       console.log("No matches data available");
     }
 

@@ -40,6 +40,29 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ');
 }
 
+// Logger utility para reemplazar console.error en producción
+export const logger = {
+  error: (message: string, error?: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.error(message, error);
+    } else {
+      // En producción, enviar a servicio de logging
+      // TODO: Implementar envío a servicio de logging como Sentry, LogRocket, etc.
+      console.error(`[ERROR] ${message}`, error?.message || error);
+    }
+  },
+  warn: (message: string, data?: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(message, data);
+    }
+  },
+  info: (message: string, data?: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.info(message, data);
+    }
+  }
+};
+
 // Cache optimizado para resultados de API
 class OptimizedCache {
   private cache = new Map<string, { data: any; timestamp: number; accessCount: number; lastAccess: number }>();
@@ -152,7 +175,7 @@ export function createImageLoader() {
 
 // Función para detectar si el usuario prefiere reducir animaciones
 export function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 

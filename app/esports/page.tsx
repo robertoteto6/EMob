@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../components/Header";
 import ChatBot from "../components/ChatBot";
@@ -326,10 +327,12 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
             <div className="flex items-center gap-3 mb-4">
               {game && (
                 <div className="relative">
-                  <img 
-                    src={game.icon} 
-                    alt={game.name} 
-                    className="w-8 h-8 group-hover:scale-110 transition-transform duration-300" 
+                  <Image
+                    src={game.icon}
+                    alt={game.name}
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent to-purple-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
@@ -737,10 +740,12 @@ function EsportsPageContent() {
                   
                   <div className="relative z-10 text-center">
                     <div className="mb-3">
-                      <img 
-                        src={g.icon} 
-                        alt={g.name} 
-                        className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300" 
+                      <Image
+                        src={g.icon}
+                        alt={g.name}
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300"
                       />
                     </div>
                     <div className="font-bold text-sm">{g.name}</div>

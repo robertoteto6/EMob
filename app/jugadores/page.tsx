@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useMemo, Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../components/Header";
@@ -94,6 +95,12 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
   favoritePlayers: number[];
 }) {
   const isFavorite = favoritePlayers.includes(player.id);
+  const [imgSrc, setImgSrc] = useState<string>(() => {
+    // initialize with best guess; can be updated onError
+    if (player.image_url) return player.image_url;
+    if (player.current_team_image) return player.current_team_image;
+    return `/api/esports/player/${player.id}/image`;
+  });
   
   // Función para obtener la imagen del jugador con fallbacks mejorados
   const getPlayerImage = () => {
@@ -148,15 +155,15 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
               {/* Avatar/Foto del jugador mejorado */}
               <div className="relative">
                 <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-800 flex items-center justify-center border-2 border-gray-600 group-hover:border-green-400 transition-colors duration-300">
-                  <img 
-                    src={playerImage} 
+                  <Image
+                    src={imgSrc}
                     alt={player.name}
+                    width={80}
+                    height={80}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      // Si falla la imagen principal, usar el fallback de la API
-                      if (!target.src.includes('/api/esports/player/')) {
-                        target.src = `/api/esports/player/${player.id}/image`;
+                    onError={() => {
+                      if (!imgSrc.includes('/api/esports/player/')) {
+                        setImgSrc(`/api/esports/player/${player.id}/image`);
                       }
                     }}
                   />
@@ -387,7 +394,7 @@ function PlayersPageContent() {
 
   // Filtrado, ordenación y paginación
   const sortedAndPaginatedPlayers = useMemo(() => {
-    let sortedPlayers = [...players];
+    const sortedPlayers = [...players];
     
     // Aplicar ordenación
     switch (sortBy) {
@@ -555,10 +562,12 @@ function PlayersPageContent() {
                   
                   <div className="relative z-10 text-center">
                     <div className="mb-3">
-                      <img 
-                        src={g.icon} 
-                        alt={g.name} 
-                        className={`w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300 ${isTransitioning && game === g.id ? 'animate-pulse' : ''}`} 
+                      <Image
+                        src={g.icon}
+                        alt={g.name}
+                        width={32}
+                        height={32}
+                        className={`w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300 ${isTransitioning && game === g.id ? 'animate-pulse' : ''}`}
                       />
                     </div>
                     <div className="font-bold text-sm">{g.name}</div>

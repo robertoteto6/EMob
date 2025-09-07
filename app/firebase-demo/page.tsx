@@ -1,10 +1,11 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import AuthComponent from '../components/AuthComponent';
 import { useFirestoreCollection } from '../hooks/useFirestore';
-import { userProfileService, userPredictionService, UserProfile, UserPrediction } from '../lib/firestore';
+import { userProfileService, userPredictionService } from '../lib/firestore';
 
 const FirebaseDemoPage: React.FC = () => {
   const { user } = useAuth();

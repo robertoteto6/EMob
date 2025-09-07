@@ -1,4 +1,4 @@
-'use client';
+// Note: This module is isomorphic (no React hooks) and safe for server and client.
 
 // Sistema de seguridad y validación de datos
 

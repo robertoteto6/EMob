@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useMemo } from "react";
+import Image from "next/image";
 
 // Props para el componente LangFlag
 interface LangFlagProps {
@@ -36,13 +37,13 @@ export const LangFlag = memo(({ code }: LangFlagProps) => {
   return (
     <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-800/50 border border-gray-700 hover:border-gray-600 transition-colors group" title={flag.alt}>
       <span className="text-lg group-hover:scale-110 transition-transform duration-200" aria-hidden="true">{flag.emoji}</span>
-      <img
+      <Image
         src={flag.src}
         alt={flag.alt}
         className="w-4 h-4 rounded-sm opacity-80 group-hover:opacity-100 transition-opacity duration-200"
         loading="lazy"
-        width="16"
-        height="16"
+        width={16}
+        height={16}
       />
       <span className="sr-only">{flag.alt}</span>
     </div>

@@ -4,7 +4,6 @@ const nextConfig: NextConfig = {
   // Optimización de rendimiento
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
-    styledComponents: true,
   },
   
   // Optimización de bundle
@@ -15,6 +14,7 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 86400, // 24 horas
     dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -78,24 +78,6 @@ const nextConfig: NextConfig = {
           {
             key: 'Cache-Control',
             value: 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          },
-        ],
-      },
-      {
-         source: '/:path*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)',
-         headers: [
-           {
-             key: 'Cache-Control',
-             value: 'public, max-age=31536000, immutable',
-           },
-         ],
-       },
-      {
-        source: '/api/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, s-maxage=60, stale-while-revalidate=300',
           },
         ],
       },

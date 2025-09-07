@@ -173,11 +173,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-// Hook para manejo de errores en componentes funcionales
 export const useErrorHandler = () => {
   const handleError = (error: Error, errorInfo?: string) => {
     console.error('Error handled:', error, errorInfo);
-    
+
     // Enviar a servicio de logging
     if (process.env.NODE_ENV === 'production') {
       // Implementar logging service

@@ -19,20 +19,26 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Validate required environment variables
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-  throw new Error('Missing required Firebase environment variables. Please check your .env file.');
+// Flag to know if Firebase can be initialized
+export const firebaseEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
+
+// Initialize Firebase only on the client when enabled
+let app: ReturnType<typeof initializeApp> | null = null;
+if (typeof window !== 'undefined' && firebaseEnabled) {
+  try {
+    app = initializeApp(firebaseConfig);
+  } catch (e) {
+    // If already initialized or any benign error, ignore
+    // console.warn('Firebase init warning:', e);
+  }
 }
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase services (null when unavailable)
+export const auth = app ? getAuth(app) : null;
+export const db = app ? getFirestore(app) : null;
+export const storage = app ? getStorage(app) : null;
 
-// Initialize Firebase services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
-
-// Initialize Analytics (only in browser environment)
-export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
+// Initialize Analytics (only in browser environment when app exists)
+export const analytics = app && typeof window !== 'undefined' ? getAnalytics(app) : null;
 
 export default app;

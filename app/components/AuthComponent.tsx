@@ -22,16 +22,16 @@ const AuthComponent: React.FC = () => {
       }
       setEmail('');
       setPassword('');
-    } catch (error: any) {
-      setAuthError(error.message);
+    } catch (error: unknown) {
+      setAuthError(error instanceof Error ? error.message : 'An error occurred');
     }
   };
 
   const handleLogout = async () => {
     try {
       await logout();
-    } catch (error: any) {
-      setAuthError(error.message);
+    } catch (error: unknown) {
+      setAuthError(error instanceof Error ? error.message : 'An error occurred');
     }
   };
 

@@ -7,7 +7,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import { devtools } from 'zustand/middleware';
 
 // Tipos para el estado global
-interface User {
+export interface User {
   id: string;
   username: string;
   email: string;
@@ -23,7 +23,7 @@ interface User {
   favoritePlayers: string[];
 }
 
-interface Match {
+export interface Match {
   id: string;
   teamA: string;
   teamB: string;
@@ -35,7 +35,7 @@ interface Match {
   game: string;
 }
 
-interface Team {
+export interface Team {
   id: string;
   name: string;
   logo: string;
@@ -45,7 +45,7 @@ interface Team {
   losses: number;
 }
 
-interface Player {
+export interface Player {
   id: string;
   name: string;
   team: string;
@@ -54,31 +54,37 @@ interface Player {
   stats: Record<string, number>;
 }
 
-interface AppState {
+export interface CacheEntry {
+  data: unknown;
+  timestamp: number;
+  ttl: number;
+}
+
+export interface AppState {
   // Estado de la aplicación
   isLoading: boolean;
   error: string | null;
   lastUpdated: number;
-  
+
   // Usuario
   user: User | null;
   isAuthenticated: boolean;
-  
+
   // Datos de esports
   matches: Match[];
   teams: Team[];
   players: Player[];
-  
+
   // UI State
   sidebarOpen: boolean;
   chatOpen: boolean;
   notificationsOpen: boolean;
-  
+
   // Cache
-  cache: Map<string, { data: any; timestamp: number; ttl: number }>;
+  cache: Map<string, CacheEntry>;
 }
 
-interface AppActions {
+export interface AppActions {
   // Acciones de usuario
   setUser: (user: User | null) => void;
   updateUserPreferences: (preferences: Partial<User['preferences']>) => void;
@@ -86,13 +92,13 @@ interface AppActions {
   removeFavoriteTeam: (teamId: string) => void;
   addFavoritePlayer: (playerId: string) => void;
   removeFavoritePlayer: (playerId: string) => void;
-  
+
   // Acciones de datos
   setMatches: (matches: Match[]) => void;
   updateMatch: (matchId: string, updates: Partial<Match>) => void;
   setTeams: (teams: Team[]) => void;
   setPlayers: (players: Player[]) => void;
-  
+
   // Acciones de UI
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
@@ -100,22 +106,22 @@ interface AppActions {
   setChatOpen: (open: boolean) => void;
   toggleNotifications: () => void;
   setNotificationsOpen: (open: boolean) => void;
-  
+
   // Acciones de estado
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   updateLastUpdated: () => void;
-  
+
   // Cache
-  setCache: (key: string, data: any, ttl?: number) => void;
-  getCache: (key: string) => any | null;
+  setCache: (key: string, data: unknown, ttl?: number) => void;
+  getCache: (key: string) => unknown | null;
   clearCache: (key?: string) => void;
-  
+
   // Utilidades
   reset: () => void;
 }
 
-type AppStore = AppState & AppActions;
+export type AppStore = AppState & AppActions;
 
 // Estado inicial
 const initialState: AppState = {
@@ -134,132 +140,132 @@ const initialState: AppState = {
 };
 
 // Store principal con middleware
-export const useAppStore = create<AppStore>()()
+export const useAppStore = create<AppStore>()(
   devtools(
     persist(
       subscribeWithSelector(
-        immer<AppStore>((set, get) => ({
+        immer((set, get) => ({
           ...initialState,
-          
+
           // Acciones de usuario
           setUser: (user) => set((state) => {
             state.user = user;
             state.isAuthenticated = !!user;
           }),
-          
+
           updateUserPreferences: (preferences) => set((state) => {
             if (state.user) {
               state.user.preferences = { ...state.user.preferences, ...preferences };
             }
           }),
-          
+
           addFavoriteTeam: (teamId) => set((state) => {
             if (state.user && !state.user.favoriteTeams.includes(teamId)) {
               state.user.favoriteTeams.push(teamId);
             }
           }),
-          
-            removeFavoriteTeam: (teamId) => set((state) => {
-              if (state.user) {
-                state.user.favoriteTeams = state.user.favoriteTeams.filter((id: string) => id !== teamId);
-              }
-            }),
-          
+
+          removeFavoriteTeam: (teamId) => set((state) => {
+            if (state.user) {
+              state.user.favoriteTeams = state.user.favoriteTeams.filter((id: string) => id !== teamId);
+            }
+          }),
+
           addFavoritePlayer: (playerId) => set((state) => {
             if (state.user && !state.user.favoritePlayers.includes(playerId)) {
               state.user.favoritePlayers.push(playerId);
             }
           }),
-          
-            removeFavoritePlayer: (playerId) => set((state) => {
-              if (state.user) {
-                state.user.favoritePlayers = state.user.favoritePlayers.filter((id: string) => id !== playerId);
-              }
-            }),
-          
+
+          removeFavoritePlayer: (playerId) => set((state) => {
+            if (state.user) {
+              state.user.favoritePlayers = state.user.favoritePlayers.filter((id: string) => id !== playerId);
+            }
+          }),
+
           // Acciones de datos
           setMatches: (matches) => set((state) => {
             state.matches = matches;
             state.lastUpdated = Date.now();
           }),
-          
-            updateMatch: (matchId, updates) => set((state) => {
+
+          updateMatch: (matchId, updates) => set((state) => {
             const matchIndex = state.matches.findIndex((m: Match) => m.id === matchId);
             if (matchIndex !== -1) {
               state.matches[matchIndex] = { ...state.matches[matchIndex], ...updates };
             }
           }),
-          
+
           setTeams: (teams) => set((state) => {
             state.teams = teams;
             state.lastUpdated = Date.now();
           }),
-          
+
           setPlayers: (players) => set((state) => {
             state.players = players;
             state.lastUpdated = Date.now();
           }),
-          
+
           // Acciones de UI
           toggleSidebar: () => set((state) => {
             state.sidebarOpen = !state.sidebarOpen;
           }),
-          
+
           setSidebarOpen: (open) => set((state) => {
             state.sidebarOpen = open;
           }),
-          
+
           toggleChat: () => set((state) => {
             state.chatOpen = !state.chatOpen;
           }),
-          
+
           setChatOpen: (open) => set((state) => {
             state.chatOpen = open;
           }),
-          
+
           toggleNotifications: () => set((state) => {
             state.notificationsOpen = !state.notificationsOpen;
           }),
-          
+
           setNotificationsOpen: (open) => set((state) => {
             state.notificationsOpen = open;
           }),
-          
+
           // Acciones de estado
           setLoading: (loading) => set((state) => {
             state.isLoading = loading;
           }),
-          
+
           setError: (error) => set((state) => {
             state.error = error;
           }),
-          
+
           updateLastUpdated: () => set((state) => {
             state.lastUpdated = Date.now();
           }),
-          
+
           // Cache
-          setCache: (key, data, ttl = 300000) => set((state) => { // 5 minutos por defecto
+          setCache: (key, data, ttl = 300000) => set((state) => {
             state.cache.set(key, {
               data,
               timestamp: Date.now(),
               ttl
             });
           }),
-          
+
           getCache: (key) => {
             const cached = get().cache.get(key);
             if (!cached) return null;
-            
+
             const now = Date.now();
             if (now - cached.timestamp > cached.ttl) {
               get().clearCache(key);
               return null;
             }
-            
+
             return cached.data;
           },
-          
+
           clearCache: (key) => set((state) => {
             if (key) {
               state.cache.delete(key);
@@ -267,7 +273,7 @@ export const useAppStore = create<AppStore>()()
               state.cache.clear();
             }
           }),
-          
+
           // Utilidades
           reset: () => set(() => ({ ...initialState, cache: new Map() }))
         }))
@@ -279,19 +285,8 @@ export const useAppStore = create<AppStore>()()
           user: state.user,
           isAuthenticated: state.isAuthenticated,
           sidebarOpen: state.sidebarOpen,
-          // Solo persistir preferencias del usuario, no datos temporales
         }),
         version: 1,
-        migrate: (persistedState: any, version) => {
-          if (version === 0) {
-            // Migración de versión 0 a 1
-            return {
-              ...persistedState,
-              cache: new Map()
-            };
-          }
-          return persistedState;
-        }
       }
     ),
     {
@@ -318,11 +313,11 @@ export const useAppStatus = () => useAppStore((state) => ({
 }));
 
 // Selectores derivados
-export const useLiveMatches = () => useAppStore((state) => 
+export const useLiveMatches = () => useAppStore((state) =>
   state.matches.filter(match => match.status === 'live')
 );
 
-export const useUpcomingMatches = () => useAppStore((state) => 
+export const useUpcomingMatches = () => useAppStore((state) =>
   state.matches.filter(match => match.status === 'upcoming')
 );
 
@@ -390,8 +385,7 @@ useAppStore.subscribe(
 setInterval(() => {
   const store = useAppStore.getState();
   const now = Date.now();
-  
-  // Usar requestIdleCallback si está disponible para no bloquear el hilo principal
+
   const cleanupCache = () => {
     store.cache.forEach((value, key) => {
       if (now - value.timestamp > value.ttl) {
@@ -399,12 +393,10 @@ setInterval(() => {
       }
     });
   };
-  
+
   if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
     window.requestIdleCallback(cleanupCache);
   } else {
     cleanupCache();
   }
 }, 300000); // Cada 5 minutos
-
-export type { User, Match, Team, Player, AppState, AppActions, AppStore };

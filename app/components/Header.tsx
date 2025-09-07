@@ -10,21 +10,11 @@ function HeaderContent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  
-  // Detectar el juego actual desde la URL o parámetros
-  const currentGame = searchParams?.get('game') || 'dota2';
-  
-  // Ocultar header en páginas de detalles de esports que tienen su propio header local
-  const shouldHideHeader = pathname?.includes('/esports/') && pathname?.split('/').length > 2;
-  
-  if (shouldHideHeader) {
-    return null;
-  }
 
-  useEffect(() => {
+  // Ocultar header en páginas de detalles de esports que tienen su propio header local
+  const shouldHideHeader = pathname?.includes('/esports/') && pathname?.split('/').length > 2;  useEffect(() => {
     setIsClient(true);
-    
+
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
@@ -42,6 +32,11 @@ function HeaderContent() {
     { name: "Equipos", href: "/equipos" },
     { name: "Jugadores", href: "/jugadores" },
   ];
+
+  // Early return for esports detail pages
+  if (shouldHideHeader) {
+    return null;
+  }
 
   return (
     <header

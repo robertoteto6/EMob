@@ -18,6 +18,11 @@ export const useFirebaseAuth = () => {
   });
 
   useEffect(() => {
+    if (!auth) {
+      // Firebase no disponible (SSR o env faltantes)
+      setAuthState(prev => ({ ...prev, loading: false }));
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setAuthState({
         user,
@@ -25,20 +30,21 @@ export const useFirebaseAuth = () => {
         error: null
       });
     });
-
     return () => unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
+      if (!auth) throw new Error('Auth no disponible');
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
       const result = await signInWithEmailAndPassword(auth, email, password);
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
       setAuthState(prev => ({ 
         ...prev, 
         loading: false, 
-        error: error.message 
+        error: errorMessage 
       }));
       throw error;
     }
@@ -46,14 +52,16 @@ export const useFirebaseAuth = () => {
 
   const signUp = async (email: string, password: string) => {
     try {
+      if (!auth) throw new Error('Auth no disponible');
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
       const result = await createUserWithEmailAndPassword(auth, email, password);
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
       setAuthState(prev => ({ 
         ...prev, 
         loading: false, 
-        error: error.message 
+        error: errorMessage 
       }));
       throw error;
     }
@@ -61,11 +69,13 @@ export const useFirebaseAuth = () => {
 
   const logout = async () => {
     try {
+      if (!auth) return;
       await signOut(auth);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
       setAuthState(prev => ({ 
         ...prev, 
-        error: error.message 
+        error: errorMessage 
       }));
       throw error;
     }

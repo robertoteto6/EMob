@@ -6,7 +6,7 @@ import { cn } from '../lib/utils';
 
 export interface Notification {
   id: string;
-  type: 'match_start' | 'match_end' | 'tournament_start' | 'team_update' | 'prediction_result';
+  type: 'match_start' | 'match_end' | 'tournament_start' | 'team_update' | 'prediction_result' | 'error';
   title: string;
   message: string;
   timestamp: number;

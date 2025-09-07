@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import Header from "../../../components/Header";
 import ChatBot from "../../../components/ChatBot";
 import NotificationSystem, { useNotifications } from "../../../components/NotificationSystem";
@@ -220,9 +221,11 @@ function CompactTeam({ team }: { team: Team }) {
       <div className="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl p-4 border border-gray-700 hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02]">
         <div className="flex items-center gap-3 mb-3">
           {team.image_url ? (
-            <img 
-              src={team.image_url} 
+            <Image
+              src={team.image_url}
               alt={team.name}
+              width={40}
+              height={40}
               className="w-10 h-10 rounded-lg object-cover bg-gray-600"
             />
           ) : (
@@ -253,9 +256,11 @@ function CompactPlayer({ player }: { player: Player }) {
       <div className="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl p-4 border border-gray-700 hover:border-green-500/50 transition-all duration-300 hover:scale-[1.02]">
         <div className="flex items-center gap-3">
           {player.image_url ? (
-            <img 
-              src={player.image_url} 
+            <Image
+              src={player.image_url}
               alt={player.name}
+              width={40}
+              height={40}
               className="w-10 h-10 rounded-full object-cover bg-gray-600"
             />
           ) : (
@@ -488,9 +493,11 @@ function GamePageContent({ gameId }: { gameId: string }) {
 
             <div className="flex items-center gap-6 mb-8">
               <div className="relative">
-                <img 
-                  src={game.icon} 
+                <Image
+                  src={game.icon}
                   alt={game.name}
+                  width={96}
+                  height={96}
                   className="w-24 h-24 group-hover:scale-110 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-white/20 rounded-full blur-xl opacity-50"></div>

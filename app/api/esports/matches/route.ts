@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     // Mapear el juego al nombre correcto de la API usando la configuración centralizada
     const game = getGameApiName(gameParam);
     
-    let baseUrl = `https://api.pandascore.co/${game}/matches`;
+    const baseUrl = `https://api.pandascore.co/${game}/matches`;
     const searchParamsApi = new URLSearchParams();
     searchParamsApi.set('per_page', '50');
     if (tournamentId) {

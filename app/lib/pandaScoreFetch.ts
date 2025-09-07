@@ -1,8 +1,11 @@
-// Solo importar proxy agent en el servidor
-const getProxyAgent = typeof window === 'undefined' 
-  ? require('./proxyAgent').getProxyAgent 
-  : () => undefined;
-import { getGlobalCache, cached } from './advancedCache';
+// Solo importar proxy agent en el servidor; avoid bundling on client
+let getProxyAgent: (() => any) | undefined;
+if (typeof window === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  getProxyAgent = require('./proxyAgent').getProxyAgent;
+}
+// In server context, prefer the server cache implementation
+import { getGlobalCache, cached } from './advancedCache.server';
 
 export async function pandaScoreFetch(
   baseUrl: string,
@@ -53,7 +56,7 @@ export async function pandaScoreFetch(
       };
       
       // Solo usar proxy agent en el servidor
-      if (typeof window === 'undefined') {
+      if (typeof window === 'undefined' && getProxyAgent) {
         (fetchOptions as any).dispatcher = getProxyAgent();
       }
       
@@ -79,8 +82,8 @@ export async function pandaScoreFetch(
       }
 
       lastError = new Error(`Rate limit hit with key ending in ${key.slice(-4)}`);
-    } catch (err) {
-      lastError = err as Error;
+    } catch (err: unknown) {
+      lastError = (err instanceof Error) ? err : new Error(String(err));
     }
   }
 

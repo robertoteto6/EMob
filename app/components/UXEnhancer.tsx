@@ -51,6 +51,10 @@ export function UXProvider({ children }: UXProviderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const announce = useScreenReaderAnnouncement();
 
+  const removeNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
+  }, []);
+
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const id = `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const newNotification: Notification = {
@@ -71,11 +75,7 @@ export function UXProvider({ children }: UXProviderProps) {
         removeNotification(id);
       }, newNotification.duration);
     }
-  }, [announce]);
-
-  const removeNotification = useCallback((id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
-  }, []);
+  }, [announce, removeNotification]);
 
   const clearAllNotifications = useCallback(() => {
     setNotifications([]);

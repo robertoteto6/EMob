@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { debounce, apiCache } from "../lib/utils";
 
 interface SearchItem {
@@ -373,7 +374,7 @@ export default function Search({
                 <div className="p-4 text-center">
                   <div className="text-gray-400 text-sm">
                     <div className="text-2xl mb-2">🔍</div>
-                    No se encontraron resultados para "<span className="font-semibold text-white">{query}</span>"
+                    No se encontraron resultados para &quot;<span className="font-semibold text-white">{query}</span>&quot;
                     <div className="mt-2 text-xs text-gray-500">
                       Intenta buscar con otros términos o verifica la ortografía
                     </div>
@@ -413,10 +414,12 @@ export default function Search({
                       `}
                     >
                       {item.image_url ? (
-                        <img 
-                          src={item.image_url} 
-                          alt={item.name} 
-                          className="w-8 h-8 object-contain rounded-lg bg-gray-800" 
+                        <Image
+                          src={item.image_url}
+                          alt={item.name}
+                          width={32}
+                          height={32}
+                          className="w-8 h-8 object-contain rounded-lg bg-gray-800"
                         />
                       ) : (
                         <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center text-sm">

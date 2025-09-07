@@ -9,12 +9,13 @@ module.exports = {
   transform: {
     ...tsJestTransformCfg,
   },
-  moduleNameMapping: {
-    "^@/(.*)$": "<rootDir>/app/$1",
+  // Correct key is moduleNameMapper
+  moduleNameMapper: {
+    "^@/(.*)$": "<rootDir>/$1",
   },
   testMatch: [
-    "**/__tests__/**/*.(ts|tsx|js|jsx)",
-    "**/*.(test|spec).(ts|tsx|js|jsx)"
+    "**/__tests__/**/*.{ts,tsx,js,jsx}",
+    "**/*.{test,spec}.{ts,tsx,js,jsx}"
   ],
   collectCoverageFrom: [
     "app/**/*.{ts,tsx}",

@@ -1,9 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, memo } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ErrorBoundary } from "../../components/ErrorBoundary";
+import { useEffect, useState, useCallback } from "react";
 import MatchHeader from "../../components/MatchHeader";
 import MatchCard from "../../components/MatchCard";
 import MatchStreams from "../../components/MatchStreams";

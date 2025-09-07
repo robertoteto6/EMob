@@ -11,6 +11,7 @@ import React, {
   ComponentType
 } from 'react';
 import { cn } from '../lib/utils';
+import NextImage from 'next/image';
 import { Skeleton, Spinner } from './LoadingOptimized';
 
 // Hook para Intersection Observer optimizado
@@ -155,11 +156,13 @@ export const LazyImage = memo<LazyImageProps>(({
       {!isLoaded && (
         <div className="absolute inset-0">
           {blurDataURL ? (
-            <img
+            <NextImage
               src={blurDataURL}
               alt=""
-              className="w-full h-full object-cover filter blur-sm scale-110"
-              aria-hidden="true"
+              fill
+              className="object-cover blur-sm scale-110"
+              unoptimized
+              priority
             />
           ) : (
             <Skeleton 
@@ -172,7 +175,7 @@ export const LazyImage = memo<LazyImageProps>(({
       
       {/* Imagen principal */}
       {(isIntersecting || priority) && (
-        <img
+        <NextImage
           src={imageSrc}
           alt={alt}
           width={width}
@@ -182,10 +185,9 @@ export const LazyImage = memo<LazyImageProps>(({
             'w-full h-full object-cover transition-opacity duration-300',
             isLoaded ? 'opacity-100' : 'opacity-0'
           )}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
+          onLoad={() => handleImageLoad()}
+          onError={() => handleImageError()}
           loading={priority ? 'eager' : 'lazy'}
-          decoding="async"
         />
       )}
     </div>

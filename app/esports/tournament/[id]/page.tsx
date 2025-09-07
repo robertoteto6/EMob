@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import Search from "../../../components/Search";
 
@@ -117,9 +118,11 @@ export default function TournamentPage({ params }: { params: Promise<{ id: strin
             {teams.map((t) => (
               <li key={t.id} className="card p-2 flex items-center gap-2">
                 {t.image_url && (
-                  <img
+                  <Image
                     src={t.image_url}
-                    alt=""
+                    alt={t.name}
+                    width={24}
+                    height={24}
                     className="w-6 h-6 object-contain"
                   />
                 )}

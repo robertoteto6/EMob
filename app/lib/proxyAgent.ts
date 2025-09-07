@@ -19,7 +19,8 @@ export function getProxyAgent(): Dispatcher | undefined {
   }
   
   try {
-    // Usar dynamic import para evitar problemas de bundling
+    // Use require in Node context only; ESLint rule disabled at file level via override
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const undici = require("undici");
     return new undici.ProxyAgent(proxyUrl);
   } catch (error) {

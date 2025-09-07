@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { use, useEffect, useState, Suspense, useCallback, useMemo } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import Header from "../../../components/Header";
 import ChatBot from "../../../components/ChatBot";
@@ -304,9 +305,11 @@ function TeamContent({ id }: { id: string }) {
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
               <div className="relative group">
                 {team.image_url ? (
-                  <img 
-                    src={team.image_url} 
+                  <Image
+                    src={team.image_url}
                     alt={team.name}
+                    width={96}
+                    height={96}
                     className="w-24 h-24 object-contain rounded-2xl bg-gray-800 p-2 border border-gray-600 group-hover:border-green-500/50 transition-all duration-300"
                   />
                 ) : (
@@ -387,9 +390,11 @@ function TeamContent({ id }: { id: string }) {
                     <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 p-6 hover:border-green-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-green-500/10 transform hover:-translate-y-2 animate-[fadeIn_0.6s_ease-out_forwards] opacity-0">
                       <div className="flex items-center gap-4 mb-4">
                         {player.image_url ? (
-                          <img 
-                            src={player.image_url} 
+                          <Image
+                            src={player.image_url}
                             alt={player.name}
+                            width={48}
+                            height={48}
                             className="w-12 h-12 object-cover rounded-full border-2 border-gray-600 group-hover:border-green-500/50 transition-all duration-300"
                           />
                         ) : (

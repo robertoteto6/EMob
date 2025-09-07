@@ -1,8 +1,8 @@
 "use client";
 
 import { use, useEffect, useState, Suspense } from "react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import Header from "../../../components/Header";
 import { useRouter } from "next/navigation";
 
@@ -281,7 +281,13 @@ function RecentMatchCard({ match }: { match: RecentMatch }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           {match.league.image_url && (
-            <img src={match.league.image_url} alt={match.league.name} className="w-6 h-6 rounded" />
+            <Image
+              src={match.league.image_url}
+              alt={match.league.name}
+              width={24}
+              height={24}
+              className="w-6 h-6 rounded"
+            />
           )}
           <span className="text-sm font-medium text-gray-300">{match.league.name}</span>
         </div>
@@ -334,7 +340,13 @@ function HistoricalMatchCard({ match }: { match: RecentMatch }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           {match.league.image_url && (
-            <img src={match.league.image_url} alt={match.league.name} className="w-6 h-6 rounded" />
+            <Image
+              src={match.league.image_url}
+              alt={match.league.name}
+              width={24}
+              height={24}
+              className="w-6 h-6 rounded"
+            />
           )}
           <span className="text-sm font-medium text-gray-300">{match.league.name}</span>
         </div>
@@ -488,10 +500,12 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
                   <div className="relative group">
                     <div className="absolute -inset-2 bg-gradient-to-r from-green-500 to-blue-500 rounded-full opacity-50 group-hover:opacity-75 transition-opacity blur-sm"></div>
                     <div className="relative w-32 h-32 lg:w-40 lg:h-40 rounded-full overflow-hidden border-4 border-gray-600 group-hover:border-green-400 transition-colors">
-                      <img 
+                      <Image
                         src={player.image_url || `/api/esports/player/${player.id}/image`}
                         alt={player.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        fill
+                        sizes="(max-width: 1024px) 128px, 160px"
+                        className="object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                     </div>
                   </div>
@@ -545,10 +559,12 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
                       
                       <div className="flex items-center gap-4 mb-4">
                         {player.team_data.image_url && (
-                          <img 
-                            src={player.team_data.image_url} 
+                          <Image
+                            src={player.team_data.image_url}
                             alt={player.team_data.name}
-                            className="w-16 h-16 rounded-xl object-cover border-2 border-gray-600"
+                            width={64}
+                            height={64}
+                            className="rounded-xl object-cover border-2 border-gray-600 w-16 h-16"
                           />
                         )}
                         <div>

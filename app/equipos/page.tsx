@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useMemo, Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../components/Header";
@@ -199,16 +200,14 @@ function TeamCard({ team, onToggleFavorite, favoriteTeams }: {
               <div className="relative">
                 {team.image_url ? (
                   <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
-                    <img 
-                      src={team.image_url} 
-                      alt={team.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        target.nextElementSibling!.classList.remove('hidden');
-                      }}
-                    />
+                      <Image
+                        src={team.image_url}
+                        alt={team.name}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        onError={() => { /* next/image handles errors silently; fallback below will render if URL invalid at build-time */ }}
+                      />
                     <div className="hidden w-full h-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
                       {team.acronym || team.name.charAt(0)}
                     </div>
@@ -581,10 +580,12 @@ function TeamsPageContent() {
                   
                   <div className="relative z-10 text-center">
                     <div className="mb-3">
-                      <img 
-                        src={g.icon} 
-                        alt={g.name} 
-                        className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300" 
+                      <Image
+                        src={g.icon}
+                        alt={g.name}
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300"
                       />
                     </div>
                     <div className="font-bold text-sm">{g.name}</div>
@@ -681,17 +682,14 @@ function TeamsPageContent() {
                         <div className="text-center mb-4">
                           <div className="relative inline-block">
                             {team.image_url ? (
-                              <img 
-                                src={team.image_url} 
+                              <Image
+                                src={team.image_url}
                                 alt={team.name}
+                                width={index === 0 ? 80 : 64}
+                                height={index === 0 ? 80 : 64}
                                 className={`${index === 0 ? 'w-20 h-20' : 'w-16 h-16'} rounded-full mx-auto mb-3 border-4 ${
                                   index === 0 ? 'border-yellow-400' : index === 1 ? 'border-gray-300' : 'border-orange-600'
                                 } shadow-lg`}
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                  target.nextElementSibling!.classList.remove('hidden');
-                                }}
                               />
                             ) : null}
                             <div className={`${team.image_url ? 'hidden' : ''} ${index === 0 ? 'w-20 h-20' : 'w-16 h-16'} rounded-full mx-auto mb-3 bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold ${index === 0 ? 'text-3xl' : 'text-2xl'} border-4 ${

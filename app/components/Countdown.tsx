@@ -2,11 +2,11 @@
 import { useEffect, useState } from "react";
 
 export default function Countdown({ targetTime }: { targetTime: number }) {
-  const calc = () => Math.floor(targetTime - Date.now() / 1000);
   const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
     // Initialize on mount to avoid mismatches between server and client time
+    const calc = () => Math.floor(targetTime - Date.now() / 1000);
     setRemaining(calc());
     const id = setInterval(() => setRemaining(calc()), 1000);
     return () => clearInterval(id);

@@ -295,13 +295,17 @@ const OptimizedImageAdvanced = memo(forwardRef<HTMLDivElement, OptimizedImagePro
             className="absolute inset-0"
           >
             {unoptimized ? (
-              <img
+              <NextImage
                 src={optimizedSrc}
                 alt={alt}
+                fill
+                quality={quality}
+                sizes={sizes}
+                priority={priority}
                 onLoad={handleLoad}
                 onError={handleError}
                 className={cn(
-                  'w-full h-full transition-opacity duration-300',
+                  'transition-opacity duration-300',
                   `object-${objectFit}`,
                   className
                 )}

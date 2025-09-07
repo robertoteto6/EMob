@@ -1,4 +1,4 @@
-'use client';
+// Note: This module is isomorphic and must run in Next.js Middleware (Edge) and server routes.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { SecurityValidator, generateCSRFToken, validateCSRFToken } from './security';
@@ -304,44 +304,4 @@ export function setupCSRFProtection(response: NextResponse): NextResponse {
   return response;
 }
 
-// Hook para usar en componentes React
-export function useCSRFToken() {
-  const [csrfToken, setCSRFToken] = useState<string | null>(null);
-  
-  useEffect(() => {
-    // Obtener token CSRF del servidor
-    fetch('/api/csrf-token')
-      .then(res => res.json())
-      .then(data => setCSRFToken(data.token))
-      .catch(err => console.error('Error getting CSRF token:', err));
-  }, []);
-  
-  return csrfToken;
-}
-
-// Función para hacer requests seguros con CSRF
-export async function secureRequest(url: string, options: RequestInit = {}) {
-  const csrfToken = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('csrf-token='))
-    ?.split('=')[1];
-  
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> || {}),
-  };
-  
-  if (csrfToken && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(options.method?.toUpperCase() || 'GET')) {
-    headers['X-CSRF-Token'] = csrfToken;
-  }
-  
-  return fetch(url, {
-    ...options,
-    headers,
-  });
-}
-
 export default SecurityMiddleware;
-
-// Importar useState y useEffect para el hook
-import { useState, useEffect } from 'react';

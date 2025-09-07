@@ -7,7 +7,6 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { AccessibilityProvider, AccessibilityButton, SkipToContent } from "./components/AccessibilityEnhancer";
 import { UXProvider, NotificationContainer, GlobalLoader } from "./components/UXEnhancer";
 import { Suspense } from "react";
-import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -86,8 +85,8 @@ export const metadata: Metadata = {
     ],
   },
   verification: {
-    google: 'your-google-verification-code',
-    yandex: 'your-yandex-verification-code',
+    google: process.env.GOOGLE_SITE_VERIFICATION || '',
+    yandex: process.env.YANDEX_VERIFICATION || '',
   },
   other: {
     'theme-color': '#00FF80',
@@ -158,8 +157,8 @@ export default function RootLayout({
       
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white min-h-screen`}>
         <ErrorBoundary>
-          <UXProvider>
-            <AccessibilityProvider>
+          <AccessibilityProvider>
+            <UXProvider>
               <AuthProvider>
                 <SkipToContent />
                 
@@ -177,8 +176,8 @@ export default function RootLayout({
                 <NotificationContainer />
                 <GlobalLoader />
               </AuthProvider>
-            </AccessibilityProvider>
-          </UXProvider>
+            </UXProvider>
+          </AccessibilityProvider>
           
           {/* Performance monitoring */}
           <script dangerouslySetInnerHTML={{

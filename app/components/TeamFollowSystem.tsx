@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 export interface TeamFollow {
   teamId: number;
@@ -134,7 +135,7 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
             {currentGameTeams.slice(0, 3).map((team) => (
               <div key={`${team.teamId}-${team.game}`} className="flex items-center gap-2 text-sm">
                 {team.teamLogo && (
-                  <img src={team.teamLogo} alt={team.teamName} className="w-4 h-4 rounded" />
+                  <Image src={team.teamLogo} alt={team.teamName} width={16} height={16} className="w-4 h-4 rounded" />
                 )}
                 <span className="text-white">{team.teamName}</span>
                 <button
@@ -215,7 +216,7 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                         className={`w-full text-left p-2 flex items-center gap-2 hover:bg-[#222] border-b border-[#333] last:border-b-0 ${isFollowed ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {team.image_url && (
-                          <img src={team.image_url} alt={team.name} className="w-6 h-6 rounded" />
+                          <Image src={team.image_url} alt={team.name} width={24} height={24} className="w-6 h-6 rounded" />
                         )}
                         <span className="text-white">{team.name}</span>
                         {isFollowed && <span className="text-green-400 text-xs ml-auto">✓ Seguido</span>}
@@ -229,9 +230,9 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                 <div className="mt-2 text-center text-gray-400" aria-live="polite">Buscando...</div>
               )}
               
-              {!isSearching && searchTerm && searchResults.length === 0 && (
+        {!isSearching && searchTerm && searchResults.length === 0 && (
                 <div className="mt-2 text-center text-gray-400" aria-live="polite">
-                  No se encontraron equipos con "{searchTerm}"
+          No se encontraron equipos con &quot;{searchTerm}&quot;
                 </div>
               )}
             </div>
@@ -248,7 +249,7 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                     {currentGameTeams.map((team) => (
                       <div key={`${team.teamId}-${team.game}`} className="flex items-center gap-3 p-2 bg-[#111] rounded border border-[#333]">
                         {team.teamLogo && (
-                          <img src={team.teamLogo} alt={team.teamName} className="w-6 h-6 rounded" />
+                          <Image src={team.teamLogo} alt={team.teamName} width={24} height={24} className="w-6 h-6 rounded" />
                         )}
                         <span className="flex-1 text-white">{team.teamName}</span>
                         <button
@@ -284,7 +285,7 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                     {allGamesTeams.map((team) => (
                       <div key={`${team.teamId}-${team.game}`} className="flex items-center gap-3 p-2 bg-[#111] rounded border border-[#333] opacity-70">
                         {team.teamLogo && (
-                          <img src={team.teamLogo} alt={team.teamName} className="w-6 h-6 rounded" />
+                          <Image src={team.teamLogo} alt={team.teamName} width={24} height={24} className="w-6 h-6 rounded" />
                         )}
                         <span className="flex-1 text-white">{team.teamName}</span>
                         <span className="text-xs text-gray-500 uppercase">{team.game}</span>

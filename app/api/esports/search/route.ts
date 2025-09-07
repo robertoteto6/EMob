@@ -2,10 +2,58 @@ import { NextResponse } from "next/server";
 import { pandaScoreFetch } from "../../../lib/pandaScoreFetch";
 import { apiCache } from "../../../lib/utils";
 
+// Tipos para los resultados de búsqueda
+interface SearchResult {
+  id: number;
+  name: string;
+  type: "team" | "player" | "tournament" | "match";
+  image_url: string | null;
+  league?: string;
+  game: string;
+  status?: string;
+}
+
+interface TeamData {
+  id: number;
+  name: string;
+  image_url?: string;
+  league?: {
+    name?: string;
+  };
+}
+
+interface PlayerData {
+  id: number;
+  name: string;
+  image_url?: string;
+}
+
+interface TournamentData {
+  id: number;
+  name: string;
+  league?: {
+    name?: string;
+    image_url?: string;
+  };
+}
+
+interface MatchData {
+  id: number;
+  opponents?: Array<{
+    opponent?: {
+      name?: string;
+    };
+  }>;
+  league?: {
+    name?: string;
+  };
+  status?: string;
+}
+
 // Mapeo de IDs de juegos a los nombres de la API de PandaScore
 const GAME_MAPPING: Record<string, string> = {
   "dota2": "dota2",
-  "lol": "lol", 
+  "lol": "lol",
   "csgo": "csgo",
   "r6siege": "r6siege",
   "ow": "ow", // Overwatch usa "ow" en PandaScore
@@ -39,12 +87,12 @@ export async function GET(req: Request) {
   }
 
   const gameList = gameParam ? [gameParam] : Object.keys(GAME_MAPPING);
-  const results: any[] = [];
+  const results: SearchResult[] = [];
 
   for (const gameParam of gameList) {
     // Mapear el juego al nombre correcto de la API
     const g = GAME_MAPPING[gameParam] || gameParam;
-    
+
     const encoded = encodeURIComponent(q);
     const base = `https://api.pandascore.co/${g}`;
     const params = `per_page=5&search%5Bname%5D=${encoded}`;
@@ -57,7 +105,7 @@ export async function GET(req: Request) {
         fetchJSON(`${base}/matches`, params),
       ]);
 
-      teams.forEach((t: any) => {
+      teams.forEach((t: TeamData) => {
         results.push({
           id: t.id,
           name: t.name,
@@ -68,7 +116,7 @@ export async function GET(req: Request) {
         });
       });
 
-      players.forEach((p: any) => {
+      players.forEach((p: PlayerData) => {
         results.push({
           id: p.id,
           name: p.name,
@@ -78,7 +126,7 @@ export async function GET(req: Request) {
         });
       });
 
-      tournaments.forEach((t: any) => {
+      tournaments.forEach((t: TournamentData) => {
         results.push({
           id: t.id,
           name: t.name,
@@ -89,7 +137,7 @@ export async function GET(req: Request) {
         });
       });
 
-      matches.forEach((m: any) => {
+      matches.forEach((m: MatchData) => {
         const radiant = m.opponents?.[0]?.opponent?.name ?? "TBD";
         const dire = m.opponents?.[1]?.opponent?.name ?? "TBD";
         results.push({
