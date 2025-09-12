@@ -4,7 +4,7 @@ import "./globals.css";
 import Header from "./components/Header";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AuthProvider } from "./contexts/AuthContext";
-import { AccessibilityProvider, AccessibilityButton, SkipToContent } from "./components/AccessibilityEnhancer";
+import { AccessibilityProvider, SkipToContent } from "./components/AccessibilityEnhancer";
 import { UXProvider, NotificationContainer, GlobalLoader } from "./components/UXEnhancer";
 import { Suspense } from "react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -171,8 +171,6 @@ export default function RootLayout({
                 <main id="main-content" className="focus:outline-none" role="main">
                   {children}
                 </main>
-                
-                <AccessibilityButton />
                 <NotificationContainer />
                 <GlobalLoader />
               </AuthProvider>

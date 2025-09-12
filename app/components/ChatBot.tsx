@@ -6,6 +6,7 @@ import { useCache } from '../lib/cache';
 import { apiCache } from '../lib/cache';
 import { debounce } from '../lib/utils';
 import { Spinner } from './LoadingOptimized';
+import { useAppActions } from '../store';
 
 interface Message {
   id: string;
@@ -33,6 +34,7 @@ const MAX_MESSAGES = 50; // Limitar mensajes para rendimiento
 
 const ChatBot: React.FC = memo(() => {
   const [isOpen, setIsOpen] = useState(false);
+  const { setChatOpen } = useAppActions();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -63,6 +65,11 @@ const ChatBot: React.FC = memo(() => {
       inputRef.current.focus();
     }
   }, [isOpen]);
+
+  // Mantener estado global sincronizado para evitar solapamientos con otros botones
+  useEffect(() => {
+    setChatOpen(isOpen);
+  }, [isOpen, setChatOpen]);
 
   // Debounced typing indicator
   const debouncedTyping = useCallback(
