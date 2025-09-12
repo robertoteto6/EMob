@@ -145,7 +145,8 @@ async function fetchAllMatches(): Promise<Match[]> {
     console.error('Error fetching matches:', error);
   }
   
-  return allMatches.sort((a, b) => a.start_time - b.start_time);
+  // Return a sorted copy to avoid mutating the aggregated results in place
+  return [...allMatches].sort((a, b) => a.start_time - b.start_time);
 }
 
 // Función para obtener torneos de múltiples juegos
