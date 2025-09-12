@@ -532,7 +532,8 @@ const Home = memo(function Home() {
       setMatches(matchesData);
     } catch (error) {
       console.error('Error loading matches:', error);
-      notificationSystem.addNotification({
+      // Use the stable callback reference to avoid unnecessary re-creations
+      addNotification({
         type: 'error',
         title: 'Error',
         message: 'Error al cargar partidos',
@@ -557,7 +558,8 @@ const Home = memo(function Home() {
       setTournaments(activeTournaments.slice(0, 6));
     } catch (error) {
       console.error('Error loading tournaments:', error);
-      notificationSystem.addNotification({
+      // Use the stable callback reference to avoid unnecessary re-creations
+      addNotification({
         type: 'error',
         title: 'Error',
         message: 'Error al cargar torneos',
@@ -635,7 +637,8 @@ const Home = memo(function Home() {
         break;
     }
 
-    return filtered.sort((a, b) => {
+    // Never mutate state during render; sort a copy
+    return [...filtered].sort((a, b) => {
       // Priorizar partidos en vivo
       const aIsLive = a.start_time <= currentTime && a.radiant_win === null;
       const bIsLive = b.start_time <= currentTime && b.radiant_win === null;
