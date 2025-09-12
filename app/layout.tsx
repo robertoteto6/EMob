@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
+import Footer from "./components/Footer";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AccessibilityProvider, SkipToContent } from "./components/AccessibilityEnhancer";
@@ -155,7 +156,7 @@ export default function RootLayout({
         }} />
       </head>
       
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white min-h-screen`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`}>
         <ErrorBoundary>
           <AccessibilityProvider>
             <UXProvider>
@@ -171,6 +172,7 @@ export default function RootLayout({
                 <main id="main-content" className="focus:outline-none" role="main">
                   {children}
                 </main>
+                <Footer />
                 <NotificationContainer />
                 <GlobalLoader />
               </AuthProvider>

@@ -487,7 +487,7 @@ function TeamsPageContent() {
       </Suspense>
       <LiveScoreTicker currentGame={game} />
       
-      <main className="min-h-screen bg-black text-white pt-20">
+      <main className="min-h-screen pt-20">
         {/* Indicador de estado de cache */}
         {showCacheInfo && (
           <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50">

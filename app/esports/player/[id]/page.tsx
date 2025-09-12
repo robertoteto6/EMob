@@ -422,7 +422,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
         <Suspense fallback={null}>
           <Header />
         </Suspense>
-        <main className="min-h-screen bg-black text-white pt-20">
+        <main className="min-h-screen pt-20">
           <div className="container mx-auto px-6 py-8">
             <div className="flex items-center justify-center min-h-[60vh]">
               <div className="text-center">
@@ -443,7 +443,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
         <Suspense fallback={null}>
           <Header />
         </Suspense>
-        <main className="min-h-screen bg-black text-white pt-20">
+        <main className="min-h-screen pt-20">
           <div className="container mx-auto px-6 py-8">
             <div className="text-center py-16">
               <div className="w-24 h-24 mx-auto mb-6 bg-gray-800 rounded-full flex items-center justify-center">
@@ -471,7 +471,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
       <Suspense fallback={null}>
         <Header />
       </Suspense>
-      <main className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white pt-20">
+      <main className="min-h-screen bg-gradient-to-br from-background via-background to-background text-foreground pt-20">
         <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-5"></div>
         
         <div className="relative z-10 container mx-auto px-6 py-8">

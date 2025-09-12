@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import Search from "./Search";
+import ThemeToggle from "./ThemeToggle";
 
 function HeaderContent() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -83,14 +84,15 @@ function HeaderContent() {
             <Search globalSearch={true} placeholder="Buscar en todos los juegos..." />
           </div>
 
-          {/* CTA Button */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* CTA Button + Theme */}
+          <div className="hidden md:flex items-center gap-3">
             <button 
               className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
               aria-label="Ver notificaciones"
             >
               🔔 Notificaciones
             </button>
+            <ThemeToggle />
           </div>
 
           {/* Mobile menu button */}
@@ -135,13 +137,14 @@ function HeaderContent() {
                   {item.name}
                 </Link>
               ))}
-              <div className="px-6 py-3">
+              <div className="px-6 py-3 flex items-center gap-3">
                 <button 
                   className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg"
                   aria-label="Ver notificaciones"
                 >
                   🔔 Notificaciones
                 </button>
+                <ThemeToggle className="flex-0" />
               </div>
             </nav>
           </div>

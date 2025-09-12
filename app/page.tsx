@@ -659,7 +659,7 @@ const Home = memo(function Home() {
       <Header />
       <LiveScoreTicker currentGame="all" />
       
-      <main className="min-h-screen bg-black text-white pt-20">
+      <main className="min-h-screen pt-20">
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 py-20">
           <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-5"></div>

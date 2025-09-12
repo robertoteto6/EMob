@@ -425,7 +425,7 @@ function GamePageContent({ gameId }: { gameId: string }) {
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-black text-white pt-20">
+        <main className="min-h-screen pt-20">
           <div className="container mx-auto px-6 py-8">
             <div className="animate-pulse">
               <div className="h-8 bg-gray-700 rounded w-64 mb-4"></div>
@@ -446,7 +446,7 @@ function GamePageContent({ gameId }: { gameId: string }) {
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-black text-white pt-20">
+        <main className="min-h-screen pt-20">
           <div className="container mx-auto px-6 py-8">
             <div className="text-center py-16">
               <div className="text-6xl mb-4">⚠️</div>
@@ -469,7 +469,7 @@ function GamePageContent({ gameId }: { gameId: string }) {
     <>
       <Header />
       
-      <main className="min-h-screen bg-black text-white pt-20">
+      <main className="min-h-screen pt-20">
         {/* Hero Section del Juego */}
         <section className={`relative overflow-hidden bg-gradient-to-br ${game.gradient} py-20`}>
           <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10"></div>

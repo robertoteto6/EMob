@@ -87,7 +87,7 @@ const FirebaseDemoPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
+    <div className="min-h-screen p-6 text-foreground">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-green-400 mb-4">
