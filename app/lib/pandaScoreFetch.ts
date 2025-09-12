@@ -16,6 +16,7 @@ if (typeof window === 'undefined') {
 }
 // In server context, prefer the server cache implementation
 import { getGlobalCache, cached } from './advancedCache.server';
+import { reportApiError } from './apiErrorReporter';
 
 export async function pandaScoreFetch(
   baseUrl: string,
@@ -24,9 +25,12 @@ export async function pandaScoreFetch(
   cacheOptions?: { ttl?: number; priority?: 'low' | 'medium' | 'high' | 'critical'; tags?: string[] }
 ) {
   const cache = getGlobalCache();
-  
-  // Generar clave de cache
-  const cacheKey = `api_${baseUrl}_${searchParams.toString()}`;
+
+  // Nunca mutar los searchParams entrantes para evitar claves inconsistentes
+  const baseParams = new URLSearchParams(searchParams);
+
+  // Generar clave de cache (sin token)
+  const cacheKey = `api_${baseUrl}_${baseParams.toString()}`;
   
   // Intentar obtener del cache primero
   const cachedResponse = cache.get(cacheKey);
@@ -44,6 +48,15 @@ export async function pandaScoreFetch(
   ].filter(Boolean) as string[];
 
   if (keys.length === 0) {
+    // Report explicitly to help track misconfiguration in prod
+    reportApiError({
+      service: 'pandascore',
+      url: baseUrl,
+      message: 'Missing PandaScore API keys in environment variables',
+      timestamp: new Date().toISOString(),
+      method: (options as any)?.method || 'GET',
+      params: searchParams.toString(),
+    });
     throw new Error('Missing PandaScore API keys in environment variables');
   }
 
@@ -51,8 +64,9 @@ export async function pandaScoreFetch(
 
   for (const key of keys) {
     const url = new URL(baseUrl);
-    searchParams.set('token', key);
-    url.search = searchParams.toString();
+    const finalParams = new URLSearchParams(baseParams);
+    finalParams.set('token', key);
+    url.search = finalParams.toString();
 
     try {
       const fetchOptions: RequestInit = {
@@ -88,12 +102,36 @@ export async function pandaScoreFetch(
       }
 
       if (res.status !== 429) {
-        throw new Error(`API error: ${res.status} - ${await res.text()}`);
+        const body = await res.text();
+        // Structured report to aid debugging
+        reportApiError({
+          service: 'pandascore',
+          url: url.toString(),
+          status: res.status,
+          ok: res.ok,
+          method: (options as any)?.method || 'GET',
+          params: finalParams.toString(),
+          message: `API error: ${res.status}`,
+          bodySnippet: body?.slice(0, 500),
+          tokenTail: key.slice(-4),
+          timestamp: new Date().toISOString(),
+        });
+        throw new Error(`API error: ${res.status} - ${body}`);
       }
 
       lastError = new Error(`Rate limit hit with key ending in ${key.slice(-4)}`);
     } catch (err: unknown) {
       lastError = (err instanceof Error) ? err : new Error(String(err));
+      // Network or other unexpected error
+      reportApiError({
+        service: 'pandascore',
+        url: baseUrl,
+        message: `Request failed: ${lastError.message}`,
+        tokenTail: key ? key.slice(-4) : undefined,
+        method: (options as any)?.method || 'GET',
+        params: baseParams.toString(),
+        timestamp: new Date().toISOString(),
+      });
     }
   }
 
