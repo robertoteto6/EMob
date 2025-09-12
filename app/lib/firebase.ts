@@ -1,5 +1,5 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApp, getApps } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -26,10 +26,11 @@ export const firebaseEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.p
 let app: ReturnType<typeof initializeApp> | null = null;
 if (typeof window !== 'undefined' && firebaseEnabled) {
   try {
-    app = initializeApp(firebaseConfig);
+    app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   } catch (e) {
     // If already initialized or any benign error, ignore
     // console.warn('Firebase init warning:', e);
+    app = null;
   }
 }
 
@@ -38,7 +39,9 @@ export const auth = app ? getAuth(app) : null;
 export const db = app ? getFirestore(app) : null;
 export const storage = app ? getStorage(app) : null;
 
-// Initialize Analytics (only in browser environment when app exists)
-export const analytics = app && typeof window !== 'undefined' ? getAnalytics(app) : null;
+// Initialize Analytics (only in browser environment when app exists and measurementId present)
+export const analytics = app && typeof window !== 'undefined' && Boolean(firebaseConfig.measurementId)
+  ? (() => { try { return getAnalytics(app!); } catch { return null; } })()
+  : null;
 
 export default app;

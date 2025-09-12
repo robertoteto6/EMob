@@ -1,8 +1,16 @@
-// Solo importar proxy agent en el servidor; avoid bundling on client
+// Solo importar proxy agent en el servidor; evitar fallos en Edge/Browser
 let getProxyAgent: (() => any) | undefined;
 if (typeof window === 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  getProxyAgent = require('./proxyAgent').getProxyAgent;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // En Edge `require` no existe; capturamos el ReferenceError
+    // para evitar fallos y seguimos sin proxy.
+    // @ts-expect-error require puede no existir en Edge
+    const mod = require('./proxyAgent');
+    getProxyAgent = mod?.getProxyAgent;
+  } catch {
+    getProxyAgent = undefined;
+  }
 }
 // In server context, prefer the server cache implementation
 import { getGlobalCache, cached } from './advancedCache.server';

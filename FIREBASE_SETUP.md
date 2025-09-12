@@ -49,9 +49,9 @@ La configuración de Firebase está directamente en el código por simplicidad, 
 
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=tu_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tu_auth_domain
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tu_project_id.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=tu_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tu_storage_bucket
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tu_project_id.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=tu_messaging_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=tu_app_id
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=tu_measurement_id

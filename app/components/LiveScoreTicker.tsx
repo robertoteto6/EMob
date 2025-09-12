@@ -24,7 +24,7 @@ const GAME_ICONS: Record<string, string> = {
   dota2: "/dota2.svg",
   lol: "/leagueoflegends.svg",
   csgo: "/counterstrike.svg",
-  r6siege: "/rainbow6siege.svg",
+  r6siege: "/rainbow6siege.png",
   overwatch: "/overwatch.svg",
 };
 

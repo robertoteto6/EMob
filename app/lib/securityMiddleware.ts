@@ -107,7 +107,40 @@ export class SecurityMiddleware {
   // Verificar si el origen está permitido
   private isAllowedOrigin(origin: string | null): boolean {
     if (!origin) return true; // Requests sin origen (ej: Postman)
-    return this.config.allowedOrigins!.includes(origin);
+
+    const allowed = this.config.allowedOrigins || [];
+    try {
+      const o = new URL(origin);
+      const hostname = o.hostname;
+      const protocol = o.protocol; // 'http:' | 'https:'
+
+      for (const entry of allowed) {
+        // Coincidencia exacta
+        if (entry === origin) return true;
+
+        // Soporte básico para wildcard: https://*.vercel.app
+        const wildcard = entry.match(/^(https?:\/\/)?\*\.(.+)$/);
+        if (wildcard) {
+          const base = wildcard[2]; // 'vercel.app'
+          // Si la entrada especifica protocolo, respétalo; si no, acepta ambos
+          const entryHasProtocol = /^(https?:\/\/)/.test(entry);
+          if ((!entryHasProtocol || entry.startsWith(protocol)) &&
+              (hostname === base || hostname.endsWith(`.${base}`))) {
+            return true;
+          }
+        }
+
+        // Permitir shorthand de dominio sin protocolo
+        if (!/^https?:\/\//.test(entry)) {
+          if (hostname === entry || hostname.endsWith(`.${entry}`)) return true;
+        }
+      }
+    } catch {
+      // Si el header Origin no es una URL válida, rechazar por seguridad
+      return false;
+    }
+
+    return false;
   }
 
   // Manejar rate limiting

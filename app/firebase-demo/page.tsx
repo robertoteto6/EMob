@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import AuthComponent from '../components/AuthComponent';
-import { useFirestoreCollection } from '../hooks/useFirestore';
+import { useFirestoreCollection, useFirestoreQuery } from '../hooks/useFirestore';
 import { userProfileService, userPredictionService } from '../lib/firestore';
 
 const FirebaseDemoPage: React.FC = () => {
@@ -23,8 +23,15 @@ const FirebaseDemoPage: React.FC = () => {
     data: predictions,
     loading: predictionsLoading,
     error: predictionsError,
-    create: createPrediction
-  } = useFirestoreCollection(userPredictionService, true);
+    refetch: refetchPredictions,
+  } = useFirestoreQuery(
+    userPredictionService,
+    'userId',
+    '==',
+    user?.uid ?? '',
+    undefined,
+    Boolean(user)
+  );
 
   const handleCreateProfile = async () => {
     if (!user) return;
@@ -49,7 +56,7 @@ const FirebaseDemoPage: React.FC = () => {
     if (!user) return;
     
     try {
-      await createPrediction({
+      await userPredictionService.create({
         userId: user.uid,
         matchId: 'match_' + Date.now(),
         prediction: {
@@ -60,6 +67,7 @@ const FirebaseDemoPage: React.FC = () => {
         points: 0,
         resolved: false
       });
+      refetchPredictions();
     } catch (error) {
       console.error('Error creating prediction:', error);
     }

@@ -2,6 +2,21 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // User Profiles - public read, only owner can write
+    match /userProfiles/{userId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // User Predictions - only owner can read/write
+    match /userPredictions/{predictionId} {
+      allow create: if request.auth != null &&
+        request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if request.auth != null &&
+        resource.data.userId == request.auth.uid;
+    }
+
     // Users can only access their own user document
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
@@ -42,7 +57,7 @@ service cloud.firestore {
     match /chatMessages/{messageId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && 
-        request.auth.uid == resource.data.userId &&
+        request.auth.uid == request.resource.data.userId &&
         validateChatMessage(request.resource.data);
       allow update, delete: if request.auth != null && 
         request.auth.uid == resource.data.userId;

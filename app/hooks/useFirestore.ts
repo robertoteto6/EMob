@@ -198,7 +198,8 @@ export const useFirestoreQuery = <T extends FirestoreDocument>(
   field: string,
   operator: any,
   value: any,
-  limitCount?: number
+  limitCount?: number,
+  enabled: boolean = true
 ) => {
   const [state, setState] = useState<UseFirestoreState<T>>({
     data: [],
@@ -207,6 +208,10 @@ export const useFirestoreQuery = <T extends FirestoreDocument>(
   });
 
   const fetchData = useCallback(async () => {
+    if (!enabled) {
+      setState({ data: [], loading: false, error: null });
+      return;
+    }
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
       const documents = await service.getWhere(field, operator, value, limitCount);
@@ -214,7 +219,7 @@ export const useFirestoreQuery = <T extends FirestoreDocument>(
     } catch (error: any) {
       setState({ data: [], loading: false, error: error.message });
     }
-  }, [service, field, operator, value, limitCount]);
+  }, [service, field, operator, value, limitCount, enabled]);
 
   const refetch = useCallback(() => {
     fetchData();

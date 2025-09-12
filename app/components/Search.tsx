@@ -34,11 +34,15 @@ export default function Search({
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [recentSearches, setRecentSearches] = useState<SearchItem[]>([]);
-  const [isFocused, setIsFocused] = useState(false);
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const controllerRef = useRef<AbortController | null>(null);
+
+  // Texto del placeholder (usar placeholder nativo para que desaparezca al escribir)
+  const placeholderText = globalSearch
+    ? "Buscar en todos los juegos — equipos, jugadores, partidos..."
+    : placeholder;
 
   // Cargar búsquedas recientes del localStorage
   useEffect(() => {
@@ -245,21 +249,7 @@ export default function Search({
           </svg>
         </div>
 
-        {/* Placeholder personalizado */}
-        {!query && !isFocused && (
-          <div className="absolute inset-y-0 left-10 flex items-center pointer-events-none z-5">
-            <span className="text-gray-400 text-sm">
-              {globalSearch ? (
-                <span>
-                  Buscar en <span className="text-green-400 font-medium">todos los juegos</span>
-                  <span className="text-gray-500 ml-1">- equipos, jugadores, partidos...</span>
-                </span>
-              ) : (
-                placeholder
-              )}
-            </span>
-          </div>
-        )}
+        {/* Se elimina el placeholder personalizado para evitar que se mantenga al escribir */}
         
         <input
           ref={inputRef}
@@ -271,10 +261,6 @@ export default function Search({
           }}
           onFocus={() => {
             setShow(true);
-            setIsFocused(true);
-          }}
-          onBlur={() => {
-            setIsFocused(false);
           }}
           onKeyDown={handleKeyDown}
           className={`
@@ -285,10 +271,11 @@ export default function Search({
             focus:bg-gray-800/80
             transition-all duration-300 ease-in-out
             hover:border-gray-500/70
-            placeholder-transparent
+            placeholder-gray-400
             ${compact ? 'py-2' : 'py-3'}
           `}
-          placeholder="" // Usamos placeholder personalizado
+          placeholder={placeholderText}
+          aria-label={placeholderText}
         />
 
         {/* Indicador de carga */}

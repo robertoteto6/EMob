@@ -4,6 +4,7 @@ import {
   getDoc, 
   getDocs, 
   addDoc, 
+  setDoc,
   updateDoc, 
   deleteDoc, 
   query, 
@@ -14,7 +15,8 @@ import {
   DocumentData, 
   QueryDocumentSnapshot,
   onSnapshot,
-  Unsubscribe
+  Unsubscribe,
+  serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -39,12 +41,28 @@ export class FirestoreService<T extends FirestoreDocument> {
   if (!db) throw new Error('Firestore no disponible');
       const docRef = await addDoc(collection(db, this.collectionName), {
         ...data,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       });
       return docRef.id;
     } catch (error) {
       console.error(`Error creating document in ${this.collectionName}:`, error);
+      throw error;
+    }
+  }
+
+  // Crear documento con ID específico
+  async createWithId(id: string, data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {
+    try {
+  if (!db) throw new Error('Firestore no disponible');
+      const docRef = doc(db, this.collectionName, id);
+      await setDoc(docRef, {
+        ...data,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error(`Error creating document with id in ${this.collectionName}:`, error);
       throw error;
     }
   }
@@ -122,7 +140,7 @@ export class FirestoreService<T extends FirestoreDocument> {
       const docRef = doc(db, this.collectionName, id);
       await updateDoc(docRef, {
         ...data,
-        updatedAt: new Date()
+        updatedAt: serverTimestamp()
       });
     } catch (error) {
       console.error(`Error updating document ${id} in ${this.collectionName}:`, error);
@@ -217,7 +235,8 @@ export const userPredictionService = new FirestoreService<UserPrediction>('userP
 // Funciones de utilidad
 export const createUserProfile = async (userId: string, email: string, displayName: string): Promise<void> => {
   try {
-    await userProfileService.create({
+    // Usa el UID como ID del documento para mayor seguridad y reglas simples
+    await userProfileService.createWithId(userId, {
       email,
       displayName,
       favoriteTeams: [],

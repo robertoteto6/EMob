@@ -124,8 +124,8 @@ const GAMES = [
   { id: "dota2", name: "Dota 2", icon: "/dota2.svg", color: "#A970FF", gradient: "from-purple-600 to-purple-800" },
   { id: "lol", name: "League of Legends", icon: "/leagueoflegends.svg", color: "#1E90FF", gradient: "from-blue-600 to-blue-800" },
   { id: "csgo", name: "Counter-Strike 2", icon: "/counterstrike.svg", color: "#FFD700", gradient: "from-yellow-600 to-yellow-800" },
-  { id: "r6siege", name: "Rainbow Six Siege", icon: "/rainbow6siege.svg", color: "#FF6B35", gradient: "from-orange-600 to-orange-800" },
-  { id: "overwatch", name: "Overwatch", icon: "/overwatch.svg", color: "#FF9500", gradient: "from-orange-500 to-orange-700" },
+  { id: "r6siege", name: "Rainbow Six Siege", icon: "/rainbow6siege.png", color: "#FF6B35", gradient: "from-orange-600 to-orange-800" },
+  { id: "overwatch", name: "Overwatch 2", icon: "/overwatch.svg", color: "#FF9500", gradient: "from-orange-500 to-orange-700" },
 ];
 
 async function fetchTeams(game: string, search?: string): Promise<Team[]> {
@@ -564,7 +564,7 @@ function TeamsPageContent() {
           {/* Filtros de juegos */}
           <div className="mb-8">
             <h3 className="text-xl font-semibold text-white mb-4 text-center">Seleccionar Juego</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
               {GAMES.map((g, index) => (
                 <button
                   key={g.id}

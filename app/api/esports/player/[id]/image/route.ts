@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { pandaScoreFetch } from "../../../../../lib/pandaScoreFetch";
 import { getProxyAgent } from "../../../../../lib/proxyAgent";
 
-const PANDA_SCORE_TOKEN = "_PSqzloyu4BibH0XiUvNHvm9AjjnwqcrIMfwEJou6Y0i4NAXENo";
-
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   

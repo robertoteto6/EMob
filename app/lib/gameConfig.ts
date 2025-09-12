@@ -45,7 +45,7 @@ export const SUPPORTED_GAMES: GameConfig[] = [
   {
     id: "r6siege",
     name: "Rainbow Six Siege",
-    icon: "/rainbow6siege.svg",
+    icon: "/rainbow6siege.png",
     color: "#FF6600",
     gradient: "from-orange-600 to-orange-800",
     description: "Combate táctico intenso",
