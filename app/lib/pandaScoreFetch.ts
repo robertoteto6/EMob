@@ -2,12 +2,14 @@
 let getProxyAgent: (() => any) | undefined;
 if (typeof window === 'undefined') {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    // En Edge `require` no existe; capturamos el ReferenceError
-    // para evitar fallos y seguimos sin proxy.
-    // @ts-expect-error require puede no existir en Edge
-    const mod = require('./proxyAgent');
-    getProxyAgent = mod?.getProxyAgent;
+    // En algunos entornos (Edge/Browser) `require` no existe.
+    // Obtenemos una referencia segura desde globalThis para evitar errores de tipos.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+    const req = (globalThis as any).require as undefined | ((id: string) => any);
+    if (typeof req === 'function') {
+      const mod = req('./proxyAgent');
+      getProxyAgent = mod?.getProxyAgent;
+    }
   } catch {
     getProxyAgent = undefined;
   }
