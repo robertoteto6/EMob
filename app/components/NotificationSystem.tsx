@@ -387,7 +387,7 @@ export function useNotifications() {
     return { unread, total: notifications.length, byType, byPriority };
   }, [notifications]);
 
-  return {
+  return useMemo(() => ({
     notifications,
     addNotification,
     markAsRead,
@@ -397,5 +397,5 @@ export function useNotifications() {
     markAllAsRead,
     stats,
     isLoading
-  };
+  }), [notifications, addNotification, markAsRead, deleteNotification, clearAll, deleteAll, markAllAsRead, stats, isLoading]);
 }
