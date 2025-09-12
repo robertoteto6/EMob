@@ -513,6 +513,7 @@ const Home = memo(function Home() {
   
   const { currentTime, isClient } = useCurrentTime();
   const notificationSystem = useNotifications();
+  const addNotification = notificationSystem.addNotification;
 
   // Callbacks memoizados para evitar re-renders
   const handleGameChange = useCallback((game: string) => {
@@ -540,16 +541,17 @@ const Home = memo(function Home() {
     } finally {
       setLoading(false);
     }
-  }, [notificationSystem.addNotification]);
+  }, [addNotification]);
 
   const loadTournaments = useCallback(async () => {
     try {
       setLoadingTournaments(true);
       const tournamentsData = await fetchAllTournaments();
+      const now = Math.floor(Date.now() / 1000);
       const activeTournaments = tournamentsData.filter(t => {
         if (!t.begin_at) return false;
-        const started = t.begin_at <= currentTime;
-        const ended = t.end_at && t.end_at < currentTime;
+        const started = t.begin_at <= now;
+        const ended = t.end_at && t.end_at < now;
         return started && !ended;
       });
       setTournaments(activeTournaments.slice(0, 6));
@@ -564,7 +566,7 @@ const Home = memo(function Home() {
     } finally {
       setLoadingTournaments(false);
     }
-  }, [currentTime, notificationSystem.addNotification]);
+  }, [addNotification]);
 
   // Cargar datos
   useEffect(() => {
@@ -572,9 +574,10 @@ const Home = memo(function Home() {
   }, [loadData]);
 
   useEffect(() => {
-    if (isClient) {
-      loadTournaments();
-    }
+    if (!isClient) return;
+    loadTournaments();
+    const interval = setInterval(loadTournaments, 60000); // refresh cada 60s
+    return () => clearInterval(interval);
   }, [isClient, loadTournaments]);
 
   // Estadísticas por juego
