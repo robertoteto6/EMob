@@ -397,5 +397,5 @@ export function useNotifications() {
     markAllAsRead,
     stats,
     isLoading
-  }), [notifications, addNotification, markAsRead, deleteNotification, clearAll, deleteAll, markAllAsRead, stats, isLoading]);
+  }), [notifications, isLoading]);
 }
