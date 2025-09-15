@@ -1,6 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
+import { shallow } from 'zustand/shallow';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { subscribeWithSelector } from 'zustand/middleware';
@@ -212,6 +213,10 @@ export const useAppStore = create<AppStore>()(
           }),
 
           setSidebarOpen: (open) => set((state) => {
+            if (state.sidebarOpen === open) {
+              return;
+            }
+
             state.sidebarOpen = open;
           }),
 
@@ -220,6 +225,10 @@ export const useAppStore = create<AppStore>()(
           }),
 
           setChatOpen: (open) => set((state) => {
+            if (state.chatOpen === open) {
+              return;
+            }
+
             state.chatOpen = open;
           }),
 
@@ -228,6 +237,10 @@ export const useAppStore = create<AppStore>()(
           }),
 
           setNotificationsOpen: (open) => set((state) => {
+            if (state.notificationsOpen === open) {
+              return;
+            }
+
             state.notificationsOpen = open;
           }),
 
@@ -305,12 +318,12 @@ export const useUIState = () => useAppStore((state) => ({
   sidebarOpen: state.sidebarOpen,
   chatOpen: state.chatOpen,
   notificationsOpen: state.notificationsOpen
-}));
+}), shallow);
 export const useAppStatus = () => useAppStore((state) => ({
   isLoading: state.isLoading,
   error: state.error,
   lastUpdated: state.lastUpdated
-}));
+}), shallow);
 
 // Selectores derivados
 export const useLiveMatches = () => useAppStore((state) =>
@@ -356,7 +369,7 @@ export const useAppActions = () => useAppStore((state) => ({
   getCache: state.getCache,
   clearCache: state.clearCache,
   reset: state.reset
-}));
+}), shallow);
 
 // Middleware personalizado para logging en desarrollo
 if (process.env.NODE_ENV === 'development') {
