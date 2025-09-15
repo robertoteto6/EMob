@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { use, useEffect, useState, Suspense, useCallback, useMemo } from "react";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "../../../components/Header";
@@ -11,11 +11,11 @@ import { TeamSkeleton, PlayerSkeleton } from "../../../components/Skeleton";
 import { useNotifications } from "../../../hooks/useNotifications";
 import { useDeferredClientRender } from "../../../hooks/useDeferredClientRender";
 
-const NotificationSystem = dynamic(() => import("../../../components/NotificationSystem"), {
+const NotificationSystem = nextDynamic(() => import("../../../components/NotificationSystem"), {
   ssr: false,
 });
 
-const ChatBot = dynamic(() => import("../../../components/ChatBot"), {
+const ChatBot = nextDynamic(() => import("../../../components/ChatBot"), {
   ssr: false,
   loading: () => null,
 });

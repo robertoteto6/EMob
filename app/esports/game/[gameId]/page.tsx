@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -9,11 +9,11 @@ import Header from "../../../components/Header";
 import { useNotifications } from "../../../hooks/useNotifications";
 import { useDeferredClientRender } from "../../../hooks/useDeferredClientRender";
 
-const NotificationSystem = dynamic(() => import("../../../components/NotificationSystem"), {
+const NotificationSystem = nextDynamic(() => import("../../../components/NotificationSystem"), {
   ssr: false,
 });
 
-const ChatBot = dynamic(() => import("../../../components/ChatBot"), {
+const ChatBot = nextDynamic(() => import("../../../components/ChatBot"), {
   ssr: false,
   loading: () => null,
 });

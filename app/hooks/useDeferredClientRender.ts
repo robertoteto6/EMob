@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-type IdleCallbackId = number;
+type IdleWindow = typeof window & {
+  requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+  cancelIdleCallback?: (handle: number) => void;
+};
 
 export function useDeferredClientRender(delay = 200) {
   const [isReady, setIsReady] = useState(false);
@@ -13,6 +16,7 @@ export function useDeferredClientRender(delay = 200) {
     }
 
     let cancelled = false;
+    const idleWindow = window as IdleWindow;
 
     const markReady = () => {
       if (!cancelled) {
@@ -20,12 +24,12 @@ export function useDeferredClientRender(delay = 200) {
       }
     };
 
-    if ("requestIdleCallback" in window) {
-      const idleId: IdleCallbackId = (window as any).requestIdleCallback(markReady, { timeout: Math.max(delay, 200) });
+    if (idleWindow.requestIdleCallback) {
+      const idleId = idleWindow.requestIdleCallback(markReady, { timeout: Math.max(delay, 200) });
       return () => {
         cancelled = true;
-        if ("cancelIdleCallback" in window) {
-          (window as any).cancelIdleCallback(idleId);
+        if (idleWindow.cancelIdleCallback) {
+          idleWindow.cancelIdleCallback(idleId);
         }
       };
     }
@@ -39,4 +43,3 @@ export function useDeferredClientRender(delay = 200) {
 
   return isReady;
 }
-
