@@ -1,7 +1,6 @@
 'use client';
 
 import { getGlobalCache } from './advancedCache';
-import { cachedPandaScoreFetch } from './pandaScoreFetch';
 
 // Tipos para optimización de consultas
 interface QueryConfig {
@@ -142,24 +141,38 @@ export class QueryOptimizer {
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
         try {
-          const searchParams = new URLSearchParams();
-          Object.entries(params).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
-              searchParams.append(key, String(value));
-            }
+          const requestUrl = this.buildRequestUrl(endpoint, params);
+          const response = await fetch(requestUrl, {
+            signal: controller.signal,
+            headers: {
+              Accept: 'application/json',
+            },
           });
 
-          const response = await cachedPandaScoreFetch(endpoint, searchParams);
           clearTimeout(timeoutId);
-          
-          return response as T;
+
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => '');
+            throw new Error(`Request to ${requestUrl} failed with status ${response.status}${errorText ? `: ${errorText}` : ''}`);
+          }
+
+          const text = await response.text();
+          if (!text) {
+            return null as T;
+          }
+
+          try {
+            return JSON.parse(text) as T;
+          } catch (parseError) {
+            throw new Error(`Failed to parse JSON response from ${requestUrl}: ${(parseError as Error).message}`);
+          }
         } catch (error) {
           clearTimeout(timeoutId);
           throw error;
         }
       } catch (error) {
         lastError = error as Error;
-        
+
         // Si no es el último intento, esperar antes de reintentar
         if (attempt < retries) {
           const delay = Math.min(1000 * Math.pow(2, attempt), 5000); // Backoff exponencial
@@ -319,6 +332,38 @@ export class QueryOptimizer {
   private generateCacheKey(config: QueryConfig): string {
     const paramsString = JSON.stringify(config.params || {});
     return `query_${config.endpoint}_${btoa(paramsString).replace(/[^a-zA-Z0-9]/g, '')}`;
+  }
+
+  private buildRequestUrl(endpoint: string, params: Record<string, unknown>): string {
+    const isAbsolute = /^https?:\/\//i.test(endpoint);
+    const base = isAbsolute
+      ? endpoint
+      : `${this.getBaseUrl().replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
+    const url = new URL(base);
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === undefined || value === null) {
+        return;
+      }
+      if (Array.isArray(value)) {
+        value.forEach((item) => {
+          if (item !== undefined && item !== null) {
+            url.searchParams.append(key, String(item));
+          }
+        });
+        return;
+      }
+      url.searchParams.append(key, String(value));
+    });
+
+    return url.toString();
+  }
+
+  private getBaseUrl(): string {
+    if (typeof window !== 'undefined' && window.location?.origin) {
+      return window.location.origin;
+    }
+    return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   }
 
   // Generar ID de request

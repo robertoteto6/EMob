@@ -25,7 +25,7 @@ describe('pandaScoreFetch', () => {
   it('adjunta el token como query param', async () => {
     process.env.PANDA_SCORE_TOKEN = 'abcd1234';
 
-    const fetchMock = jest.spyOn(global, 'fetch' as any).mockImplementation((input: RequestInfo | URL) => {
+    const fetchMock = jest.spyOn(global, 'fetch' as any).mockImplementation((input: unknown) => {
       const url = typeof input === 'string' ? input : (input as URL).toString();
       expect(url).toContain('token=abcd1234');
       expect(url).toContain('per_page=1');
@@ -74,7 +74,7 @@ describe('pandaScoreFetch', () => {
     process.env.PANDA_SCORE_TOKEN = 'tok1';
     process.env.PANDA_SCORE_TOKEN_FALLBACK = 'tok2';
 
-    const fetchMock = jest.spyOn(global, 'fetch' as any).mockImplementation((input: RequestInfo | URL) => {
+    const fetchMock = jest.spyOn(global, 'fetch' as any).mockImplementation((input: unknown) => {
       const url = typeof input === 'string' ? input : (input as URL).toString();
       if (url.includes('token=tok1')) {
         return Promise.resolve(new Response('', { status: 429 }));
@@ -104,4 +104,3 @@ describe('pandaScoreFetch', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
-

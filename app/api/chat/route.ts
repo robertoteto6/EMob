@@ -9,23 +9,24 @@ interface ChatRequest {
   prompt: string;
 }
 
-// Validate and sanitize input
+// Validate and sanitize input (accept both prompt/message for backward compatibility)
 function validateChatRequest(body: unknown): { isValid: boolean; error?: string; data?: ChatRequest } {
   if (!body || typeof body !== 'object') {
     return { isValid: false, error: 'Invalid request body' };
   }
 
-  const { prompt } = body as Record<string, unknown>;
+  const { prompt, message } = body as Record<string, unknown>;
+  const rawPrompt = typeof prompt === 'string' && prompt.trim().length > 0
+    ? prompt
+    : typeof message === 'string'
+      ? message
+      : '';
 
-  if (!prompt || typeof prompt !== 'string') {
-    return { isValid: false, error: 'Prompt is required and must be a string' };
-  }
-
-  if (prompt.length === 0) {
+  if (rawPrompt.length === 0) {
     return { isValid: false, error: 'Prompt cannot be empty' };
   }
 
-  if (prompt.length > 4000) {
+  if (rawPrompt.length > 4000) {
     return { isValid: false, error: 'Prompt is too long (max 4000 characters)' };
   }
 
@@ -38,13 +39,13 @@ function validateChatRequest(body: unknown): { isValid: boolean; error?: string;
   ];
 
   for (const pattern of forbiddenPatterns) {
-    if (pattern.test(prompt)) {
+    if (pattern.test(rawPrompt)) {
       return { isValid: false, error: 'Invalid content detected' };
     }
   }
 
   // Sanitize the prompt
-  const sanitizedPrompt = prompt
+  const sanitizedPrompt = rawPrompt
     .replace(/[<>"'&]/g, '') // Remove potentially dangerous characters
     .trim();
 
@@ -123,7 +124,7 @@ export async function POST(req: Request) {
       }
 
       const data = await res.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
 
       if (!text) {
         return new NextResponse('No response generated', { 
@@ -132,7 +133,7 @@ export async function POST(req: Request) {
         });
       }
 
-      return NextResponse.json({ text }, { headers });
+      return NextResponse.json({ text, response: text }, { headers });
 
     } catch (error) {
       clearTimeout(timeoutId);

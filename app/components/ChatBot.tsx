@@ -146,7 +146,7 @@ const ChatBot: React.FC = memo(() => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: messageText }),
+        body: JSON.stringify({ prompt: messageText }),
       });
 
       if (!response.ok) {
@@ -154,7 +154,7 @@ const ChatBot: React.FC = memo(() => {
       }
 
       const data = await response.json();
-      const botResponse = data.response || 'Lo siento, no pude procesar tu mensaje.';
+      const botResponse = data.text || data.response || 'Lo siento, no pude procesar tu mensaje.';
       
       // Cachear respuesta
       setCached(cacheKey, botResponse, 10 * 60 * 1000); // 10 minutos
