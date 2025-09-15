@@ -1,6 +1,6 @@
 'use client';
 
-import { create } from 'zustand';
+import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
@@ -141,7 +141,7 @@ const initialState: AppState = {
 };
 
 // Store principal con middleware
-export const useAppStore = create<AppStore>()(
+export const useAppStore = createWithEqualityFn<AppStore>()(
   devtools(
     persist(
       subscribeWithSelector(
