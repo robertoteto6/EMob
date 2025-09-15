@@ -7,13 +7,15 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const gameParam = searchParams.get("game") || "dota2";
     const tournamentId = searchParams.get("tournamentId");
+    const perPageParam = searchParams.get("per_page");
     
     // Mapear el juego al nombre correcto de la API usando la configuración centralizada
     const game = getGameApiName(gameParam);
     
     const baseUrl = `https://api.pandascore.co/${game}/matches`;
     const searchParamsApi = new URLSearchParams();
-    searchParamsApi.set('per_page', '50');
+    const perPage = perPageParam ? Math.min(Math.max(parseInt(perPageParam, 10) || 0, 1), 100) : 50;
+    searchParamsApi.set('per_page', String(perPage));
     if (tournamentId) {
       searchParamsApi.set('filter[tournament_id]', tournamentId);
     }

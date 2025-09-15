@@ -1,12 +1,22 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Header from "../../../components/Header";
-import ChatBot from "../../../components/ChatBot";
-import NotificationSystem, { useNotifications } from "../../../components/NotificationSystem";
+import { useNotifications } from "../../../hooks/useNotifications";
+import { useDeferredClientRender } from "../../../hooks/useDeferredClientRender";
+
+const NotificationSystem = dynamic(() => import("../../../components/NotificationSystem"), {
+  ssr: false,
+});
+
+const ChatBot = dynamic(() => import("../../../components/ChatBot"), {
+  ssr: false,
+  loading: () => null,
+});
 
 // Interfaces
 interface Match {
@@ -294,7 +304,8 @@ function GamePageContent({ gameId }: { gameId: string }) {
   }>({ matches: [], tournaments: [], teams: [], players: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const notificationSystem = useNotifications();
+  const clientExtrasReady = useDeferredClientRender(400);
+  const notificationSystem = useNotifications({ enabled: clientExtrasReady });
   const router = useRouter();
 
   const game = GAMES.find(g => g.id === gameId);
@@ -716,14 +727,17 @@ function GamePageContent({ gameId }: { gameId: string }) {
       </main>
 
       {/* Sistemas adicionales */}
-      <NotificationSystem
-        notifications={notificationSystem.notifications}
-        onMarkAsRead={notificationSystem.markAsRead}
-        onClearAll={notificationSystem.clearAll}
-        onDeleteNotification={notificationSystem.deleteNotification}
-      />
-      
-      <ChatBot />
+      {clientExtrasReady && (
+        <>
+          <NotificationSystem
+            notifications={notificationSystem.notifications}
+            onMarkAsRead={notificationSystem.markAsRead}
+            onClearAll={notificationSystem.clearAll}
+            onDeleteNotification={notificationSystem.deleteNotification}
+          />
+          <ChatBot />
+        </>
+      )}
     </>
   );
 }

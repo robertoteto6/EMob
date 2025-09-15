@@ -6,13 +6,15 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const gameParam = searchParams.get("game") || "dota2";
+    const perPageParam = searchParams.get("per_page");
     
     // Mapear el juego al nombre correcto de la API usando la configuración centralizada
     const game = getGameApiName(gameParam);
     
     const baseUrl = `https://api.pandascore.co/${game}/tournaments`;
     const searchParamsApi = new URLSearchParams();
-    searchParamsApi.set('per_page', '50');
+    const perPage = perPageParam ? Math.min(Math.max(parseInt(perPageParam, 10) || 0, 1), 100) : 50;
+    searchParamsApi.set('per_page', String(perPage));
     
     const res = await pandaScoreFetch(baseUrl, searchParamsApi, { 
       cache: "no-store",

@@ -3,12 +3,22 @@
 export const dynamic = "force-dynamic";
 
 import { use, useEffect, useState, Suspense, useCallback, useMemo } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "../../../components/Header";
-import ChatBot from "../../../components/ChatBot";
 import { TeamSkeleton, PlayerSkeleton } from "../../../components/Skeleton";
-import NotificationSystem, { useNotifications } from "../../../components/NotificationSystem";
+import { useNotifications } from "../../../hooks/useNotifications";
+import { useDeferredClientRender } from "../../../hooks/useDeferredClientRender";
+
+const NotificationSystem = dynamic(() => import("../../../components/NotificationSystem"), {
+  ssr: false,
+});
+
+const ChatBot = dynamic(() => import("../../../components/ChatBot"), {
+  ssr: false,
+  loading: () => null,
+});
 
 // Icono de favorito (estrella)
 function Star({ filled, ...props }: { filled: boolean; [key: string]: any }) {
@@ -136,13 +146,14 @@ function TeamContent({ id }: { id: string }) {
   const [team, setTeam] = useState<TeamDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
-  const { 
-    notifications, 
-    addNotification, 
-    markAsRead, 
-    deleteNotification, 
-    clearAll 
-  } = useNotifications();
+  const clientExtrasReady = useDeferredClientRender(400);
+  const {
+    notifications,
+    addNotification,
+    markAsRead,
+    deleteNotification,
+    clearAll,
+  } = useNotifications({ enabled: clientExtrasReady });
 
   useEffect(() => {
     async function load() {
@@ -236,12 +247,14 @@ function TeamContent({ id }: { id: string }) {
           </div>
         </main>
         
-        <NotificationSystem
-          notifications={notifications}
-          onMarkAsRead={markAsRead}
-          onClearAll={clearAll}
-          onDeleteNotification={deleteNotification}
-        />
+        {clientExtrasReady && (
+          <NotificationSystem
+            notifications={notifications}
+            onMarkAsRead={markAsRead}
+            onClearAll={clearAll}
+            onDeleteNotification={deleteNotification}
+          />
+        )}
       </div>
     );
   }
@@ -266,12 +279,14 @@ function TeamContent({ id }: { id: string }) {
           </div>
         </main>
         
-        <NotificationSystem
-          notifications={notifications}
-          onMarkAsRead={markAsRead}
-          onClearAll={clearAll}
-          onDeleteNotification={deleteNotification}
-        />
+        {clientExtrasReady && (
+          <NotificationSystem
+            notifications={notifications}
+            onMarkAsRead={markAsRead}
+            onClearAll={clearAll}
+            onDeleteNotification={deleteNotification}
+          />
+        )}
       </div>
     );
   }
@@ -461,14 +476,16 @@ function TeamContent({ id }: { id: string }) {
         </div>
       </main>
       
-      <ChatBot />
+      {clientExtrasReady && <ChatBot />}
       
-      <NotificationSystem
-        notifications={notifications}
-        onMarkAsRead={markAsRead}
-        onClearAll={clearAll}
-        onDeleteNotification={deleteNotification}
-      />
+      {clientExtrasReady && (
+        <NotificationSystem
+          notifications={notifications}
+          onMarkAsRead={markAsRead}
+          onClearAll={clearAll}
+          onDeleteNotification={deleteNotification}
+        />
+      )}
     </div>
   );
 }

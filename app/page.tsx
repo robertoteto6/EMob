@@ -3,14 +3,24 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useMemo, useCallback, memo } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import Header from "./components/Header";
 import Image from "next/image";
-import ChatBot from "./components/ChatBot";
 import LiveScoreTicker from "./components/LiveScoreTicker";
-import NotificationSystem, { useNotifications } from "./components/NotificationSystem";
 import ScrollToTop from "./components/ScrollToTop";
 import { SUPPORTED_GAMES, type GameConfig } from "./lib/gameConfig";
+import { useNotifications } from "./hooks/useNotifications";
+import { useDeferredClientRender } from "./hooks/useDeferredClientRender";
+
+const NotificationSystem = dynamic(() => import("./components/NotificationSystem"), {
+  ssr: false,
+});
+
+const ChatBot = dynamic(() => import("./components/ChatBot"), {
+  ssr: false,
+  loading: () => null,
+});
 
 // Custom hook to handle time consistently between server and client
 function useCurrentTime() {
@@ -78,7 +88,7 @@ async function fetchAllMatches(): Promise<Match[]> {
   // Usar consultas en lote para mejor rendimiento
   const batchConfigs = GAMES.map(game => ({
     endpoint: `/api/esports/matches`,
-    params: { game: game.id },
+    params: { game: game.id, per_page: 30 },
     cacheTTL: 2 * 60 * 1000, // 2 minutos
     priority: 'high' as const,
   }));
@@ -156,7 +166,7 @@ async function fetchAllTournaments(): Promise<Tournament[]> {
   // Usar consultas en lote optimizadas
   const batchConfigs = GAMES.map(game => ({
     endpoint: `/api/esports/tournaments`,
-    params: { game: game.id },
+    params: { game: game.id, per_page: 20 },
     cacheTTL: 5 * 60 * 1000, // 5 minutos (los torneos cambian menos frecuentemente)
     priority: 'medium' as const,
   }));
@@ -513,17 +523,25 @@ const Home = memo(function Home() {
   const [selectedGame, setSelectedGame] = useState<string>("all");
   
   const { currentTime, isClient } = useCurrentTime();
-  const notificationSystem = useNotifications();
+  const clientExtrasReady = useDeferredClientRender(400);
+  const notificationSystem = useNotifications({ enabled: clientExtrasReady });
   const addNotification = notificationSystem.addNotification;
 
-  // Callbacks memoizados para evitar re-renders
-  const handleGameChange = useCallback((game: string) => {
-    setSelectedGame(game);
-  }, []);
+  const matchesByGame = useMemo(() => {
+    const grouped: Record<string, Match[]> = {};
+    for (const match of matches) {
+      (grouped[match.game] ||= []).push(match);
+    }
+    return grouped;
+  }, [matches]);
 
-  const handleTimeframeChange = useCallback((timeframe: "today" | "week" | "all") => {
-    setSelectedTimeframe(timeframe);
-  }, []);
+  const tournamentsByGame = useMemo(() => {
+    const grouped: Record<string, Tournament[]> = {};
+    for (const tournament of tournaments) {
+      (grouped[tournament.game] ||= []).push(tournament);
+    }
+    return grouped;
+  }, [tournaments]);
 
   // Función de carga de datos memoizada
   const loadData = useCallback(async () => {
@@ -587,59 +605,70 @@ const Home = memo(function Home() {
   const gameStats = useMemo(() => {
     const stats: Record<string, GameStats> = {};
 
-    GAMES.forEach(game => {
-      const gameMatches = matches.filter(m => m.game === game.id);
-      const gameTournaments = tournaments.filter(t => t.game === game.id);
-      
+    GAMES.forEach((game) => {
+      const gameMatches = matchesByGame[game.id] ?? [];
+      const gameTournaments = tournamentsByGame[game.id] ?? [];
+      let liveMatches = 0;
+      let upcomingMatches = 0;
+      let completedMatches = 0;
+
+      for (const match of gameMatches) {
+        if (match.start_time <= currentTime && match.radiant_win === null) {
+          liveMatches += 1;
+        } else if (match.start_time > currentTime) {
+          upcomingMatches += 1;
+        } else if (match.radiant_win !== null) {
+          completedMatches += 1;
+        }
+      }
+
       stats[game.id] = {
         totalMatches: gameMatches.length,
-        liveMatches: gameMatches.filter(m => m.start_time <= currentTime && m.radiant_win === null).length,
-        upcomingMatches: gameMatches.filter(m => m.start_time > currentTime).length,
-        completedMatches: gameMatches.filter(m => m.radiant_win !== null).length,
+        liveMatches,
+        upcomingMatches,
+        completedMatches,
         activeTournaments: gameTournaments.length,
       };
     });
 
     return stats;
-  }, [matches, tournaments, currentTime]);
+  }, [currentTime, matchesByGame, tournamentsByGame]);
 
   // Partidos filtrados por timeframe y juego
   const filteredMatches = useMemo(() => {
-    if (!matches.length) return [];
-    
-    let filtered = matches;
-
-    // Filtrar por juego
-    if (selectedGame !== "all") {
-      filtered = filtered.filter(m => m.game === selectedGame);
+    const baseMatches = selectedGame === "all" ? matches : matchesByGame[selectedGame] ?? [];
+    if (!baseMatches.length) {
+      return [];
     }
 
-    // Filtrar por tiempo
+    let filtered = baseMatches;
     const currentTimeMs = currentTime * 1000;
+
     switch (selectedTimeframe) {
-      case "today":
+      case "today": {
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
         const todayStartMs = todayStart.getTime();
         const todayEndMs = todayEnd.getTime();
-        filtered = filtered.filter(m => {
-          const matchTime = m.start_time * 1000;
+        filtered = filtered.filter((match) => {
+          const matchTime = match.start_time * 1000;
           return matchTime >= todayStartMs && matchTime <= todayEndMs;
         });
         break;
-      case "week":
-        const weekEnd = currentTimeMs + (7 * 24 * 60 * 60 * 1000);
-        filtered = filtered.filter(m => {
-          const matchTime = m.start_time * 1000;
+      }
+      case "week": {
+        const weekEnd = currentTimeMs + 7 * 24 * 60 * 60 * 1000;
+        filtered = filtered.filter((match) => {
+          const matchTime = match.start_time * 1000;
           return matchTime >= currentTimeMs && matchTime <= weekEnd;
         });
         break;
+      }
     }
 
-    // Never mutate state during render; sort a copy
-    return [...filtered].sort((a, b) => {
+    return filtered.slice().sort((a, b) => {
       // Priorizar partidos en vivo
       const aIsLive = a.start_time <= currentTime && a.radiant_win === null;
       const bIsLive = b.start_time <= currentTime && b.radiant_win === null;
@@ -649,7 +678,7 @@ const Home = memo(function Home() {
       
       return a.start_time - b.start_time;
     });
-  }, [matches, selectedTimeframe, selectedGame, currentTime]);
+  }, [matches, matchesByGame, selectedGame, selectedTimeframe, currentTime]);
 
   // Partidos destacados (en vivo + próximos importantes)
   const featuredMatches = useMemo(() => {
@@ -823,7 +852,7 @@ const Home = memo(function Home() {
 
                 {/* Opciones de juegos individuales */}
                 {GAMES.map((game, index) => {
-                  const gameMatches = matches.filter(m => m.game === game.id);
+                  const gameMatches = matchesByGame[game.id] ?? [];
                   return (
                     <button
                       key={game.id}
@@ -1157,14 +1186,17 @@ const Home = memo(function Home() {
       </main>
 
       {/* Sistemas adicionales */}
-      <NotificationSystem
-        notifications={notificationSystem.notifications}
-        onMarkAsRead={notificationSystem.markAsRead}
-        onClearAll={notificationSystem.clearAll}
-        onDeleteNotification={notificationSystem.deleteNotification}
-      />
-      
-      <ChatBot />
+      {clientExtrasReady && (
+        <>
+          <NotificationSystem
+            notifications={notificationSystem.notifications}
+            onMarkAsRead={notificationSystem.markAsRead}
+            onClearAll={notificationSystem.clearAll}
+            onDeleteNotification={notificationSystem.deleteNotification}
+          />
+          <ChatBot />
+        </>
+      )}
       <ScrollToTop />
     </>
   );

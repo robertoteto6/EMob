@@ -3,14 +3,24 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useMemo, Suspense } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../components/Header";
-import ChatBot from "../components/ChatBot";
 import { TeamSkeleton } from "../components/Skeleton";
 import LiveScoreTicker from "../components/LiveScoreTicker";
-import NotificationSystem, { useNotifications } from "../components/NotificationSystem";
+import { useNotifications } from "../hooks/useNotifications";
+import { useDeferredClientRender } from "../hooks/useDeferredClientRender";
+
+const NotificationSystem = dynamic(() => import("../components/NotificationSystem"), {
+  ssr: false,
+});
+
+const ChatBot = dynamic(() => import("../components/ChatBot"), {
+  ssr: false,
+  loading: () => null,
+});
 
 // Icono de favorito (estrella)
 function Star({ filled, ...props }: { filled: boolean; [key: string]: any }) {
@@ -386,7 +396,8 @@ function TeamsPageContent() {
   const [usingFallback, setUsingFallback] = useState<boolean>(false);
   
   // Sistemas
-  const notificationSystem = useNotifications();
+  const clientExtrasReady = useDeferredClientRender(400);
+  const notificationSystem = useNotifications({ enabled: clientExtrasReady });
   
   // Favoritos: ids de equipos favoritos
   const [favoriteTeams, setFavoriteTeams] = useState<number[]>(() => {
@@ -931,14 +942,17 @@ function TeamsPageContent() {
       </main>
 
       {/* Sistemas adicionales */}
-      <NotificationSystem
-        notifications={notificationSystem.notifications}
-        onMarkAsRead={notificationSystem.markAsRead}
-        onClearAll={notificationSystem.clearAll}
-        onDeleteNotification={notificationSystem.deleteNotification}
-      />
-      
-      <ChatBot />
+      {clientExtrasReady && (
+        <>
+          <NotificationSystem
+            notifications={notificationSystem.notifications}
+            onMarkAsRead={notificationSystem.markAsRead}
+            onClearAll={notificationSystem.clearAll}
+            onDeleteNotification={notificationSystem.deleteNotification}
+          />
+          <ChatBot />
+        </>
+      )}
     </>
   );
 }

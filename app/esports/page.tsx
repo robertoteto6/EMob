@@ -3,16 +3,26 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useMemo, Suspense } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../components/Header";
-import ChatBot from "../components/ChatBot";
 import Countdown from "../components/Countdown";
 import { MatchSkeleton, TournamentSkeleton } from "../components/Skeleton";
 import LiveScoreTicker from "../components/LiveScoreTicker";
-import NotificationSystem, { useNotifications } from "../components/NotificationSystem";
 import ScrollToTop from "../components/ScrollToTop";
+import { useNotifications } from "../hooks/useNotifications";
+import { useDeferredClientRender } from "../hooks/useDeferredClientRender";
+
+const NotificationSystem = dynamic(() => import("../components/NotificationSystem"), {
+  ssr: false,
+});
+
+const ChatBot = dynamic(() => import("../components/ChatBot"), {
+  ssr: false,
+  loading: () => null,
+});
 
 // Icono de favorito (estrella)
 function Star({ filled, ...props }: { filled: boolean; [key: string]: any }) {
@@ -466,7 +476,8 @@ function EsportsPageContent() {
   const [loadingTournaments, setLoadingTournaments] = useState<boolean>(true);
   
   // Sistemas nuevos
-  const notificationSystem = useNotifications();
+  const clientExtrasReady = useDeferredClientRender(400);
+  const notificationSystem = useNotifications({ enabled: clientExtrasReady });
   
   // Favoritos: ids de partidos favoritos
   const [favoriteMatches, setFavoriteMatches] = useState<number[]>(() => {
@@ -1093,14 +1104,17 @@ function EsportsPageContent() {
       </main>
 
       {/* Sistemas adicionales */}
-      <NotificationSystem
-        notifications={notificationSystem.notifications}
-        onMarkAsRead={notificationSystem.markAsRead}
-        onClearAll={notificationSystem.clearAll}
-        onDeleteNotification={notificationSystem.deleteNotification}
-      />
-      
-      <ChatBot />
+      {clientExtrasReady && (
+        <>
+          <NotificationSystem
+            notifications={notificationSystem.notifications}
+            onMarkAsRead={notificationSystem.markAsRead}
+            onClearAll={notificationSystem.clearAll}
+            onDeleteNotification={notificationSystem.deleteNotification}
+          />
+          <ChatBot />
+        </>
+      )}
       <ScrollToTop />
     </>
   );
