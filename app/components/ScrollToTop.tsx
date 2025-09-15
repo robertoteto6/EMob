@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUIState } from "../store";
+import { useAppStore } from "../store";
 
 export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false);
-  const { chatOpen } = useUIState();
+  const chatOpen = useAppStore(state => state.chatOpen);
 
   useEffect(() => {
     const onScroll = () => {
