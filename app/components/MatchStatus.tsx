@@ -140,11 +140,10 @@ const MatchStatus = ({ match }: MatchStatusProps) => {
     <div
       className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm shadow-lg border ${statusInfo.className}`}
       role="status"
-      aria-label={`Estado del partido: ${statusInfo.content}${statusInfo.time ? ` ${statusInfo.time}` : ''}`}
+      aria-label={`Estado del partido: ${statusInfo.content}`}
     >
       {renderIcon()}
       <span>{statusInfo.content}</span>
-      {statusInfo.time && <span className="text-red-200">{statusInfo.time}</span>}
     </div>
   );
 };

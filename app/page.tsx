@@ -705,6 +705,43 @@ const Home = memo(function Home() {
     return stats;
   }, [currentTime, matchesByGame, tournamentsByGame]);
 
+  const numberFormatter = useMemo(() => new Intl.NumberFormat("es-ES"), []);
+
+  const aggregatedStats = useMemo(() => {
+    return Object.values(gameStats).reduce(
+      (acc, stats) => {
+        if (!stats) {
+          return acc;
+        }
+
+        acc.totalMatches += stats.totalMatches;
+        acc.liveMatches += stats.liveMatches;
+        acc.upcomingMatches += stats.upcomingMatches;
+        acc.tournaments += stats.activeTournaments;
+        return acc;
+      },
+      { totalMatches: 0, liveMatches: 0, upcomingMatches: 0, tournaments: 0 }
+    );
+  }, [gameStats]);
+
+  const heroHighlights = [
+    {
+      label: "Partidos activos",
+      value: aggregatedStats.liveMatches,
+      helper: "actualizados al minuto",
+    },
+    {
+      label: "Programados",
+      value: aggregatedStats.upcomingMatches,
+      helper: "para los próximos 7 días",
+    },
+    {
+      label: "Torneos activos",
+      value: aggregatedStats.tournaments,
+      helper: "de las ligas top",
+    },
+  ];
+
   // Partidos filtrados por timeframe y juego + métricas para los filtros
   const { filteredMatches, timeframeCounts } = useMemo(() => {
     const baseMatches = selectedGame === "all" ? matches : matchesByGame[selectedGame] ?? [];
@@ -812,6 +849,14 @@ const Home = memo(function Home() {
     return [...live, ...upcoming].slice(0, 4);
   }, [filteredMatches, currentTime]);
 
+  const heroFeaturedMatch = featuredMatches[0];
+  const heroMatchIsLive = heroFeaturedMatch ? heroFeaturedMatch.start_time <= currentTime && heroFeaturedMatch.radiant_win === null : false;
+  const heroMatchIsUpcoming = heroFeaturedMatch ? heroFeaturedMatch.start_time > currentTime : false;
+  const heroMatchIsFinished = heroFeaturedMatch ? heroFeaturedMatch.radiant_win !== null : false;
+  const heroMatchDate = heroFeaturedMatch ? new Date(heroFeaturedMatch.start_time * 1000) : null;
+  const heroRadiantWinner = heroMatchIsFinished && heroFeaturedMatch ? heroFeaturedMatch.radiant_win === true : false;
+  const heroDireWinner = heroMatchIsFinished && heroFeaturedMatch ? heroFeaturedMatch.radiant_win === false : false;
+
   return (
     <>
       <Header />
@@ -819,75 +864,237 @@ const Home = memo(function Home() {
       
       <main className="min-h-screen pt-20">
         {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 py-20">
-          <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-5"></div>
-          <div className="container mx-auto px-6 relative z-10">
-            <div className="text-center mb-12">
-              <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
-                EMob Esports
-              </h1>
-              <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-                Tu centro de comando para seguir los mejores torneos y partidos de esports en tiempo real
-              </p>
-              <div className="flex justify-center gap-4">
-                <Link href="/esports" className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
-                  Explorar Partidos
-                </Link>
-                <button className="border border-green-500 text-green-500 hover:bg-green-500 hover:text-black px-8 py-3 rounded-xl font-semibold transition-all duration-300">
-                  Ver Torneos
-                </button>
-              </div>
-            </div>
+        <section className="relative overflow-hidden py-24">
+          <div className="absolute inset-0 -z-20 bg-gradient-to-br from-slate-950 via-black to-slate-900" aria-hidden="true" />
+          <div className="absolute inset-0 -z-10 bg-[url('/pattern.svg')] opacity-10" aria-hidden="true" />
+          <div className="absolute -left-1/3 top-24 -z-10 h-80 w-80 rounded-full bg-emerald-500/25 blur-3xl" aria-hidden="true" />
+          <div className="absolute -right-1/4 bottom-10 -z-10 h-72 w-72 rounded-full bg-sky-500/20 blur-3xl" aria-hidden="true" />
 
-            {isFiltering && !loading && (
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/40 backdrop-blur-sm text-white animate-fadein">
-                <Spinner size={30} label="Aplicando filtros" />
-                <span className="text-sm font-medium tracking-wide">Actualizando resultados…</span>
+          <div className="container relative z-10 mx-auto px-6">
+            <div className="relative">
+              <div className="grid grid-cols-1 gap-14 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+                <div className="flex flex-col gap-8">
+                  <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
+                    Temporada 2025
+                  </div>
+                  <h1 className="text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">
+                    Toda la escena esports en un solo panel en vivo
+                  </h1>
+                  <p className="max-w-xl text-base text-white/70 sm:text-lg">
+                    Monitoriza resultados, mira horarios y recibe alertas en tiempo real de tus ligas favoritas de Dota 2, League of Legends, CS2 y más.
+                  </p>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Link
+                      href="/esports"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/40 transition-all duration-300 hover:scale-[1.02]"
+                    >
+                      Explorar partidos
+                      <span aria-hidden="true">→</span>
+                    </Link>
+                    <Link
+                      href="#torneos"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-7 py-3 text-sm font-semibold text-white/80 transition-all duration-300 hover:border-emerald-400/60 hover:bg-white/10 hover:text-white"
+                    >
+                      Ver torneos activos
+                      <span aria-hidden="true">⚡</span>
+                    </Link>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    {heroHighlights.map((metric) => (
+                      <div
+                        key={metric.label}
+                        className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 p-5 shadow-inner shadow-black/20"
+                      >
+                        <span className="text-xs font-semibold uppercase tracking-[0.28em] text-white/50">
+                          {metric.label}
+                        </span>
+                        <p className="mt-3 text-3xl font-bold text-white">
+                          {numberFormatter.format(Math.max(metric.value, 0))}
+                        </p>
+                        <p className="mt-1 text-xs text-white/60">{metric.helper}</p>
+                        <div className="absolute inset-x-4 bottom-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" aria-hidden="true" />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 text-sm text-white/70">
+                    {["Alertas en vivo", "Cobertura multijuego", "Estadísticas avanzadas"].map((feature) => (
+                      <span
+                        key={feature}
+                        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2"
+                      >
+                        <span aria-hidden="true">✔</span>
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute -right-10 top-10 h-48 w-48 rounded-full bg-emerald-500/30 blur-3xl" aria-hidden="true" />
+                  <div className="absolute -left-16 bottom-0 h-52 w-52 rounded-full bg-blue-500/20 blur-3xl" aria-hidden="true" />
+                  <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/60 backdrop-blur-2xl shadow-[0_25px_80px_-35px_rgba(16,185,129,0.6)]">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/5" aria-hidden="true" />
+                    <div className="relative flex flex-col gap-7 p-8 sm:p-10">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/50">
+                            Partido destacado
+                          </p>
+                          <h3 className="mt-3 text-2xl font-semibold text-white">
+                            {heroFeaturedMatch ? (
+                              <>
+                                {heroFeaturedMatch.radiant} <span className="text-emerald-400">vs</span> {heroFeaturedMatch.dire}
+                              </>
+                            ) : (
+                              "Personaliza tu feed"
+                            )}
+                          </h3>
+                          <p className="mt-2 text-sm text-white/60">
+                            {heroFeaturedMatch ? heroFeaturedMatch.league || "" : "Sigue tus juegos favoritos y detecta el proximo hit."}
+                          </p>
+                        </div>
+                        {heroFeaturedMatch ? (
+                          heroMatchIsLive ? (
+                            <LiveBadge className="scale-90" />
+                          ) : heroMatchIsUpcoming ? (
+                            <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-200">Próximo</span>
+                          ) : heroMatchIsFinished ? (
+                            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/70">Finalizado</span>
+                          ) : null
+                        ) : (
+                          <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/70">Explora juegos</span>
+                        )}
+                      </div>
+
+                      {heroFeaturedMatch ? (
+                        <>
+                          <div className="rounded-2xl border border-white/10 bg-black/40 p-6">
+                            <div className="grid grid-cols-2 items-center gap-6 text-center text-white">
+                              <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-white/50">{heroFeaturedMatch.radiant}</p>
+                                <p className={`text-4xl font-black ${heroRadiantWinner ? "text-emerald-400" : "text-white"}`}>
+                                  {typeof heroFeaturedMatch.radiant_score === "number" ? heroFeaturedMatch.radiant_score : "--"}
+                                </p>
+                              </div>
+                              <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-white/50">{heroFeaturedMatch.dire}</p>
+                                <p className={`text-4xl font-black ${heroDireWinner ? "text-emerald-400" : "text-white"}`}>
+                                  {typeof heroFeaturedMatch.dire_score === "number" ? heroFeaturedMatch.dire_score : "--"}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-6 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-white/50">
+                              <span>
+                                {heroMatchDate?.toLocaleDateString("es-ES", {
+                                  weekday: "short",
+                                  day: "numeric",
+                                  month: "short",
+                                })}
+                              </span>
+                              <span>
+                                {heroMatchDate?.toLocaleTimeString("es-ES", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </div>
+                          </div>
+
+                          <Link
+                            href={`/esports/${heroFeaturedMatch.id}`}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition-all duration-300 hover:border-emerald-400/60 hover:bg-white/10"
+                          >
+                            Ir al partido
+                            <span aria-hidden="true">→</span>
+                          </Link>
+                        </>
+                      ) : (
+                        <div className="space-y-4 text-white/70">
+                          <p>
+                            Configura notificaciones y selecciona tus títulos favoritos para recibir recomendaciones personalizadas.
+                          </p>
+                          <div className="flex flex-col gap-3 sm:flex-row">
+                            <Link
+                              href="/equipos"
+                              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all duration-300 hover:scale-[1.02]"
+                            >
+                              Descubrir equipos
+                            </Link>
+                            <Link
+                              href="/esports"
+                              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white/80 transition-all duration-300 hover:border-emerald-400/60 hover:bg-white/10 hover:text-white"
+                            >
+                              Ver calendario
+                            </Link>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
+
+              {isFiltering && !loading && (
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-[2.5rem] bg-black/50 backdrop-blur-md text-white animate-fadein">
+                  <Spinner size={30} label="Aplicando filtros" />
+                  <span className="text-sm font-medium tracking-wide">Actualizando resultados…</span>
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
         {/* Estadísticas por Juego */}
-        <section className="container mx-auto px-6 py-16">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
-              📊 Estadísticas en Tiempo Real
-            </h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Métricas actualizadas de todos los esports más populares
-            </p>
-            <div className="w-24 h-1 bg-gradient-to-r from-green-500 to-blue-500 mx-auto mt-4 rounded-full"></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-            {GAMES.map((game, index) => (
-              <div 
-                key={game.id} 
-                className="animate-fadein"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <GameStatsCard 
-                  game={game} 
-                  stats={gameStats[game.id] || { totalMatches: 0, liveMatches: 0, upcomingMatches: 0, completedMatches: 0, activeTournaments: 0 }} 
-                />
-              </div>
-            ))}
+        <section className="relative py-16">
+          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-white/5 to-transparent" aria-hidden="true" />
+          <div className="container mx-auto px-6">
+            <div className="mx-auto mb-12 max-w-3xl text-center">
+              <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/70">
+                Métricas en directo
+              </p>
+              <h2 className="mt-4 text-3xl font-bold text-white sm:text-4xl">
+                📊 Estadísticas en tiempo real por juego
+              </h2>
+              <p className="mt-3 text-base text-white/60">
+                Identifica qué escena está más activa ahora mismo y descubre oportunidades de seguir nuevas ligas.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
+              {GAMES.map((game, index) => (
+                <div
+                  key={game.id}
+                  className="animate-fadein"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <GameStatsCard
+                    game={game}
+                    stats={gameStats[game.id] || { totalMatches: 0, liveMatches: 0, upcomingMatches: 0, completedMatches: 0, activeTournaments: 0 }}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
         {/* Filtros Avanzados */}
-        <section className="container mx-auto px-6 mb-12">
-          <div
-            className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-3xl p-8 border border-gray-700 backdrop-blur-sm relative overflow-hidden"
-            aria-busy={isFiltering}
-          >
-            <div className={`transition-opacity duration-300 ${isFiltering ? "opacity-60" : "opacity-100"}`}>
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold text-white mb-3 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-                  🎛️ Filtros Avanzados
-                </h3>
-                <p className="text-gray-400 text-sm">Personaliza tu experiencia seleccionando período de tiempo y juegos</p>
-              </div>
+        <section className="relative pb-16">
+          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-500/10 via-transparent to-sky-500/10" aria-hidden="true" />
+          <div className="container mx-auto px-6">
+            <div
+              className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-[0_20px_70px_-45px_rgba(16,185,129,0.6)] sm:p-10"
+              aria-busy={isFiltering}
+            >
+              <div className="absolute -right-28 -top-28 h-72 w-72 rounded-full bg-emerald-400/20 blur-3xl" aria-hidden="true" />
+              <div className="absolute -left-24 bottom-0 h-64 w-64 rounded-full bg-sky-500/20 blur-3xl" aria-hidden="true" />
+              <div className={`relative transition-opacity duration-300 ${isFiltering ? "opacity-60" : "opacity-100"}`}>
+                <div className="text-center mb-8">
+                  <h3 className="text-2xl font-bold text-white mb-3 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                    🎛️ Filtros Avanzados
+                  </h3>
+                  <p className="text-gray-400 text-sm">Personaliza tu experiencia seleccionando período de tiempo y juegos</p>
+                </div>
 
             {/* Filtros de Tiempo */}
             <div className="mb-8">
@@ -1106,9 +1313,10 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                 )}
               </div>
             </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
         {/* Partidos Destacados */}
         <section className="container mx-auto px-6 py-16">

@@ -87,6 +87,31 @@ body {
   min-height: 100vh;
 }
 
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -2;
+}
+
+body::before {
+  background:
+    radial-gradient(circle at 20% -10%, rgba(0, 255, 128, 0.18), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(59, 130, 246, 0.15), transparent 50%);
+  filter: blur(0px);
+}
+
+body::after {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 0),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 0);
+  background-size: 120px 120px;
+  opacity: 0.6;
+  z-index: -3;
+}
+
 /* Mejorar contraste para usuarios con baja visión */
 @media (prefers-contrast: high) {
   :root {
