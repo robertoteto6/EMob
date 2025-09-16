@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import LiveBadge from "./LiveBadge";
 
 interface CalendarMatch {
   id: number;
@@ -179,7 +180,10 @@ export default function CalendarView({ matches, onMonthChange }: CalendarViewPro
                 {hasMatches && (
                   <div className="flex gap-1">
                     {hasLiveMatches && (
-                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="Partidos en vivo" />
+                      <div
+                        className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]"
+                        title="Partidos en vivo"
+                      />
                     )}
                     {hasFavorites && (
                       <div className="w-2 h-2 bg-yellow-400 rounded-full" title="Partidos favoritos" />
@@ -195,8 +199,10 @@ export default function CalendarView({ matches, onMonthChange }: CalendarViewPro
                     <div
                       key={matchIndex}
                       className={`
-                        text-xs p-1 rounded truncate
-                        ${match.isLive ? 'bg-red-900 text-red-200' : 'bg-[#333] text-gray-300'}
+                        text-xs p-1 rounded truncate transition-shadow
+                        ${match.isLive
+                          ? 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white shadow-[0_0_12px_rgba(239,68,68,0.35)] animate-pulse'
+                          : 'bg-[#333] text-gray-300'}
                         ${match.isFavorite ? 'ring-1 ring-yellow-400' : ''}
                       `}
                       title={`${match.radiant} vs ${match.dire}`}
@@ -247,9 +253,7 @@ export default function CalendarView({ matches, onMonthChange }: CalendarViewPro
                           {match.radiant} vs {match.dire}
                         </span>
                         {match.isLive && (
-                          <span className="px-2 py-1 bg-red-600 text-white text-xs rounded-full animate-pulse">
-                            🔴 EN VIVO
-                          </span>
+                          <LiveBadge size="sm" className="pointer-events-none" />
                         )}
                         {match.isFavorite && (
                           <span className="text-yellow-400" title="Favorito">⭐</span>
@@ -276,7 +280,7 @@ export default function CalendarView({ matches, onMonthChange }: CalendarViewPro
       {/* Leyenda */}
       <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-400">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+          <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.6)]"></div>
           <span>Partidos en vivo</span>
         </div>
         <div className="flex items-center gap-2">

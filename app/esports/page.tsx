@@ -2,16 +2,19 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState, useMemo, Suspense } from "react";
+import { useEffect, useState, useMemo, Suspense, useCallback, useRef } from "react";
 import nextDynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
+import LiveBadge from "../components/LiveBadge";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../components/Header";
 import Countdown from "../components/Countdown";
 import { MatchSkeleton, TournamentSkeleton } from "../components/Skeleton";
 import LiveScoreTicker from "../components/LiveScoreTicker";
 import ScrollToTop from "../components/ScrollToTop";
+import Tooltip from "../components/Tooltip";
+import Spinner from "../components/Spinner";
 import { useNotifications } from "../hooks/useNotifications";
 import { useDeferredClientRender } from "../hooks/useDeferredClientRender";
 
@@ -80,7 +83,9 @@ const TIMEFRAMES = [
   { id: "today", label: "Hoy", offset: 0, emoji: "📅", description: "Partidos de hoy" },
   { id: "tomorrow", label: "Mañana", offset: 1, emoji: "⏩", description: "Partidos de mañana" },
   { id: "week", label: "Esta Semana", offset: 7, emoji: "🗓️", description: "Próximos 7 días" },
-];
+] as const;
+
+type TimeframeId = (typeof TIMEFRAMES)[number]["id"];
 
 async function fetchMatches(game: string): Promise<Match[]> {
   const res = await fetch(`/api/esports/matches?game=${game}`, {
@@ -156,7 +161,11 @@ function FeaturedMatch({ match, onToggleFavorite, favoriteMatches }: {
   
   return (
     <Link href={`/esports/${match.id}`}>
-      <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 hover:border-green-500/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl">
+      <div
+        className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 hover:border-green-500/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl ${
+          isLive ? "ring-2 ring-red-500/40 shadow-[0_0_35px_rgba(239,68,68,0.45)]" : ""
+        }`}
+      >
         {/* Efecto de brillo animado */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
         
@@ -194,15 +203,7 @@ function FeaturedMatch({ match, onToggleFavorite, favoriteMatches }: {
               </button>
               
               {/* Estado del partido */}
-              {isLive && (
-                <div className="relative">
-                  <span className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-3 py-2 rounded-full animate-pulse shadow-lg flex items-center gap-2">
-                    <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
-                    EN VIVO
-                  </span>
-                  <div className="absolute inset-0 bg-red-500/30 rounded-full blur-xl animate-pulse"></div>
-                </div>
-              )}
+              {isLive && <LiveBadge className="pointer-events-none" />}
               
               {isUpcoming && (
                 <span className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold px-3 py-2 rounded-full shadow-lg flex items-center gap-2">
@@ -328,7 +329,11 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
   return (
     <div className="animate-fadein">
       <Link href={`/esports/tournament/${tournament.id}`}>
-        <div className="group relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 hover:shadow-2xl transition-all duration-500 hover:scale-105 border border-gray-700 hover:border-purple-500/50">
+        <div
+          className={`group relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 hover:shadow-2xl transition-all duration-500 hover:scale-105 border border-gray-700 hover:border-purple-500/50 ${
+            isLive ? "ring-2 ring-emerald-400/50 shadow-[0_0_32px_rgba(16,185,129,0.35)]" : ""
+          }`}
+        >
           {/* Efecto de brillo */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
           
@@ -357,12 +362,7 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
               </div>
               
               {/* Estado del torneo */}
-              {isLive && (
-                <div className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse shadow-lg flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></div>
-                  EN CURSO
-                </div>
-              )}
+              {isLive && <LiveBadge label="EN CURSO" tone="emerald" className="pointer-events-none" />}
               {isUpcoming && (
                 <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -460,16 +460,7 @@ function EsportsPageContent() {
   const [game, setGame] = useState<string>(() => {
     return searchParams?.get('game') || GAMES[0].id;
   });
-  // Función para cambiar el juego y actualizar la URL
-  const handleGameChange = (newGame: string) => {
-    setGame(newGame);
-    // Actualizar la URL con el nuevo juego
-    const params = new URLSearchParams(searchParams?.toString());
-    params.set('game', newGame);
-    router.push(`/esports?${params.toString()}`);
-  };
-
-  const [timeframe, setTimeframe] = useState<string>("today");
+  const [timeframe, setTimeframe] = useState<TimeframeId>("today");
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -496,7 +487,51 @@ function EsportsPageContent() {
   const [filterTeam, setFilterTeam] = useState<string>("");
   const [filterStatus, setFilterStatus] = useState<string>("");
   const [selectedView, setSelectedView] = useState<"matches" | "tournaments">("matches");
+  const [isFiltering, setIsFiltering] = useState(false);
+  const filterAnimationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerFilterFeedback = useCallback(() => {
+    if (filterAnimationTimeoutRef.current) {
+      clearTimeout(filterAnimationTimeoutRef.current);
+    }
+    setIsFiltering(true);
+    filterAnimationTimeoutRef.current = setTimeout(() => {
+      setIsFiltering(false);
+      filterAnimationTimeoutRef.current = null;
+    }, 360);
+  }, []);
+
+  const handleGameChange = useCallback((newGame: string) => {
+    if (game === newGame) {
+      return false;
+    }
+    triggerFilterFeedback();
+    setGame(newGame);
+    const params = new URLSearchParams(searchParams?.toString());
+    params.set('game', newGame);
+    router.push(`/esports?${params.toString()}`);
+    return true;
+  }, [game, router, searchParams, triggerFilterFeedback]);
+
+  const handleTimeframeChange = useCallback((newTimeframe: TimeframeId) => {
+    if (timeframe === newTimeframe) {
+      return false;
+    }
+    triggerFilterFeedback();
+    setTimeframe(newTimeframe);
+    return true;
+  }, [timeframe, triggerFilterFeedback]);
+
+  const isViewLoading = selectedView === "matches" ? loading : loadingTournaments;
   
+  useEffect(() => {
+    return () => {
+      if (filterAnimationTimeoutRef.current) {
+        clearTimeout(filterAnimationTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Paginación
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 8;
@@ -680,26 +715,51 @@ function EsportsPageContent() {
               
               {/* Estadísticas rápidas */}
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
-                <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700">
-                  <div className="text-2xl font-bold text-green-400">{stats.total}</div>
-                  <div className="text-sm text-gray-400">Partidos</div>
-                </div>
-                <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700">
-                  <div className="text-2xl font-bold text-yellow-400">{stats.favoritos}</div>
-                  <div className="text-sm text-gray-400">Favoritos</div>
-                </div>
-                <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700">
-                  <div className="text-2xl font-bold text-blue-400">{stats.hoy}</div>
-                  <div className="text-sm text-gray-400">Hoy</div>
-                </div>
-                <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700">
-                  <div className="text-2xl font-bold text-purple-400">{stats.equipos}</div>
-                  <div className="text-sm text-gray-400">Equipos</div>
-                </div>
-                <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700">
-                  <div className="text-2xl font-bold text-cyan-400">{stats.ligas}</div>
-                  <div className="text-sm text-gray-400">Ligas</div>
-                </div>
+                <Tooltip
+                  content={`Total de partidos visibles con los filtros actuales.`}
+                  className="block h-full"
+                >
+                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700">
+                    <div className="text-2xl font-bold text-green-400">{stats.total}</div>
+                    <div className="text-sm text-gray-400">Partidos</div>
+                  </div>
+                </Tooltip>
+                <Tooltip
+                  content={`Número de partidos que marcaste como favoritos.`}
+                  className="block h-full"
+                >
+                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700">
+                    <div className="text-2xl font-bold text-yellow-400">{stats.favoritos}</div>
+                    <div className="text-sm text-gray-400">Favoritos</div>
+                  </div>
+                </Tooltip>
+                <Tooltip
+                  content={`Partidos programados para la jornada de hoy.`}
+                  className="block h-full"
+                >
+                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700">
+                    <div className="text-2xl font-bold text-blue-400">{stats.hoy}</div>
+                    <div className="text-sm text-gray-400">Hoy</div>
+                  </div>
+                </Tooltip>
+                <Tooltip
+                  content={`Equipos únicos involucrados en los encuentros listados.`}
+                  className="block h-full"
+                >
+                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700">
+                    <div className="text-2xl font-bold text-purple-400">{stats.equipos}</div>
+                    <div className="text-sm text-gray-400">Equipos</div>
+                  </div>
+                </Tooltip>
+                <Tooltip
+                  content={`Ligas o torneos representados en los resultados.`}
+                  className="block h-full"
+                >
+                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700">
+                    <div className="text-2xl font-bold text-cyan-400">{stats.ligas}</div>
+                    <div className="text-sm text-gray-400">Ligas</div>
+                  </div>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -732,40 +792,67 @@ function EsportsPageContent() {
             </div>
           </div>
 
+          <div
+            className="relative"
+            aria-busy={isFiltering}
+          >
+            <div className={`transition-opacity duration-300 ${isFiltering && !isViewLoading ? "opacity-60" : "opacity-100"}`}>
           {/* Filtros de juegos */}
           <div className="mb-8">
-            <h3 className="text-xl font-semibold text-white mb-4 text-center">Seleccionar Juego</h3>
+            <h3 className="text-xl font-semibold text-white mb-4 text-center flex items-center justify-center gap-2">
+              Seleccionar Juego
+              <Tooltip
+                content={`Elige el título para actualizar partidos, estadísticas y torneos relacionados.`}
+                className="inline-flex"
+                side="right"
+              >
+                <span
+                  tabIndex={0}
+                  aria-label="Ayuda sobre la selección de juego"
+                  className="flex h-5 w-5 items-center justify-center rounded-full border border-green-400/60 bg-green-500/10 text-xs font-bold text-green-200 hover:bg-green-500/20 focus:outline-none focus:ring-2 focus:ring-green-400/60"
+                >
+                  i
+                </span>
+              </Tooltip>
+            </h3>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
               {GAMES.map((g, index) => (
-                <button
+                <Tooltip
                   key={g.id}
-                  onClick={() => handleGameChange(g.id)}
-                  className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
-                    game === g.id
-                      ? `bg-gradient-to-r ${g.gradient} text-white border-white/30 shadow-lg`
-                      : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
-                  }`}
-                  style={{ animationDelay: `${index * 0.1}s` }}
+                  content={`${g.name}
+Actualiza la vista con partidos, estadísticas y torneos de este juego.`}
+                  className="block h-full"
+                  side="top"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                  
-                  <div className="relative z-10 text-center">
-                    <div className="mb-3">
-                      <Image
-                        src={g.icon}
-                        alt={g.name}
-                        width={32}
-                        height={32}
-                        className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300"
-                      />
+                  <button
+                    onClick={() => handleGameChange(g.id)}
+                    className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
+                      game === g.id
+                        ? `bg-gradient-to-r ${g.gradient} text-white border-white/30 shadow-lg`
+                        : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
+                    }`}
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                    
+                    <div className="relative z-10 text-center">
+                      <div className="mb-3">
+                        <Image
+                          src={g.icon}
+                          alt={g.name}
+                          width={32}
+                          height={32}
+                          className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
+                      <div className="font-bold text-sm">{g.name}</div>
                     </div>
-                    <div className="font-bold text-sm">{g.name}</div>
-                  </div>
 
-                  {game === g.id && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-b-xl"></div>
-                  )}
-                </button>
+                    {game === g.id && (
+                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-b-xl"></div>
+                    )}
+                  </button>
+                </Tooltip>
               ))}
             </div>
           </div>
@@ -774,33 +861,54 @@ function EsportsPageContent() {
             <>
               {/* Filtros de tiempo */}
               <div className="mb-8">
-                <h3 className="text-xl font-semibold text-white mb-4 text-center">Período de Tiempo</h3>
+                <h3 className="text-xl font-semibold text-white mb-4 text-center flex items-center justify-center gap-2">
+                  Período de Tiempo
+                  <Tooltip
+                    content={`Elige la ventana temporal para acotar los partidos listados.`}
+                    className="inline-flex"
+                    side="right"
+                  >
+                    <span
+                      tabIndex={0}
+                      aria-label="Ayuda sobre el filtro de tiempo"
+                      className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400/60 bg-blue-500/10 text-xs font-bold text-blue-200 hover:bg-blue-500/20 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
+                    >
+                      i
+                    </span>
+                  </Tooltip>
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
                   {TIMEFRAMES.map((t, index) => (
-                    <button
+                    <Tooltip
                       key={t.id}
-                      onClick={() => setTimeframe(t.id)}
-                      className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
-                        timeframe === t.id
-                          ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/25"
-                          : "bg-gray-800/50 text-white border-gray-600 hover:border-blue-500/50 hover:bg-gray-700/50"
-                      }`}
-                      style={{ animationDelay: `${index * 0.1}s` }}
+                      content={`${t.emoji} ${t.label}
+${t.description}. Ajusta la lista de partidos al período indicado.`}
+                      className="block h-full"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                      
-                      <div className="relative z-10 text-center">
-                        <div className="text-2xl mb-2">{t.emoji}</div>
-                        <div className="font-bold text-base mb-1">{t.label}</div>
-                        <div className={`text-xs ${timeframe === t.id ? 'text-blue-100' : 'text-gray-400'}`}>
-                          {t.description}
+                      <button
+                        onClick={() => handleTimeframeChange(t.id)}
+                        className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
+                          timeframe === t.id
+                            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/25"
+                            : "bg-gray-800/50 text-white border-gray-600 hover:border-blue-500/50 hover:bg-gray-700/50"
+                        }`}
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                        
+                        <div className="relative z-10 text-center">
+                          <div className="text-2xl mb-2">{t.emoji}</div>
+                          <div className="font-bold text-base mb-1">{t.label}</div>
+                          <div className={`text-xs ${timeframe === t.id ? 'text-blue-100' : 'text-gray-400'}`}>
+                            {t.description}
+                          </div>
                         </div>
-                      </div>
-
-                      {timeframe === t.id && (
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-b-xl"></div>
-                      )}
-                    </button>
+                        
+                        {timeframe === t.id && (
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-b-xl"></div>
+                        )}
+                      </button>
+                    </Tooltip>
                   ))}
                 </div>
               </div>
@@ -808,10 +916,42 @@ function EsportsPageContent() {
               {/* Filtros adicionales */}
               <div className="mb-8">
                 <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-2xl p-6 border border-gray-700 max-w-4xl mx-auto">
-                  <h3 className="text-lg font-semibold text-white mb-4 text-center">Filtros Avanzados</h3>
+                  <h3 className="text-lg font-semibold text-white mb-4 text-center flex items-center justify-center gap-2">
+                    Filtros Avanzados
+                    <Tooltip
+                      content={`Complementa la búsqueda restringiendo por liga, equipo o estado del partido.`}
+                      className="inline-flex"
+                      side="right"
+                    >
+                      <span
+                        tabIndex={0}
+                        aria-label="Ayuda sobre filtros avanzados"
+                        className="flex h-5 w-5 items-center justify-center rounded-full border border-green-400/60 bg-green-500/10 text-xs font-bold text-green-200 hover:bg-green-500/20 focus:outline-none focus:ring-2 focus:ring-green-400/60"
+                      >
+                        i
+                      </span>
+                    </Tooltip>
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Liga</label>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">
+                        <span className="flex items-center gap-2">
+                          Liga
+                          <Tooltip
+                            content={`Filtra por nombre de liga o torneo. Puedes escribir coincidencias parciales.`}
+                            className="inline-flex"
+                            side="top"
+                          >
+                            <span
+                              tabIndex={0}
+                              aria-label="Ayuda sobre el filtro de liga"
+                              className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-green-400/60"
+                            >
+                              i
+                            </span>
+                          </Tooltip>
+                        </span>
+                      </label>
                       <input
                         type="text"
                         placeholder="Buscar liga..."
@@ -821,7 +961,24 @@ function EsportsPageContent() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Equipo</label>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">
+                        <span className="flex items-center gap-2">
+                          Equipo
+                          <Tooltip
+                            content={`Encuentra partidos donde participe un equipo concreto. Acepta búsquedas parciales.`}
+                            className="inline-flex"
+                            side="top"
+                          >
+                            <span
+                              tabIndex={0}
+                              aria-label="Ayuda sobre el filtro de equipo"
+                              className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-green-400/60"
+                            >
+                              i
+                            </span>
+                          </Tooltip>
+                        </span>
+                      </label>
                       <input
                         type="text"
                         placeholder="Buscar equipo..."
@@ -831,7 +988,24 @@ function EsportsPageContent() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Estado</label>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">
+                        <span className="flex items-center gap-2">
+                          Estado
+                          <Tooltip
+                            content={`Limita los resultados a encuentros en vivo, próximos o ya finalizados.`}
+                            className="inline-flex"
+                            side="top"
+                          >
+                            <span
+                              tabIndex={0}
+                              aria-label="Ayuda sobre el estado del partido"
+                              className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-green-400/60"
+                            >
+                              i
+                            </span>
+                          </Tooltip>
+                        </span>
+                      </label>
                       <select
                         value={filterStatus}
                         onChange={e => setFilterStatus(e.target.value)}
@@ -947,10 +1121,42 @@ function EsportsPageContent() {
               {/* Filtros específicos para torneos */}
               <div className="mb-8">
                 <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-2xl p-6 border border-gray-700 max-w-4xl mx-auto">
-                  <h3 className="text-lg font-semibold text-white mb-4 text-center">Filtros de Torneos</h3>
+                  <h3 className="text-lg font-semibold text-white mb-4 text-center flex items-center justify-center gap-2">
+                    Filtros de Torneos
+                    <Tooltip
+                      content={`Refina la búsqueda de torneos según nombre o estado de competencia.`}
+                      className="inline-flex"
+                      side="right"
+                    >
+                      <span
+                        tabIndex={0}
+                        aria-label="Ayuda sobre filtros de torneos"
+                        className="flex h-5 w-5 items-center justify-center rounded-full border border-purple-400/60 bg-purple-500/10 text-xs font-bold text-purple-200 hover:bg-purple-500/20 focus:outline-none focus:ring-2 focus:ring-purple-400/60"
+                      >
+                        i
+                      </span>
+                    </Tooltip>
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Liga/Torneo</label>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">
+                        <span className="flex items-center gap-2">
+                          Liga/Torneo
+                          <Tooltip
+                            content={`Escribe parte del nombre del torneo o liga para filtrar coincidencias.`}
+                            className="inline-flex"
+                            side="top"
+                          >
+                            <span
+                              tabIndex={0}
+                              aria-label="Ayuda sobre la búsqueda de torneos"
+                              className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-purple-400/60"
+                            >
+                              i
+                            </span>
+                          </Tooltip>
+                        </span>
+                      </label>
                       <input
                         type="text"
                         placeholder="Buscar torneo o liga..."
@@ -960,7 +1166,24 @@ function EsportsPageContent() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Estado</label>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">
+                        <span className="flex items-center gap-2">
+                          Estado
+                          <Tooltip
+                            content={`Muestra torneos en curso, próximos o ya finalizados según corresponda.`}
+                            className="inline-flex"
+                            side="top"
+                          >
+                            <span
+                              tabIndex={0}
+                              aria-label="Ayuda sobre el estado del torneo"
+                              className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-purple-400/60"
+                            >
+                              i
+                            </span>
+                          </Tooltip>
+                        </span>
+                      </label>
                       <select
                         value={filterStatus}
                         onChange={e => setFilterStatus(e.target.value)}
@@ -1019,33 +1242,72 @@ function EsportsPageContent() {
                     
                     {/* Información adicional de torneos */}
                     <div className="mt-12 bg-gradient-to-r from-purple-900/20 to-pink-900/20 rounded-2xl p-8 border border-purple-500/30 max-w-4xl mx-auto">
-                      <h4 className="text-xl font-bold text-white mb-6 text-center">📊 Estadísticas de Torneos</h4>
+                      <h4 className="text-xl font-bold text-white mb-6 text-center flex items-center justify-center gap-2">
+                        📊 Estadísticas de Torneos
+                        <Tooltip
+                          content={`Resumen rápido de cómo se distribuyen los torneos filtrados.`}
+                          className="inline-flex"
+                          side="right"
+                        >
+                          <span
+                            tabIndex={0}
+                            aria-label="Ayuda sobre las estadísticas de torneos"
+                            className="flex h-5 w-5 items-center justify-center rounded-full border border-purple-400/60 bg-purple-500/10 text-xs font-bold text-purple-200 hover:bg-purple-500/20 focus:outline-none focus:ring-2 focus:ring-purple-400/60"
+                          >
+                            i
+                          </span>
+                        </Tooltip>
+                      </h4>
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <div className="text-center bg-black/20 rounded-xl p-4">
-                          <div className="text-2xl font-bold text-purple-400">{tournaments.length}</div>
-                          <div className="text-sm text-gray-400">Total</div>
-                        </div>
-                        <div className="text-center bg-black/20 rounded-xl p-4">
-                          <div className="text-2xl font-bold text-green-400">
-                            {tournaments.filter(t => {
-                              const now = Date.now() / 1000;
-                              return t.begin_at && t.begin_at <= now && (!t.end_at || t.end_at > now);
-                            }).length}
+                        <Tooltip
+                          content={`Cantidad total de torneos disponibles tras aplicar los filtros.`}
+                          className="block h-full"
+                          side="top"
+                        >
+                          <div className="text-center bg-black/20 rounded-xl p-4">
+                            <div className="text-2xl font-bold text-purple-400">{tournaments.length}</div>
+                            <div className="text-sm text-gray-400">Total</div>
                           </div>
-                          <div className="text-sm text-gray-400">En Curso</div>
-                        </div>
-                        <div className="text-center bg-black/20 rounded-xl p-4">
-                          <div className="text-2xl font-bold text-blue-400">
-                            {tournaments.filter(t => t.begin_at && t.begin_at > Date.now() / 1000).length}
+                        </Tooltip>
+                        <Tooltip
+                          content={`Torneos que actualmente están disputándose.`}
+                          className="block h-full"
+                          side="top"
+                        >
+                          <div className="text-center bg-black/20 rounded-xl p-4">
+                            <div className="text-2xl font-bold text-green-400">
+                              {tournaments.filter(t => {
+                                const now = Date.now() / 1000;
+                                return t.begin_at && t.begin_at <= now && (!t.end_at || t.end_at > now);
+                              }).length}
+                            </div>
+                            <div className="text-sm text-gray-400">En Curso</div>
                           </div>
-                          <div className="text-sm text-gray-400">Próximos</div>
-                        </div>
-                        <div className="text-center bg-black/20 rounded-xl p-4">
-                          <div className="text-2xl font-bold text-yellow-400">
-                            {tournaments.filter(t => t.prizepool && t.prizepool.toLowerCase() !== 'tbd').length}
+                        </Tooltip>
+                        <Tooltip
+                          content={`Competencias programadas que aún no inician.`}
+                          className="block h-full"
+                          side="top"
+                        >
+                          <div className="text-center bg-black/20 rounded-xl p-4">
+                            <div className="text-2xl font-bold text-blue-400">
+                              {tournaments.filter(t => t.begin_at && t.begin_at > Date.now() / 1000).length}
+                            </div>
+                            <div className="text-sm text-gray-400">Próximos</div>
                           </div>
-                          <div className="text-sm text-gray-400">Con Premio</div>
-                        </div>
+                        </Tooltip>
+                        <Tooltip
+                          content={`Torneos con bolsa de premios confirmada o comunicada.`}
+                          className="block h-full"
+                          side="top"
+                        >
+                          <div className="text-center bg-black/20 rounded-xl p-4">
+                            <div className="text-2xl font-bold text-yellow-400">
+                              {tournaments.filter(t => t.prizepool && t.prizepool.toLowerCase() !== 'tbd').length}
+                            </div>
+                            <div className="text-sm text-gray-400">Con Premio</div>
+                          </div>
+                        </Tooltip>
                       </div>
                       
                       {/* Acciones rápidas */}
@@ -1100,6 +1362,15 @@ function EsportsPageContent() {
               </div>
             </>
           )}
+            </div>
+
+            {isFiltering && !isViewLoading && (
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/40 backdrop-blur-sm text-white animate-fadein">
+                <Spinner size={32} label="Aplicando filtros" />
+                <span className="text-sm font-medium tracking-wide">Actualizando contenido…</span>
+              </div>
+            )}
+          </div>
         </div>
       </main>
 

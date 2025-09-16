@@ -2,13 +2,16 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState, useMemo, useCallback, memo } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef, memo } from "react";
 import nextDynamic from "next/dynamic";
 import Link from "next/link";
 import Header from "./components/Header";
 import Image from "next/image";
 import LiveScoreTicker from "./components/LiveScoreTicker";
 import ScrollToTop from "./components/ScrollToTop";
+import Tooltip from "./components/Tooltip";
+import Spinner from "./components/Spinner";
+import LiveBadge from "./components/LiveBadge";
 import { SUPPORTED_GAMES, type GameConfig } from "./lib/gameConfig";
 import { useNotifications } from "./hooks/useNotifications";
 import { useDeferredClientRender } from "./hooks/useDeferredClientRender";
@@ -22,24 +25,34 @@ const ChatBot = nextDynamic(() => import("./components/ChatBot"), {
   loading: () => null,
 });
 
+const TIME_UPDATE_INTERVAL = 15_000;
+
 // Custom hook to handle time consistently between server and client
-function useCurrentTime() {
-  const [currentTime, setCurrentTime] = useState<number>(() => {
-    // Initialize with a consistent value for SSR
-    return typeof window !== 'undefined' ? Math.floor(Date.now() / 1000) : 0;
-  });
+function useCurrentTime(updateInterval = TIME_UPDATE_INTERVAL) {
+  const [currentTime, setCurrentTime] = useState<number>(() => Math.floor(Date.now() / 1000));
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-    setCurrentTime(Math.floor(Date.now() / 1000));
-    
-    const interval = setInterval(() => {
-      setCurrentTime(Math.floor(Date.now() / 1000));
-    }, 1000);
+    if (typeof window === 'undefined') {
+      return;
+    }
 
-    return () => clearInterval(interval);
-  }, []);
+    setIsClient(true);
+
+    const syncTime = () => {
+      const now = Math.floor(Date.now() / 1000);
+      setCurrentTime((prev) => (prev === now ? prev : now));
+    };
+
+    syncTime();
+
+    if (updateInterval <= 0) {
+      return;
+    }
+
+    const interval = window.setInterval(syncTime, updateInterval);
+    return () => window.clearInterval(interval);
+  }, [updateInterval]);
 
   return { currentTime, isClient };
 }
@@ -155,8 +168,9 @@ async function fetchAllMatches(): Promise<Match[]> {
     console.error('Error fetching matches:', error);
   }
   
-  // Return a sorted copy to avoid mutating the aggregated results in place
-  return [...allMatches].sort((a, b) => a.start_time - b.start_time);
+  // Sort once before returning to avoid allocating a new array unnecessarily
+  allMatches.sort((a, b) => a.start_time - b.start_time);
+  return allMatches;
 }
 
 // Función para obtener torneos de múltiples juegos
@@ -269,45 +283,65 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
         
         {/* Estadísticas */}
         <div className="grid grid-cols-2 gap-6">
-          <div className="bg-black/20 rounded-xl p-4 group-hover:bg-black/30 transition-colors duration-300">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 bg-white rounded-full opacity-75"></div>
-              <p className="text-sm font-medium opacity-90">Total</p>
+          <Tooltip
+            content={`Total de partidas registradas para ${game.name} en EMob.`}
+            className="block h-full"
+          >
+            <div className="bg-black/20 rounded-xl p-4 group-hover:bg-black/30 transition-colors duration-300">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-white rounded-full opacity-75"></div>
+                <p className="text-sm font-medium opacity-90">Total</p>
+              </div>
+              <p className="text-3xl font-bold group-hover:scale-105 transition-transform duration-300">
+                {stats.totalMatches}
+              </p>
             </div>
-            <p className="text-3xl font-bold group-hover:scale-105 transition-transform duration-300">
-              {stats.totalMatches}
-            </p>
-          </div>
+          </Tooltip>
           
-          <div className="bg-black/20 rounded-xl p-4 group-hover:bg-black/30 transition-colors duration-300">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
-              <p className="text-sm font-medium opacity-90">En Vivo</p>
+          <Tooltip
+            content={`Partidas de ${game.name} que están en curso en este momento.`}
+            className="block h-full"
+          >
+            <div className="bg-black/20 rounded-xl p-4 group-hover:bg-black/30 transition-colors duration-300">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                <p className="text-sm font-medium opacity-90">En Vivo</p>
+              </div>
+              <p className="text-3xl font-bold text-red-300 group-hover:scale-105 transition-transform duration-300">
+                {stats.liveMatches}
+              </p>
             </div>
-            <p className="text-3xl font-bold text-red-300 group-hover:scale-105 transition-transform duration-300">
-              {stats.liveMatches}
-            </p>
-          </div>
+          </Tooltip>
           
-          <div className="bg-black/20 rounded-xl p-4 group-hover:bg-black/30 transition-colors duration-300">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <p className="text-sm font-medium opacity-90">Próximos</p>
+          <Tooltip
+            content={`Enfrentamientos programados de ${game.name} que aún no comienzan.`}
+            className="block h-full"
+          >
+            <div className="bg-black/20 rounded-xl p-4 group-hover:bg-black/30 transition-colors duration-300">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <p className="text-sm font-medium opacity-90">Próximos</p>
+              </div>
+              <p className="text-3xl font-bold text-blue-300 group-hover:scale-105 transition-transform duration-300">
+                {stats.upcomingMatches}
+              </p>
             </div>
-            <p className="text-3xl font-bold text-blue-300 group-hover:scale-105 transition-transform duration-300">
-              {stats.upcomingMatches}
-            </p>
-          </div>
+          </Tooltip>
           
-          <div className="bg-black/20 rounded-xl p-4 group-hover:bg-black/30 transition-colors duration-300">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-              <p className="text-sm font-medium opacity-90">Torneos</p>
+          <Tooltip
+            content={`Torneos activos o en curso asociados a ${game.name}.`}
+            className="block h-full"
+          >
+            <div className="bg-black/20 rounded-xl p-4 group-hover:bg-black/30 transition-colors duration-300">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                <p className="text-sm font-medium opacity-90">Torneos</p>
+              </div>
+              <p className="text-3xl font-bold text-yellow-300 group-hover:scale-105 transition-transform duration-300">
+                {stats.activeTournaments}
+              </p>
             </div>
-            <p className="text-3xl font-bold text-yellow-300 group-hover:scale-105 transition-transform duration-300">
-              {stats.activeTournaments}
-            </p>
-          </div>
+          </Tooltip>
         </div>
 
         {/* Footer con indicador de actividad */}
@@ -337,7 +371,11 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
   
   return (
     <Link href={`/esports/${match.id}`}>
-      <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 hover:border-green-500/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl">
+      <div
+        className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 hover:border-green-500/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl ${
+          isLive ? "ring-2 ring-red-500/40 shadow-[0_0_35px_rgba(239,68,68,0.45)]" : ""
+        }`}
+      >
         {/* Efecto de brillo animado */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
         
@@ -374,13 +412,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
             
             {/* Estado del partido */}
             {isLive && (
-              <div className="relative">
-                <span className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-3 py-2 rounded-full animate-pulse shadow-lg flex items-center gap-2">
-                  <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
-                  EN VIVO
-                </span>
-                <div className="absolute inset-0 bg-red-500/30 rounded-full blur-xl animate-pulse"></div>
-              </div>
+              <LiveBadge className="pointer-events-none" />
             )}
             
             {isUpcoming && (
@@ -521,6 +553,45 @@ const Home = memo(function Home() {
   const [loadingTournaments, setLoadingTournaments] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState<"today" | "week" | "all">("today");
   const [selectedGame, setSelectedGame] = useState<string>("all");
+  const [isFiltering, setIsFiltering] = useState(false);
+  const filterAnimationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  const triggerFilterFeedback = useCallback(() => {
+    if (filterAnimationTimeoutRef.current) {
+      clearTimeout(filterAnimationTimeoutRef.current);
+    }
+    setIsFiltering(true);
+    filterAnimationTimeoutRef.current = setTimeout(() => {
+      setIsFiltering(false);
+      filterAnimationTimeoutRef.current = null;
+    }, 360);
+  }, []);
+
+  const handleTimeframeChange = useCallback((timeframe: "today" | "week" | "all") => {
+    if (selectedTimeframe === timeframe) {
+      return false;
+    }
+    triggerFilterFeedback();
+    setSelectedTimeframe(timeframe);
+    return true;
+  }, [selectedTimeframe, triggerFilterFeedback]);
+
+  const handleGameChange = useCallback((gameId: string) => {
+    if (selectedGame === gameId) {
+      return false;
+    }
+    triggerFilterFeedback();
+    setSelectedGame(gameId);
+    return true;
+  }, [selectedGame, triggerFilterFeedback]);
+
+  useEffect(() => {
+    return () => {
+      if (filterAnimationTimeoutRef.current) {
+        clearTimeout(filterAnimationTimeoutRef.current);
+      }
+    };
+  }, []);
   
   const { currentTime, isClient } = useCurrentTime();
   const clientExtrasReady = useDeferredClientRender(400);
@@ -634,60 +705,111 @@ const Home = memo(function Home() {
     return stats;
   }, [currentTime, matchesByGame, tournamentsByGame]);
 
-  // Partidos filtrados por timeframe y juego
-  const filteredMatches = useMemo(() => {
+  // Partidos filtrados por timeframe y juego + métricas para los filtros
+  const { filteredMatches, timeframeCounts } = useMemo(() => {
     const baseMatches = selectedGame === "all" ? matches : matchesByGame[selectedGame] ?? [];
+
     if (!baseMatches.length) {
-      return [];
+      return {
+        filteredMatches: [] as Match[],
+        timeframeCounts: {
+          today: 0,
+          week: 0,
+          all: 0,
+        },
+      };
     }
 
-    let filtered = baseMatches;
-    const currentTimeMs = currentTime * 1000;
+    const filtered: Match[] = [];
+    const nowSeconds = currentTime || Math.floor(Date.now() / 1000);
+    const nowMs = nowSeconds * 1000;
+    const dayMs = 24 * 60 * 60 * 1000;
+    const startOfToday = new Date(nowMs);
+    startOfToday.setHours(0, 0, 0, 0);
+    const todayStartMs = startOfToday.getTime();
+    const todayEndMs = todayStartMs + dayMs;
+    const weekEndMs = nowMs + 7 * dayMs;
 
-    switch (selectedTimeframe) {
-      case "today": {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999);
-        const todayStartMs = todayStart.getTime();
-        const todayEndMs = todayEnd.getTime();
-        filtered = filtered.filter((match) => {
-          const matchTime = match.start_time * 1000;
-          return matchTime >= todayStartMs && matchTime <= todayEndMs;
-        });
-        break;
+    let todayCount = 0;
+    let weekCount = 0;
+
+    for (const match of baseMatches) {
+      const matchMs = match.start_time * 1000;
+      const isToday = matchMs >= todayStartMs && matchMs < todayEndMs;
+      if (isToday) {
+        todayCount += 1;
       }
-      case "week": {
-        const weekEnd = currentTimeMs + 7 * 24 * 60 * 60 * 1000;
-        filtered = filtered.filter((match) => {
-          const matchTime = match.start_time * 1000;
-          return matchTime >= currentTimeMs && matchTime <= weekEnd;
-        });
-        break;
+
+      const isWithinWeek = matchMs >= nowMs && matchMs <= weekEndMs;
+      if (isWithinWeek) {
+        weekCount += 1;
+      }
+
+      let include = true;
+      if (selectedTimeframe === "today") {
+        include = isToday;
+      } else if (selectedTimeframe === "week") {
+        include = isWithinWeek;
+      }
+
+      if (include) {
+        filtered.push(match);
       }
     }
 
-    return filtered.slice().sort((a, b) => {
-      // Priorizar partidos en vivo
-      const aIsLive = a.start_time <= currentTime && a.radiant_win === null;
-      const bIsLive = b.start_time <= currentTime && b.radiant_win === null;
-      
+    filtered.sort((a, b) => {
+      const aIsLive = a.start_time <= nowSeconds && a.radiant_win === null;
+      const bIsLive = b.start_time <= nowSeconds && b.radiant_win === null;
+
       if (aIsLive && !bIsLive) return -1;
       if (!aIsLive && bIsLive) return 1;
-      
+
       return a.start_time - b.start_time;
     });
+
+    return {
+      filteredMatches: filtered,
+      timeframeCounts: {
+        today: todayCount,
+        week: weekCount,
+        all: baseMatches.length,
+      },
+    };
   }, [matches, matchesByGame, selectedGame, selectedTimeframe, currentTime]);
+
+  const timeframeOptions = useMemo(
+    () => ([
+      { id: "today" as const, label: "Hoy", emoji: "📅", description: "Partidos de hoy", count: timeframeCounts.today },
+      { id: "week" as const, label: "Esta Semana", emoji: "🗓️", description: "Próximos 7 días", count: timeframeCounts.week },
+      { id: "all" as const, label: "Todos", emoji: "🌐", description: "Sin filtro de tiempo", count: timeframeCounts.all },
+    ]),
+    [timeframeCounts]
+  );
 
   // Partidos destacados (en vivo + próximos importantes)
   const featuredMatches = useMemo(() => {
     if (!filteredMatches.length) return [];
-    
-    const live = filteredMatches.filter(m => m.start_time <= currentTime && m.radiant_win === null);
-    const upcoming = filteredMatches.filter(m => m.start_time > currentTime);
-    
-    return [...live.slice(0, 2), ...upcoming.slice(0, 3)].slice(0, 4);
+
+    const live: Match[] = [];
+    const upcoming: Match[] = [];
+
+    for (const match of filteredMatches) {
+      if (match.start_time <= currentTime && match.radiant_win === null) {
+        if (live.length < 2) {
+          live.push(match);
+        }
+      } else if (match.start_time > currentTime) {
+        if (upcoming.length < 3) {
+          upcoming.push(match);
+        }
+      }
+
+      if (live.length >= 2 && upcoming.length >= 3) {
+        break;
+      }
+    }
+
+    return [...live, ...upcoming].slice(0, 4);
   }, [filteredMatches, currentTime]);
 
   return (
@@ -716,6 +838,13 @@ const Home = memo(function Home() {
                 </button>
               </div>
             </div>
+
+            {isFiltering && !loading && (
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/40 backdrop-blur-sm text-white animate-fadein">
+                <Spinner size={30} label="Aplicando filtros" />
+                <span className="text-sm font-medium tracking-wide">Actualizando resultados…</span>
+              </div>
+            )}
           </div>
         </section>
 
@@ -748,69 +877,78 @@ const Home = memo(function Home() {
 
         {/* Filtros Avanzados */}
         <section className="container mx-auto px-6 mb-12">
-          <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-3xl p-8 border border-gray-700 backdrop-blur-sm">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-white mb-3 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-                🎛️ Filtros Avanzados
-              </h3>
-              <p className="text-gray-400 text-sm">Personaliza tu experiencia seleccionando período de tiempo y juegos</p>
-            </div>
-            
+          <div
+            className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-3xl p-8 border border-gray-700 backdrop-blur-sm relative overflow-hidden"
+            aria-busy={isFiltering}
+          >
+            <div className={`transition-opacity duration-300 ${isFiltering ? "opacity-60" : "opacity-100"}`}>
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-white mb-3 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                  🎛️ Filtros Avanzados
+                </h3>
+                <p className="text-gray-400 text-sm">Personaliza tu experiencia seleccionando período de tiempo y juegos</p>
+              </div>
+
             {/* Filtros de Tiempo */}
             <div className="mb-8">
               <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <span className="text-blue-400">⏰</span>
                 Período de Tiempo
+                <Tooltip
+                  content={`Selecciona el rango temporal que mejor se adapte a tu análisis.
+Incluye partidos en vivo y próximos para ese período.`}
+                  className="ml-2 inline-flex"
+                >
+                  <span
+                    tabIndex={0}
+                    aria-label="Ayuda sobre el período de tiempo"
+                    className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400/60 bg-blue-500/10 text-xs font-bold text-blue-200 hover:bg-blue-500/20 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
+                  >
+                    i
+                  </span>
+                </Tooltip>
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  { id: "today", label: "Hoy", emoji: "📅", description: "Partidos de hoy", count: filteredMatches.filter(m => {
-                    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-                    const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
-                    const matchTime = m.start_time * 1000;
-                    return matchTime >= todayStart.getTime() && matchTime <= todayEnd.getTime();
-                  }).length },
-                  { id: "week", label: "Esta Semana", emoji: "🗓️", description: "Próximos 7 días", count: filteredMatches.filter(m => {
-                    const weekStart = currentTime * 1000;
-                    const weekEnd = weekStart + (7 * 24 * 60 * 60 * 1000);
-                    const matchTime = m.start_time * 1000;
-                    return matchTime >= weekStart && matchTime <= weekEnd;
-                  }).length },
-                  { id: "all", label: "Todos", emoji: "🌐", description: "Sin filtro de tiempo", count: matches.length },
-                ].map((option, index) => (
-                  <button
+                {timeframeOptions.map((option, index) => (
+                  <Tooltip
                     key={option.id}
-                    onClick={() => setSelectedTimeframe(option.id as typeof selectedTimeframe)}
-                    className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
-                      selectedTimeframe === option.id
-                        ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/25"
-                        : "bg-gray-800/50 text-white border-gray-600 hover:border-blue-500/50 hover:bg-gray-700/50"
-                    }`}
-                    style={{ animationDelay: `${index * 0.1}s` }}
+                    content={`${option.emoji} ${option.label}
+${option.description}. Coincidencias actuales: ${option.count}.`}
+                    className="block h-full"
                   >
-                    {/* Efecto de brillo */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                    
-                    <div className="relative z-10 text-center">
-                      <div className="text-2xl mb-2">{option.emoji}</div>
-                      <div className="font-bold text-base mb-1">{option.label}</div>
-                      <div className={`text-xs mb-2 ${selectedTimeframe === option.id ? 'text-blue-100' : 'text-gray-400'}`}>
-                        {option.description}
+                    <button
+                      onClick={() => handleTimeframeChange(option.id)}
+                      className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
+                        selectedTimeframe === option.id
+                          ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/25"
+                          : "bg-gray-800/50 text-white border-gray-600 hover:border-blue-500/50 hover:bg-gray-700/50"
+                      }`}
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      {/* Efecto de brillo */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                      
+                      <div className="relative z-10 text-center">
+                        <div className="text-2xl mb-2">{option.emoji}</div>
+                        <div className="font-bold text-base mb-1">{option.label}</div>
+                        <div className={`text-xs mb-2 ${selectedTimeframe === option.id ? 'text-blue-100' : 'text-gray-400'}`}>
+                          {option.description}
+                        </div>
+                        <div className={`text-xs font-bold px-2 py-1 rounded-full ${
+                          selectedTimeframe === option.id 
+                            ? 'bg-white/20 text-white' 
+                            : 'bg-gray-700 text-gray-300'
+                        }`}>
+                          {option.count} partidos
+                        </div>
                       </div>
-                      <div className={`text-xs font-bold px-2 py-1 rounded-full ${
-                        selectedTimeframe === option.id 
-                          ? 'bg-white/20 text-white' 
-                          : 'bg-gray-700 text-gray-300'
-                      }`}>
-                        {selectedGame === "all" ? option.count : filteredMatches.length} partidos
-                      </div>
-                    </div>
 
-                    {/* Indicador de selección */}
-                    {selectedTimeframe === option.id && (
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-b-xl"></div>
-                    )}
-                  </button>
+                      {/* Indicador de selección */}
+                      {selectedTimeframe === option.id && (
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-b-xl"></div>
+                      )}
+                    </button>
+                  </Tooltip>
                 ))}
               </div>
             </div>
@@ -820,78 +958,103 @@ const Home = memo(function Home() {
               <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <span className="text-green-400">🎮</span>
                 Seleccionar Juegos
+                <Tooltip
+                  content={`Filtra la lista por juego específico para centrarte en tus ligas favoritas.
+Los partidos mostrados y las estadísticas se ajustan automáticamente.`}
+                  className="ml-2 inline-flex"
+                >
+                  <span
+                    tabIndex={0}
+                    aria-label="Ayuda sobre el filtro de juegos"
+                    className="flex h-5 w-5 items-center justify-center rounded-full border border-green-400/60 bg-green-500/10 text-xs font-bold text-green-200 hover:bg-green-500/20 focus:outline-none focus:ring-2 focus:ring-green-400/60"
+                  >
+                    i
+                  </span>
+                </Tooltip>
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
                 {/* Opción "Todos los juegos" */}
-                <button
-                  onClick={() => setSelectedGame("all")}
-                  className={`group relative overflow-hidden px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
-                    selectedGame === "all"
-                      ? "bg-gradient-to-r from-green-500 to-green-600 text-white border-green-400 shadow-lg shadow-green-500/25"
-                      : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
-                  }`}
+                <Tooltip
+                  content={`Todos los juegos
+Reúne enfrentamientos de cada título disponible. Coincidencias actuales: ${matches.length}.`}
+                  className="block h-full"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                  
-                  <div className="relative z-10 text-center">
-                    <div className="text-3xl mb-3">🌟</div>
-                    <div className="font-bold text-sm mb-2">Todos</div>
-                    <div className={`text-xs px-2 py-1 rounded-full ${
-                      selectedGame === "all" 
-                        ? 'bg-white/20 text-white' 
-                        : 'bg-gray-700 text-gray-300'
-                    }`}>
-                      {matches.length} partidos
+                  <button
+                    onClick={() => handleGameChange("all")}
+                    className={`group relative overflow-hidden px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
+                      selectedGame === "all"
+                        ? "bg-gradient-to-r from-green-500 to-green-600 text-white border-green-400 shadow-lg shadow-green-500/25"
+                        : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
+                    }`}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                    
+                    <div className="relative z-10 text-center">
+                      <div className="text-3xl mb-3">🌟</div>
+                      <div className="font-bold text-sm mb-2">Todos</div>
+                      <div className={`text-xs px-2 py-1 rounded-full ${
+                        selectedGame === "all" 
+                          ? 'bg-white/20 text-white' 
+                          : 'bg-gray-700 text-gray-300'
+                      }`}>
+                        {matches.length} partidos
+                      </div>
                     </div>
-                  </div>
 
-                  {selectedGame === "all" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-b-xl"></div>
-                  )}
-                </button>
+                    {selectedGame === "all" && (
+                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-b-xl"></div>
+                    )}
+                  </button>
+                </Tooltip>
 
                 {/* Opciones de juegos individuales */}
                 {GAMES.map((game, index) => {
                   const gameMatches = matchesByGame[game.id] ?? [];
                   return (
-                    <button
+                    <Tooltip
                       key={game.id}
-                      onClick={() => setSelectedGame(game.id)}
-                      className={`group relative overflow-hidden px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
-                        selectedGame === game.id
-                          ? `bg-gradient-to-r ${game.gradient} text-white border-white/30 shadow-lg`
-                          : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
-                      }`}
-                      style={{ animationDelay: `${(index + 1) * 0.1}s` }}
+                      content={`${game.name}
+${game.description ?? "Información del título"}. Coincidencias actuales: ${gameMatches.length}.`}
+                      className="block h-full"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                      
-                      <div className="relative z-10 text-center">
-                        <div className="mb-3">
-                          <Image
-                            src={game.icon}
-                            alt={`Icono de ${game.name}`}
-                            width={32}
-                            height={32}
-                            className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300"
-                          />
+                      <button
+                        onClick={() => handleGameChange(game.id)}
+                        className={`group relative overflow-hidden px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
+                          selectedGame === game.id
+                            ? `bg-gradient-to-r ${game.gradient} text-white border-white/30 shadow-lg`
+                            : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
+                        }`}
+                        style={{ animationDelay: `${(index + 1) * 0.1}s` }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                        
+                        <div className="relative z-10 text-center">
+                          <div className="mb-3">
+                            <Image
+                              src={game.icon}
+                              alt={`Icono de ${game.name}`}
+                              width={32}
+                              height={32}
+                              className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300"
+                            />
+                          </div>
+                          <div className="font-bold text-sm mb-2 line-clamp-1" title={game.name}>
+                            {game.name}
+                          </div>
+                          <div className={`text-xs px-2 py-1 rounded-full ${
+                            selectedGame === game.id 
+                              ? 'bg-white/20 text-white' 
+                              : 'bg-gray-700 text-gray-300'
+                          }`}>
+                            {gameMatches.length} partidos
+                          </div>
                         </div>
-                        <div className="font-bold text-sm mb-2 line-clamp-1" title={game.name}>
-                          {game.name}
-                        </div>
-                        <div className={`text-xs px-2 py-1 rounded-full ${
-                          selectedGame === game.id 
-                            ? 'bg-white/20 text-white' 
-                            : 'bg-gray-700 text-gray-300'
-                        }`}>
-                          {gameMatches.length} partidos
-                        </div>
-                      </div>
 
-                      {selectedGame === game.id && (
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-b-xl"></div>
-                      )}
-                    </button>
+                        {selectedGame === game.id && (
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-b-xl"></div>
+                        )}
+                      </button>
+                    </Tooltip>
                   );
                 })}
               </div>
@@ -915,8 +1078,11 @@ const Home = memo(function Home() {
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => {
-                    setSelectedTimeframe("today");
-                    setSelectedGame("all");
+                    const timeframeChanged = handleTimeframeChange("today");
+                    const gameChanged = handleGameChange("all");
+                    if (!timeframeChanged && !gameChanged) {
+                      triggerFilterFeedback();
+                    }
                   }}
                   className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2"
                   aria-label="Restablecer filtros a valores por defecto"
@@ -941,7 +1107,8 @@ const Home = memo(function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
         {/* Partidos Destacados */}
         <section className="container mx-auto px-6 py-16">
@@ -955,59 +1122,70 @@ const Home = memo(function Home() {
             <div className="w-24 h-1 bg-gradient-to-r from-green-500 to-blue-500 mx-auto mt-4 rounded-full"></div>
           </div>
 
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-gray-800/50 rounded-2xl p-8 animate-pulse border border-gray-700">
-                  <div className="flex justify-between items-center mb-6">
-                    <div className="h-4 bg-gray-700 rounded w-32"></div>
-                    <div className="h-6 bg-gray-700 rounded-full w-20"></div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-center flex-1">
-                      <div className="h-6 bg-gray-700 rounded mb-2"></div>
-                      <div className="h-10 bg-gray-700 rounded w-16 mx-auto"></div>
+          <div className="relative" aria-busy={loading || isFiltering}>
+            <div className={`transition-opacity duration-300 ${isFiltering && !loading ? "opacity-60" : "opacity-100"}`}>
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="bg-gray-800/50 rounded-2xl p-8 animate-pulse border border-gray-700">
+                      <div className="flex justify-between items-center mb-6">
+                        <div className="h-4 bg-gray-700 rounded w-32"></div>
+                        <div className="h-6 bg-gray-700 rounded-full w-20"></div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-center flex-1">
+                          <div className="h-6 bg-gray-700 rounded mb-2"></div>
+                          <div className="h-10 bg-gray-700 rounded w-16 mx-auto"></div>
+                        </div>
+                        <div className="text-center px-6">
+                          <div className="h-6 bg-gray-700 rounded w-8 mx-auto"></div>
+                        </div>
+                        <div className="text-center flex-1">
+                          <div className="h-6 bg-gray-700 rounded mb-2"></div>
+                          <div className="h-10 bg-gray-700 rounded w-16 mx-auto"></div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-center px-6">
-                      <div className="h-6 bg-gray-700 rounded w-8 mx-auto"></div>
+                  ))}
+                </div>
+              ) : featuredMatches.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {featuredMatches.map((match, index) => (
+                    <div 
+                      key={match.id} 
+                      className="animate-fadein"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <FeaturedMatch match={match} currentTime={currentTime} />
                     </div>
-                    <div className="text-center flex-1">
-                      <div className="h-6 bg-gray-700 rounded mb-2"></div>
-                      <div className="h-10 bg-gray-700 rounded w-16 mx-auto"></div>
-                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-12 border border-gray-700 max-w-md mx-auto">
+                    <div className="text-6xl mb-4">🎮</div>
+                    <h3 className="text-xl font-bold text-white mb-2">No hay partidos destacados</h3>
+                    <p className="text-gray-400 mb-6">
+                      No hay partidos en vivo o próximos en este momento.
+                    </p>
+                    <Link 
+                      href="/esports"
+                      className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg inline-block"
+                    >
+                      Ver Todos los Partidos
+                    </Link>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
-          ) : featuredMatches.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {featuredMatches.map((match, index) => (
-                <div 
-                  key={match.id} 
-                  className="animate-fadein"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <FeaturedMatch match={match} currentTime={currentTime} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-12 border border-gray-700 max-w-md mx-auto">
-                <div className="text-6xl mb-4">🎮</div>
-                <h3 className="text-xl font-bold text-white mb-2">No hay partidos destacados</h3>
-                <p className="text-gray-400 mb-6">
-                  No hay partidos en vivo o próximos en este momento.
-                </p>
-                <Link 
-                  href="/esports"
-                  className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg inline-block"
-                >
-                  Ver Todos los Partidos
-                </Link>
+
+            {isFiltering && !loading && (
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/40 backdrop-blur-sm text-white animate-fadein">
+                <Spinner size={34} label="Actualizando partidos destacados" />
+                <span className="text-sm font-medium">Filtrando partidos…</span>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Acciones rápidas */}
           {featuredMatches.length > 0 && (
@@ -1073,6 +1251,10 @@ const Home = memo(function Home() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {tournaments.map((tournament, index) => {
                   const game = GAMES.find(g => g.id === tournament.game);
+                  const isLive =
+                    tournament.begin_at !== null &&
+                    tournament.begin_at <= currentTime &&
+                    (!tournament.end_at || tournament.end_at > currentTime);
                   return (
                     <div 
                       key={tournament.id} 
@@ -1080,7 +1262,11 @@ const Home = memo(function Home() {
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
                       <Link href={`/esports/tournament/${tournament.id}`}>
-                        <div className="group relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 hover:shadow-2xl transition-all duration-500 hover:scale-105 border border-gray-700 hover:border-green-500/50">
+                        <div
+                          className={`group relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 hover:shadow-2xl transition-all duration-500 hover:scale-105 border border-gray-700 hover:border-green-500/50 ${
+                            isLive ? "ring-2 ring-emerald-400/50 shadow-[0_0_32px_rgba(16,185,129,0.35)]" : ""
+                          }`}
+                        >
                           {/* Efecto de brillo */}
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                           
@@ -1109,9 +1295,9 @@ const Home = memo(function Home() {
                               </div>
                               
                               {/* Estado activo */}
-                              <div className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse shadow-lg">
-                                ACTIVO
-                              </div>
+                              {isLive && (
+                                <LiveBadge label="EN CURSO" tone="emerald" className="pointer-events-none" />
+                              )}
                             </div>
                             
                             {/* Información del torneo */}
