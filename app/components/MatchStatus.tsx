@@ -23,9 +23,25 @@ interface MatchStatusProps {
   match: MatchDetail;
 }
 
+type StatusInfo =
+  | {
+      type: 'live';
+      content: string;
+      detail: string | null;
+      time: string | null;
+      className: string;
+    }
+  | {
+      type: 'finished' | 'upcoming';
+      content: string;
+      detail: null;
+      time: null;
+      className: string;
+    };
+
 // Componente para mostrar el estado del partido con diseño mejorado
 const MatchStatus = ({ match }: MatchStatusProps) => {
-  const statusInfo = useMemo(() => {
+  const statusInfo = useMemo<StatusInfo>(() => {
     const now = Date.now() / 1000;
     const isLive = match.start_time <= now && match.radiant_win === null;
 
