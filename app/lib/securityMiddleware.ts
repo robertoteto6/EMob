@@ -82,13 +82,18 @@ export class SecurityMiddleware {
   // Manejar CORS
   private handleCORS(request: NextRequest): NextResponse | null {
     const origin = request.headers.get('origin');
+    const requestOrigin = request.nextUrl.origin;
+    const isSameOrigin = origin !== null && origin === requestOrigin;
     
     // Para requests preflight
     if (request.method === 'OPTIONS') {
+      const allowOrigin = isSameOrigin || this.isAllowedOrigin(origin)
+        ? (origin ?? requestOrigin)
+        : 'null';
       return new NextResponse(null, {
         status: 200,
         headers: {
-          'Access-Control-Allow-Origin': this.isAllowedOrigin(origin) ? origin! : 'null',
+          'Access-Control-Allow-Origin': allowOrigin,
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-CSRF-Token',
           'Access-Control-Max-Age': '86400',
@@ -97,7 +102,7 @@ export class SecurityMiddleware {
     }
 
     // Validar origen para requests normales
-    if (origin && !this.isAllowedOrigin(origin)) {
+    if (origin && !(isSameOrigin || this.isAllowedOrigin(origin))) {
       return new NextResponse('CORS: Origin not allowed', { status: 403 });
     }
 
@@ -275,11 +280,12 @@ export class SecurityMiddleware {
     
     // CORS headers si es necesario
     const origin = request.headers.get('origin');
-    if (origin && this.isAllowedOrigin(origin)) {
+    const requestOrigin = request.nextUrl.origin;
+    if (origin && (origin === requestOrigin || this.isAllowedOrigin(origin))) {
       response.headers.set('Access-Control-Allow-Origin', origin);
       response.headers.set('Access-Control-Allow-Credentials', 'true');
     }
-    
+
     return response;
   }
 
