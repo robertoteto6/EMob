@@ -10,9 +10,14 @@ test('home page should hit network', async ({ page }) => {
     }
   });
 
-  await page.goto('/', { waitUntil: 'load' });
-  await page.waitForTimeout(2000);
+  const networkPromise = page.waitForResponse((response) => {
+    const url = response.url();
+    return url.includes('/api/esports/matches') || url.includes('/api/esports/tournaments');
+  }, { timeout: 20000 });
 
-  console.log('Responses captured:', responses);
+  await page.goto('/', { waitUntil: 'load' });
+  await networkPromise;
+  await page.waitForTimeout(500);
+
   expect.soft(responses.length).toBeGreaterThan(0);
 });

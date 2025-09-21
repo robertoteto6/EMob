@@ -17,6 +17,7 @@ module.exports = {
     "**/__tests__/**/*.{ts,tsx,js,jsx}",
     "**/*.{test,spec}.{ts,tsx,js,jsx}"
   ],
+  testPathIgnorePatterns: ["<rootDir>/tests/"],
   collectCoverageFrom: [
     "app/**/*.{ts,tsx}",
     "!app/**/*.d.ts",
