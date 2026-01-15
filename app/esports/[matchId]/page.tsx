@@ -38,6 +38,7 @@ const useOnlineStatus = () => {
 
 const matchCache = new Map<string, { data: MatchDetail | null; timestamp: number }>();
 const CACHE_DURATION = 30000;
+const AUTO_REFRESH_INTERVAL_MS = 30000;
 
 async function fetchMatchAPI(matchId: string): Promise<any> {
     const controller = new AbortController();
@@ -53,6 +54,18 @@ async function fetchMatchAPI(matchId: string): Promise<any> {
 function transformApiDataToMatchDetail(apiData: any): MatchDetail {
     const team1 = apiData.opponents?.[0]?.opponent;
     const team2 = apiData.opponents?.[1]?.opponent;
+    const results = Array.isArray(apiData.results) ? apiData.results : [];
+    const scoresByTeam = new Map<number, number>();
+    for (const result of results) {
+        const teamId = result?.team_id ?? result?.opponent_id;
+        if (typeof teamId === "number" && typeof result?.score === "number") {
+            scoresByTeam.set(teamId, result.score);
+        }
+    }
+    const fallbackScore = (index: number) => {
+        const score = results[index]?.score;
+        return typeof score === "number" ? score : 0;
+    };
     return {
         id: apiData.id,
         name: apiData.name ?? `${team1?.name ?? "TBD"} vs ${team2?.name ?? "TBD"}`,
@@ -60,8 +73,8 @@ function transformApiDataToMatchDetail(apiData: any): MatchDetail {
         dire: team2?.name ?? "TBD",
         radiant_id: team1?.id ?? null,
         dire_id: team2?.id ?? null,
-        radiant_score: apiData.results?.[0]?.score ?? 0,
-        dire_score: apiData.results?.[1]?.score ?? 0,
+        radiant_score: typeof team1?.id === "number" && scoresByTeam.has(team1.id) ? (scoresByTeam.get(team1.id) ?? 0) : fallbackScore(0),
+        dire_score: typeof team2?.id === "number" && scoresByTeam.has(team2.id) ? (scoresByTeam.get(team2.id) ?? 0) : fallbackScore(1),
         start_time: new Date(apiData.begin_at ?? apiData.scheduled_at).getTime() / 1000,
         end_time: apiData.end_at ? new Date(apiData.end_at).getTime() / 1000 : null,
         league: apiData.league?.name ?? "",
@@ -110,7 +123,6 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
   const [error, setError] = useState<string | null>(null);
   const [lang, setLang] = useState<string>(LANGS[0].code);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState<number>(0);
 
   const isPageVisible = usePageVisibility();
@@ -159,12 +171,29 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
   useEffect(() => { if (matchId) loadMatchData(); }, [matchId, loadMatchData]);
 
   useEffect(() => {
-    if (!match || !autoRefresh || !isPageVisible || !isOnline) return;
-    const isLive = match.start_time <= (Date.now() / 1000) && match.radiant_win === null;
-    if (!isLive) return;
-    const interval = setInterval(() => { if (isPageVisible && isOnline) loadMatchData(true); }, 30000);
-    return () => clearInterval(interval);
-  }, [match, autoRefresh, isPageVisible, isOnline, loadMatchData]);
+    if (!match || !isPageVisible || !isOnline) return;
+    const now = Date.now();
+    const matchStartMs = match.start_time * 1000;
+    const isLive = matchStartMs <= now && match.radiant_win === null;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    if (isLive) {
+      intervalId = setInterval(() => {
+        if (isPageVisible && isOnline) loadMatchData(true);
+      }, AUTO_REFRESH_INTERVAL_MS);
+    } else if (match.radiant_win === null) {
+      const delay = Math.max(0, Math.min(matchStartMs - now, AUTO_REFRESH_INTERVAL_MS));
+      timeoutId = setTimeout(() => {
+        if (isPageVisible && isOnline) loadMatchData(true);
+      }, delay);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [match, isPageVisible, isOnline, loadMatchData]);
 
   useEffect(() => {
     const savedLang = localStorage.getItem("match_lang");
