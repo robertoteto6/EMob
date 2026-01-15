@@ -104,91 +104,12 @@ self.addEventListener('fetch', (event) => {
         return response;
       }).catch(() => {
         // Fallback a cache o página offline
-        return caches.match(request).then(response => {
-          return response || caches.match('/');
+        // Service Worker desactivado (reservado para uso futuro)
+        self.addEventListener('install', (event) => {
+          event.waitUntil(self.skipWaiting());
         });
-      })
-    );
-    return;
-  }
 
+        self.addEventListener('activate', (event) => {
+          event.waitUntil(self.clients.claim());
+        });
   // Estrategia para otros recursos (Cache First)
-  event.respondWith(
-    caches.match(request).then(response => {
-      if (response) {
-        return response;
-      }
-      
-      return fetch(request).then(response => {
-        // Cachear recursos útiles
-        if (response.status === 200 && 
-            (request.destination === 'image' || 
-             request.destination === 'script' || 
-             request.destination === 'style')) {
-          caches.open(DYNAMIC_CACHE).then(cache => {
-            cache.put(request, response.clone());
-          });
-        }
-        return response;
-      });
-    })
-  );
-});
-
-// Limpiar cache periódicamente
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'CLEAR_CACHE') {
-    event.waitUntil(
-      Promise.all([
-        caches.delete(DYNAMIC_CACHE),
-        caches.delete(API_CACHE)
-      ]).then(() => {
-        event.ports[0].postMessage({ success: true });
-      })
-    );
-  }
-});
-
-// Notificaciones push (preparado para futuro)
-self.addEventListener('push', (event) => {
-  if (event.data) {
-    const data = event.data.json();
-    const options = {
-      body: data.body,
-      icon: '/icons/icon-192x192.png',
-      badge: '/icons/icon-96x96.png',
-      vibrate: [100, 50, 100],
-      data: {
-        dateOfArrival: Date.now(),
-        primaryKey: data.primaryKey
-      },
-      actions: [
-        {
-          action: 'explore',
-          title: 'Ver detalles',
-          icon: '/icons/explore.png'
-        },
-        {
-          action: 'close',
-          title: 'Cerrar',
-          icon: '/icons/close.png'
-        }
-      ]
-    };
-    
-    event.waitUntil(
-      self.registration.showNotification(data.title, options)
-    );
-  }
-});
-
-// Manejar clicks en notificaciones
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  
-  if (event.action === 'explore') {
-    event.waitUntil(
-      clients.openWindow('/esports')
-    );
-  }
-});

@@ -76,15 +76,6 @@ export const metadata: Metadata = {
     },
   },
   manifest: "/manifest.json",
-  icons: {
-    icon: [
-      { url: '/icons/icon-32x32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-    ],
-    apple: [
-      { url: '/icons/icon-180x180.png', sizes: '180x180', type: 'image/png' },
-    ],
-  },
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION || '',
     yandex: process.env.YANDEX_VERIFICATION || '',
@@ -126,34 +117,6 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        
-        {/* Service Worker Registration */}
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                  .then((registration) => {
-                    console.log('SW registered: ', registration);
-                  })
-                  .catch((registrationError) => {
-                    console.log('SW registration failed: ', registrationError);
-                  });
-              });
-            }
-          `
-        }} />
-        
-        {/* Analytics placeholder */}
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            // Google Analytics or other analytics code here
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            // gtag('config', 'GA_MEASUREMENT_ID');
-          `
-        }} />
       </head>
       
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`}>
@@ -178,29 +141,6 @@ export default function RootLayout({
               </AuthProvider>
             </UXProvider>
           </AccessibilityProvider>
-          
-          {/* Performance monitoring */}
-          <script dangerouslySetInnerHTML={{
-            __html: `
-              // Monitor Core Web Vitals
-              function sendToAnalytics(metric) {
-                // Send to your analytics service
-                console.log('Web Vital:', metric);
-              }
-              
-              // Monitor long tasks
-              if ('PerformanceObserver' in window) {
-                const observer = new PerformanceObserver((list) => {
-                  for (const entry of list.getEntries()) {
-                    if (entry.entryType === 'longtask') {
-                      console.warn('Long task detected:', entry.duration);
-                    }
-                  }
-                });
-                observer.observe({entryTypes: ['longtask']});
-              }
-            `
-          }} />
           <SpeedInsights />
           <Analytics />
         </ErrorBoundary>
