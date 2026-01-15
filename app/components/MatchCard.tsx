@@ -6,8 +6,9 @@ import Star from './Star';
 import TeamLogo from './TeamLogo';
 import MatchStatus from './MatchStatus';
 import Countdown from './Countdown';
+import type { GameInfo } from '../lib/types';
 
-// Interfaz para los detalles del partido. Idealmente, esto debería estar en un archivo de tipos compartido.
+// Interfaz para los detalles del partido.
 interface MatchDetail {
   id: number;
   name: string;
@@ -23,7 +24,7 @@ interface MatchDetail {
   serie: string;
   tournament: string;
   radiant_win: boolean | null;
-  games: any[]; // Simplificado para este componente
+  games: GameInfo[];
 }
 
 // Props para el componente MatchCard

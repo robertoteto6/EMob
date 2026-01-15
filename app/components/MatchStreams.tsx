@@ -1,14 +1,8 @@
 "use client";
 
 import { memo, useEffect, useMemo, useState } from 'react';
-import { LangFlag } from './LangFlag'; // Asegúrate de que la ruta sea correcta
-
-// Interfaz para la información de un stream
-interface StreamInfo {
-  embed_url: string | null;
-  raw_url: string;
-  language: string;
-}
+import { LangFlag } from './LangFlag';
+import type { StreamInfo } from '../lib/types';
 
 // Props para el componente MatchStreams
 interface MatchStreamsProps {

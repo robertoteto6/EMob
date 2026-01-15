@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { getTeamImageUrl } from "../lib/imageFallback";
 
 interface Team {
   id: number;
@@ -69,15 +70,13 @@ export default function TeamSearch({ game = "dota2" }: { game?: string }) {
                 onClick={() => select(t)}
                 className="flex items-center gap-2 w-full text-left p-2 hover:bg-[#1a1a1a]"
               >
-                {t.image_url && (
-                  <Image
-                    src={t.image_url}
-                    alt={`Logotipo de ${t.name}`}
-                    width={20}
-                    height={20}
-                    className="object-contain"
-                  />
-                )}
+                <Image
+                  src={getTeamImageUrl({ id: t.id, name: t.name, image_url: t.image_url })}
+                  alt={`Logotipo de ${t.name}`}
+                  width={20}
+                  height={20}
+                  className="object-contain"
+                />
                 <span>{t.name}</span>
               </button>
             </li>

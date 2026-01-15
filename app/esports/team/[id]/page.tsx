@@ -7,6 +7,7 @@ import Link from "next/link";
 import { TeamSkeleton, PlayerSkeleton } from "../../../components/Skeleton";
 import { useNotifications } from "../../../hooks/useNotifications";
 import { useDeferredClientRender } from "../../../hooks/useDeferredClientRender";
+import { getPlayerImageUrl, getTeamImageUrl } from "../../../lib/imageFallback";
 
 const NotificationSystem = nextDynamic(() => import("../../../components/NotificationSystem"), {
   ssr: false,
@@ -143,6 +144,7 @@ function TeamContent({ id }: { id: string }) {
   const [team, setTeam] = useState<TeamDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [logoError, setLogoError] = useState(false);
   const clientExtrasReady = useDeferredClientRender(400);
   const {
     notifications,
@@ -158,6 +160,7 @@ function TeamContent({ id }: { id: string }) {
         setLoading(true);
         const data = await fetchTeam(id);
         setTeam(data);
+        setLogoError(false);
         
         // Verificar si está en favoritos
         const favorites = JSON.parse(localStorage.getItem('favoriteTeams') || '[]');
@@ -284,6 +287,8 @@ function TeamContent({ id }: { id: string }) {
     );
   }
 
+  const teamLogoSrc = getTeamImageUrl(team);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
       <main className="pt-20 pb-20 px-4 sm:px-6 lg:px-8">
@@ -310,13 +315,14 @@ function TeamContent({ id }: { id: string }) {
           <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 hover:border-green-500/50 p-8 mb-8 transition-all duration-300 hover:shadow-2xl hover:shadow-green-500/10">
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
               <div className="relative group">
-                {team.image_url ? (
+                {!logoError ? (
                   <Image
-                    src={team.image_url}
+                    src={teamLogoSrc}
                     alt={team.name}
                     width={96}
                     height={96}
                     className="w-24 h-24 object-contain rounded-2xl bg-gray-800 p-2 border border-gray-600 group-hover:border-green-500/50 transition-all duration-300"
+                    onError={() => setLogoError(true)}
                   />
                 ) : (
                   <div className="w-24 h-24 bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl flex items-center justify-center border border-gray-600 group-hover:border-green-500/50 transition-all duration-300">
@@ -395,21 +401,13 @@ function TeamContent({ id }: { id: string }) {
                   >
                     <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 p-6 hover:border-green-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-green-500/10 transform hover:-translate-y-2 animate-[fadeIn_0.6s_ease-out_forwards] opacity-0">
                       <div className="flex items-center gap-4 mb-4">
-                        {player.image_url ? (
-                          <Image
-                            src={player.image_url}
-                            alt={player.name}
-                            width={48}
-                            height={48}
-                            className="w-12 h-12 object-cover rounded-full border-2 border-gray-600 group-hover:border-green-500/50 transition-all duration-300"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center border-2 border-gray-600 group-hover:border-green-500/50 transition-all duration-300">
-                            <span className="text-lg font-bold text-gray-400">
-                              {player.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
+                        <Image
+                          src={getPlayerImageUrl({ id: player.id, name: player.name, image_url: player.image_url })}
+                          alt={player.name}
+                          width={48}
+                          height={48}
+                          className="w-12 h-12 object-cover rounded-full border-2 border-gray-600 group-hover:border-green-500/50 transition-all duration-300"
+                        />
                         
                         <div className="flex-1">
                           <h3 className="font-bold text-white group-hover:text-green-400 transition-colors duration-300">

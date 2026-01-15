@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Search from "../../../components/Search";
+import { getTeamImageUrl } from "../../../lib/imageFallback";
 
 interface TournamentDetail {
   id: number;
@@ -117,15 +118,13 @@ export default function TournamentPage({ params }: { params: Promise<{ id: strin
           <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {teams.map((t) => (
               <li key={t.id} className="card p-2 flex items-center gap-2">
-                {t.image_url && (
-                  <Image
-                    src={t.image_url}
-                    alt={t.name}
-                    width={24}
-                    height={24}
-                    className="w-6 h-6 object-contain"
-                  />
-                )}
+                <Image
+                  src={getTeamImageUrl({ id: t.id, name: t.name, image_url: t.image_url })}
+                  alt={t.name}
+                  width={24}
+                  height={24}
+                  className="w-6 h-6 object-contain"
+                />
                 <span className="text-sm">{t.name}</span>
               </li>
             ))}

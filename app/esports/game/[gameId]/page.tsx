@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useNotifications } from "../../../hooks/useNotifications";
 import { useDeferredClientRender } from "../../../hooks/useDeferredClientRender";
+import { getPlayerImageUrl, getTeamImageUrl } from "../../../lib/imageFallback";
 
 const NotificationSystem = nextDynamic(() => import("../../../components/NotificationSystem"), {
   ssr: false,
@@ -225,25 +226,30 @@ function CompactTournament({ tournament }: { tournament: Tournament }) {
 
 // Componente de equipo compacto
 function CompactTeam({ team }: { team: Team }) {
+  const fallbackLogo = getTeamImageUrl({
+    id: team.id,
+    name: team.name,
+    acronym: team.acronym,
+    image_url: null,
+  });
+  const [logoSrc, setLogoSrc] = useState(team.image_url ?? fallbackLogo);
+
   return (
     <Link href={`/esports/team/${team.id}`}>
       <div className="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl p-4 border border-gray-700 hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02]">
         <div className="flex items-center gap-3 mb-3">
-          {team.image_url ? (
-            <Image
-              src={team.image_url}
-              alt={team.name}
-              width={40}
-              height={40}
-              className="w-10 h-10 rounded-lg object-cover bg-gray-600"
-            />
-          ) : (
-            <div className="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center">
-              <span className="text-sm font-bold text-gray-300">
-                {team.acronym || team.name.charAt(0)}
-              </span>
-            </div>
-          )}
+          <Image
+            src={logoSrc}
+            alt={team.name}
+            width={40}
+            height={40}
+            className="w-10 h-10 rounded-lg object-cover bg-gray-600"
+            onError={() => {
+              if (logoSrc !== fallbackLogo) {
+                setLogoSrc(fallbackLogo);
+              }
+            }}
+          />
           <div className="flex-1">
             <h4 className="font-bold text-white group-hover:text-purple-400 transition-colors duration-300 truncate">
               {team.name}
@@ -260,25 +266,31 @@ function CompactTeam({ team }: { team: Team }) {
 
 // Componente de jugador compacto
 function CompactPlayer({ player }: { player: Player }) {
+  const fallbackAvatar = getPlayerImageUrl({
+    id: player.id,
+    name: player.name,
+    image_url: null,
+  });
+  const [avatarSrc, setAvatarSrc] = useState(
+    getPlayerImageUrl({ id: player.id, name: player.name, image_url: player.image_url })
+  );
+
   return (
     <Link href={`/esports/player/${player.id}`}>
       <div className="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl p-4 border border-gray-700 hover:border-green-500/50 transition-all duration-300 hover:scale-[1.02]">
         <div className="flex items-center gap-3">
-          {player.image_url ? (
-            <Image
-              src={player.image_url}
-              alt={player.name}
-              width={40}
-              height={40}
-              className="w-10 h-10 rounded-full object-cover bg-gray-600"
-            />
-          ) : (
-            <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
-              <span className="text-sm font-bold text-gray-300">
-                {player.name.charAt(0)}
-              </span>
-            </div>
-          )}
+          <Image
+            src={avatarSrc}
+            alt={player.name}
+            width={40}
+            height={40}
+            className="w-10 h-10 rounded-full object-cover bg-gray-600"
+            onError={() => {
+              if (avatarSrc !== fallbackAvatar) {
+                setAvatarSrc(fallbackAvatar);
+              }
+            }}
+          />
           <div className="flex-1">
             <h4 className="font-bold text-white group-hover:text-green-400 transition-colors duration-300 truncate">
               {player.name}

@@ -16,7 +16,21 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const playerRes = await pandaScoreFetch(baseUrl, searchParamsApi, { cache: "no-store" });
     
     if (!playerRes.ok) {
-      return new NextResponse("Player not found", { status: 404 });
+      const fallbackName = nameParam || "Player";
+      const fallbackSvg = buildMonogramSvg({
+        name: fallbackName,
+        label: labelParam,
+        size: 128,
+        shape: "circle",
+        maxLen: 4,
+      });
+
+      return new NextResponse(fallbackSvg, {
+        headers: {
+          "Content-Type": "image/svg+xml",
+          "Cache-Control": "public, max-age=86400",
+        },
+      });
     }
     
     const playerData = await playerRes.json();

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { getTeamImageUrl } from "../lib/imageFallback";
 
 export interface TeamFollow {
   teamId: number;
@@ -75,7 +76,7 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
       game: currentGame,
       notifications: true,
       addedAt: Date.now(),
-      teamLogo: team.image_url
+      teamLogo: getTeamImageUrl({ id: team.id, name: team.name, image_url: team.image_url })
     };
 
     setFollowedTeams(prev => {
@@ -134,9 +135,13 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
           <div className="space-y-2">
             {currentGameTeams.slice(0, 3).map((team) => (
               <div key={`${team.teamId}-${team.game}`} className="flex items-center gap-2 text-sm">
-                {team.teamLogo && (
-                  <Image src={team.teamLogo} alt={team.teamName} width={16} height={16} className="w-4 h-4 rounded" />
-                )}
+                <Image
+                  src={team.teamLogo || getTeamImageUrl({ id: team.teamId, name: team.teamName, image_url: null })}
+                  alt={team.teamName}
+                  width={16}
+                  height={16}
+                  className="w-4 h-4 rounded"
+                />
                 <span className="text-white">{team.teamName}</span>
                 <button
                   onClick={() => toggleNotifications(team.teamId, team.game)}
@@ -215,9 +220,13 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                         disabled={isFollowed}
                         className={`w-full text-left p-2 flex items-center gap-2 hover:bg-[#222] border-b border-[#333] last:border-b-0 ${isFollowed ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
-                        {team.image_url && (
-                          <Image src={team.image_url} alt={team.name} width={24} height={24} className="w-6 h-6 rounded" />
-                        )}
+                        <Image
+                          src={getTeamImageUrl({ id: team.id, name: team.name, image_url: team.image_url })}
+                          alt={team.name}
+                          width={24}
+                          height={24}
+                          className="w-6 h-6 rounded"
+                        />
                         <span className="text-white">{team.name}</span>
                         {isFollowed && <span className="text-green-400 text-xs ml-auto">✓ Seguido</span>}
                       </button>

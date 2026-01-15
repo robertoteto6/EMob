@@ -9,6 +9,7 @@ import { TeamSkeleton } from "../components/Skeleton";
 import LiveScoreTicker from "../components/LiveScoreTicker";
 import { useNotifications } from "../hooks/useNotifications";
 import { useDeferredClientRender } from "../hooks/useDeferredClientRender";
+import { getTeamFallbackUrl, getTeamImageUrl } from "../lib/imageFallback";
 
 const NotificationSystem = nextDynamic(() => import("../components/NotificationSystem"), {
   ssr: false,
@@ -178,6 +179,8 @@ function TeamCard({ team, onToggleFavorite, favoriteTeams }: {
   favoriteTeams: number[];
 }) {
   const isFavorite = favoriteTeams.includes(team.id);
+  const fallbackLogo = getTeamFallbackUrl(team);
+  const [logoSrc, setLogoSrc] = useState(team.image_url ?? fallbackLogo);
   
   return (
     <Link href={`/esports/team/${team.id}`}>
@@ -205,25 +208,20 @@ function TeamCard({ team, onToggleFavorite, favoriteTeams }: {
             <div className="flex items-center gap-3">
               {/* Logo del equipo */}
               <div className="relative">
-                {team.image_url ? (
-                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
-                      <Image
-                        src={team.image_url}
-                        alt={team.name}
-                        width={48}
-                        height={48}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        onError={() => { /* next/image handles errors silently; fallback below will render if URL invalid at build-time */ }}
-                      />
-                    <div className="hidden w-full h-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
-                      {team.acronym || team.name.charAt(0)}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg group-hover:scale-110 transition-transform duration-300">
-                    {team.acronym || team.name.charAt(0)}
-                  </div>
-                )}
+                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
+                  <Image
+                    src={logoSrc}
+                    alt={team.name}
+                    width={48}
+                    height={48}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    onError={() => {
+                      if (logoSrc !== fallbackLogo) {
+                        setLogoSrc(fallbackLogo);
+                      }
+                    }}
+                  />
+                </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
               </div>
               
@@ -686,22 +684,15 @@ function TeamsPageContent() {
                         {/* Logo y nombre del equipo */}
                         <div className="text-center mb-4">
                           <div className="relative inline-block">
-                            {team.image_url ? (
-                              <Image
-                                src={team.image_url}
-                                alt={team.name}
-                                width={index === 0 ? 80 : 64}
-                                height={index === 0 ? 80 : 64}
-                                className={`${index === 0 ? 'w-20 h-20' : 'w-16 h-16'} rounded-full mx-auto mb-3 border-4 ${
-                                  index === 0 ? 'border-yellow-400' : index === 1 ? 'border-gray-300' : 'border-orange-600'
-                                } shadow-lg`}
-                              />
-                            ) : null}
-                            <div className={`${team.image_url ? 'hidden' : ''} ${index === 0 ? 'w-20 h-20' : 'w-16 h-16'} rounded-full mx-auto mb-3 bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold ${index === 0 ? 'text-3xl' : 'text-2xl'} border-4 ${
-                              index === 0 ? 'border-yellow-400' : index === 1 ? 'border-gray-300' : 'border-orange-600'
-                            } shadow-lg`}>
-                              {team.acronym || team.name.charAt(0)}
-                            </div>
+                            <Image
+                              src={getTeamImageUrl(team)}
+                              alt={team.name}
+                              width={index === 0 ? 80 : 64}
+                              height={index === 0 ? 80 : 64}
+                              className={`${index === 0 ? 'w-20 h-20' : 'w-16 h-16'} rounded-full mx-auto mb-3 border-4 ${
+                                index === 0 ? 'border-yellow-400' : index === 1 ? 'border-gray-300' : 'border-orange-600'
+                              } shadow-lg`}
+                            />
                           </div>
                           
                           <h4 className={`font-bold text-white mb-2 ${index === 0 ? 'text-xl' : 'text-lg'}`}>

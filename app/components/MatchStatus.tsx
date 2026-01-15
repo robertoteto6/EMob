@@ -2,15 +2,10 @@
 
 import { memo, useMemo } from 'react';
 import LiveBadge from './LiveBadge';
+import type { GameInfo } from '../lib/types';
 
-// Interfaces para los datos del partido, deberían moverse a un archivo de tipos compartido
-interface GameInfo {
-  status: string;
-  position: number;
-  begin_at: string | null;
-}
-
-interface MatchDetail {
+// Interfaz para el partido con los campos necesarios para mostrar el estado
+interface MatchForStatus {
   start_time: number;
   radiant_win: boolean | null;
   radiant: string;
@@ -20,7 +15,7 @@ interface MatchDetail {
 
 // Props para el componente MatchStatus
 interface MatchStatusProps {
-  match: MatchDetail;
+  match: MatchForStatus;
 }
 
 type StatusInfo =

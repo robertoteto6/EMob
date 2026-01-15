@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { debounce, apiCache } from "../lib/utils";
+import { getPlayerImageUrl, getTeamImageUrl } from "../lib/imageFallback";
 
 interface SearchItem {
   id: number;
@@ -400,19 +401,28 @@ export default function Search({
                         }
                       `}
                     >
-                      {item.image_url ? (
-                        <Image
-                          src={item.image_url}
-                          alt={item.name}
-                          width={32}
-                          height={32}
-                          className="w-8 h-8 object-contain rounded-lg bg-gray-800"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center text-sm">
-                          {getTypeIcon(item.type)}
-                        </div>
-                      )}
+                      {(() => {
+                        const imageSrc =
+                          item.type === "team"
+                            ? getTeamImageUrl({ id: item.id, name: item.name, image_url: item.image_url })
+                            : item.type === "player"
+                              ? getPlayerImageUrl({ id: item.id, name: item.name, image_url: item.image_url })
+                              : item.image_url;
+
+                        return imageSrc ? (
+                          <Image
+                            src={imageSrc}
+                            alt={item.name}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 object-contain rounded-lg bg-gray-800"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center text-sm">
+                            {getTypeIcon(item.type)}
+                          </div>
+                        );
+                      })()}
                       
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">

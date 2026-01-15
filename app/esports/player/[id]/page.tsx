@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getPlayerImageUrl, getTeamImageUrl } from "../../../lib/imageFallback";
 
 interface RegionInfo {
   name: string;
@@ -459,6 +460,16 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
     );
   }
 
+  const playerImageSrc = getPlayerImageUrl(player);
+  const teamLogoSrc = player.team_data
+    ? getTeamImageUrl({
+        id: player.team_data.id,
+        name: player.team_data.name,
+        acronym: player.team_data.acronym,
+        image_url: player.team_data.image_url,
+      })
+    : null;
+
   return (
     <>
       <main className="min-h-screen bg-gradient-to-br from-background via-background to-background text-foreground pt-20">
@@ -491,7 +502,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
                     <div className="absolute -inset-2 bg-gradient-to-r from-green-500 to-blue-500 rounded-full opacity-50 group-hover:opacity-75 transition-opacity blur-sm"></div>
                     <div className="relative w-32 h-32 lg:w-40 lg:h-40 rounded-full overflow-hidden border-4 border-gray-600 group-hover:border-green-400 transition-colors">
                       <Image
-                        src={player.image_url || `/api/esports/player/${player.id}/image`}
+                        src={playerImageSrc}
                         alt={player.name}
                         fill
                         sizes="(max-width: 1024px) 128px, 160px"
@@ -548,9 +559,9 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
                       </h3>
                       
                       <div className="flex items-center gap-4 mb-4">
-                        {player.team_data.image_url && (
+                        {teamLogoSrc && (
                           <Image
-                            src={player.team_data.image_url}
+                            src={teamLogoSrc}
                             alt={player.team_data.name}
                             width={64}
                             height={64}
