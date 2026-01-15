@@ -266,6 +266,10 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
 
         <MatchCard match={match} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} lang={lang} />
 
+        <div className="mb-10">
+          <MatchStreams streams={match.streams} />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
           {/* Left/Main Column: Games, Lineups, Predictions */}
           <div className="lg:col-span-2 space-y-8">
@@ -281,10 +285,10 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
             <PredictionSystem matchId={match.id} matchTitle={match.name} game="esports" radiantTeam={match.radiant} direTeam={match.dire} isFinished={match.radiant_win !== null} actualWinner={match.radiant_win === true ? 'radiant' : match.radiant_win === false ? 'dire' : null} startTime={match.start_time} />
           </div>
 
-          {/* Right Column: Streams */}
+          {/* Right Column: Information */}
           <div className="lg:col-span-1">
-            <div className="sticky top-6">
-              <MatchStreams streams={match.streams} />
+            <div className="p-6 rounded-2xl bg-gray-800/20 border border-gray-700/50 flex items-center justify-center text-gray-500 italic text-sm">
+              Información adicional del partido
             </div>
           </div>
         </div>

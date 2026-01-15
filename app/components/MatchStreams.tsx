@@ -74,20 +74,15 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
   if (!streams || streams.length === 0) return null;
 
   return (
-    <div className="mb-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-      <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-        <span className="w-1 h-6 bg-red-500 rounded-full"></span>
-        Transmisiones en Vivo
-      </h3>
-
-      <div className="flex flex-col lg:flex-row gap-6">
+    <div className="mb-0 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+      <div className="flex flex-col lg:flex-row gap-8">
         {/* Main Embed */}
         <div className="flex-1">
-          <div className="relative group rounded-2xl overflow-hidden bg-gray-900 border border-gray-700 shadow-2xl">
-            {/* Glow effect */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-red-500 to-pink-600 rounded-2xl opacity-20 group-hover:opacity-30 transition-opacity duration-500 blur-lg" />
+          <div className="relative group rounded-[2rem] overflow-hidden bg-gray-900 border border-gray-700/50 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)]">
+            {/* Ultra-premium Glow effect */}
+            <div className="absolute -inset-2 bg-gradient-to-r from-purple-600 via-[var(--accent,#00FF80)] to-blue-600 rounded-[2rem] opacity-[0.08] group-hover:opacity-[0.15] transition-opacity duration-1000 blur-3xl mx-4" />
 
-            <div className="relative aspect-video bg-black rounded-xl overflow-hidden z-10">
+            <div className="relative aspect-video bg-black rounded-[1.5rem] overflow-hidden z-10 m-2 border border-gray-800/80">
               {activeStream && embedSrc ? (
                 <iframe
                   src={embedSrc}
@@ -98,32 +93,56 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
                   title="Live Stream"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-500 flex-col gap-2">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect x="2" y="7" width="20" height="15" rx="2" ry="2" /><polyline points="17 2 12 7 7 2" /></svg>
-                  <span>Selecciona un stream para ver</span>
+                <div className="w-full h-full flex items-center justify-center text-gray-500 flex-col gap-6 bg-[radial-gradient(circle_at_center,_#111_0%,_#000_100%)]">
+                  <div className="p-5 rounded-full bg-gray-900/50 border border-gray-800 animate-pulse">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-gray-700"><rect x="2" y="7" width="20" height="15" rx="2" ry="2" /><polyline points="17 2 12 7 7 2" /></svg>
+                  </div>
+                  <span className="text-xs font-black tracking-[0.3em] uppercase text-gray-700">Selecciona un canal para visualizar</span>
                 </div>
               )}
             </div>
           </div>
           {activeStream && (
-            <div className="mt-3 flex items-center justify-between px-2">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                <span className="text-sm font-semibold text-gray-300">
-                  Viendo: <span className="text-white">{(activeStream.language || 'Stream').toUpperCase()}</span>
-                </span>
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-[var(--accent,#00FF80)]/10 border border-[var(--accent,#00FF80)]/30 backdrop-blur-sm">
+                  <div className="w-2 h-2 bg-[var(--accent,#00FF80)] rounded-full animate-pulse shadow-[0_0_12px_var(--accent,#00FF80)]" />
+                  <span className="text-[10px] font-black text-[var(--accent,#00FF80)] uppercase tracking-widest">
+                    {(activeStream.language || 'Global').toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-white tracking-tight">Transmisión en Directo</h2>
+                  <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-0.5">Gaming World Experience</p>
+                </div>
               </div>
-              <a href={activeStream.raw_url} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors">
-                Abrir externo <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
-              </a>
+
+              <div className="flex items-center gap-3">
+                <a
+                  href={activeStream.raw_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group/btn flex items-center gap-3 px-6 py-3 rounded-2xl bg-gray-800/50 hover:bg-gray-700 text-xs font-black text-gray-300 hover:text-white transition-all border border-gray-700/50 hover:border-gray-500 backdrop-blur-md shadow-lg active:scale-95"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover/btn:rotate-12 transition-transform"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+                  ABRIR EXTERNO
+                </a>
+              </div>
             </div>
           )}
         </div>
 
         {/* Stream Selector List */}
-        <div className="lg:w-80 flex flex-col gap-3">
-          <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1 px-1">Canales Disponibles</h4>
-          <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+        <div className="lg:w-80 flex flex-col gap-6">
+          <div className="flex items-center justify-between px-2">
+            <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.4em]">Multi-Canal</h4>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-ping" />
+              <span className="text-[9px] font-black text-red-500 uppercase tracking-widest">{streams.length} LIVE</span>
+            </div>
+          </div>
+
+          <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar lg:pb-10">
             {streams.map((stream, idx) => {
               const isActive = activeStream === stream;
               const isTwitch = isTwitchUrl(stream.raw_url);
@@ -131,28 +150,44 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
                 <button
                   key={idx}
                   onClick={() => setActiveStream(stream)}
-                  className={`w-full text-left group flex items-center gap-3 p-3 rounded-xl border transition-all duration-300 ${isActive
-                      ? 'bg-gradient-to-r from-gray-800 to-gray-700 border-[var(--accent,#00FF80)] shadow-lg shadow-[var(--accent,#00FF80)]/10'
-                      : 'bg-gray-800/40 border-gray-700/50 hover:bg-gray-700/60 hover:border-gray-600'
+                  className={`w-full text-left group flex items-center gap-4 p-5 rounded-[1.5rem] border transition-all duration-700 relative overflow-hidden ${isActive
+                      ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-[var(--accent,#00FF80)]/40 shadow-2xl'
+                      : 'bg-gray-900/30 border-gray-800/50 hover:bg-gray-800/40 hover:border-gray-700'
                     }`}
                 >
-                  <div className={`p-2 rounded-lg ${isActive ? 'bg-gray-900/50' : 'bg-gray-900/30'}`}>
+                  {isActive && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent,#00FF80)]/5 via-transparent to-transparent pointer-events-none" />
+                  )}
+
+                  <div className={`p-3 rounded-2xl transition-all duration-700 ${isActive ? 'bg-[var(--accent,#00FF80)]/15 scale-110 shadow-[0_0_20px_rgba(0,255,128,0.1)]' : 'bg-gray-800 group-hover:bg-gray-700'}`}>
                     <LangFlag code={stream.language} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-sm font-bold truncate ${isActive ? 'text-white' : 'text-gray-300 group-hover:text-gray-200'}`}>
-                        {(stream.language || 'Unknown').toUpperCase()}
-                      </span>
-                      {isActive && <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />}
+
+                  <div className="flex-1 min-w-0 z-10">
+                    <span className={`text-sm font-black block truncate transition-colors duration-500 tracking-tight ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-200'}`}>
+                      {(stream.language || 'Unknown').toUpperCase()}
+                    </span>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <div className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md border ${isActive ? 'text-[var(--accent,#00FF80)] border-[var(--accent,#00FF80)]/30 bg-[var(--accent,#00FF80)]/5' : 'text-gray-700 border-gray-800'}`}>
+                        {isTwitch ? 'TWITCH' : 'EXTERNAL'}
+                      </div>
+                      {isActive && (
+                        <div className="flex gap-1">
+                          <div className="w-1 h-3 bg-[var(--accent,#00FF80)]/40 rounded-full animate-pulse self-end" style={{ animationDelay: '0s' }} />
+                          <div className="w-1 h-5 bg-[var(--accent,#00FF80)]/60 rounded-full animate-pulse self-end" style={{ animationDelay: '0.2s', animationDuration: '0.7s' }} />
+                          <div className="w-1 h-2 bg-[var(--accent,#00FF80)]/30 rounded-full animate-pulse self-end" style={{ animationDelay: '0.4s' }} />
+                        </div>
+                      )}
                     </div>
-                    <p className="text-xs text-gray-500 truncate mt-0.5">
-                      {isTwitch ? 'Twitch' : 'External'}
-                    </p>
                   </div>
-                  {isActive && (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--accent,#00FF80)]"><polyline points="20 6 9 17 4 12" /></svg>
-                  )}
+
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center border transition-all duration-700 ${isActive ? 'bg-[var(--accent,#00FF80)] border-[var(--accent,#00FF80)]/50 shadow-[0_0_15px_rgba(0,255,128,0.3)]' : 'bg-gray-800 border-gray-700 opacity-0 group-hover:opacity-100'}`}>
+                    {isActive ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                    )}
+                  </div>
                 </button>
               )
             })}
