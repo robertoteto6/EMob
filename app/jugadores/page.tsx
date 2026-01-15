@@ -9,6 +9,7 @@ import { PlayerSkeleton } from "../components/Skeleton";
 import LiveScoreTicker from "../components/LiveScoreTicker";
 import { useNotifications } from "../hooks/useNotifications";
 import { useDeferredClientRender } from "../hooks/useDeferredClientRender";
+import { getPlayerFallbackUrl, getPlayerImageUrl } from "../lib/imageFallback";
 import "./animations.css";
 
 const NotificationSystem = nextDynamic(() => import("../components/NotificationSystem"), {
@@ -102,24 +103,8 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
   favoritePlayers: number[];
 }) {
   const isFavorite = favoritePlayers.includes(player.id);
-  const [imgSrc, setImgSrc] = useState<string>(() => {
-    // initialize with best guess; can be updated onError
-    if (player.image_url) return player.image_url;
-    if (player.current_team_image) return player.current_team_image;
-    return `/api/esports/player/${player.id}/image`;
-  });
-  
-  // Función para obtener la imagen del jugador con fallbacks mejorados
-  const getPlayerImage = () => {
-    if (player.image_url) {
-      return player.image_url;
-    }
-    if (player.current_team_image) {
-      return player.current_team_image;
-    }
-    // Usar nuestra API personalizada como fallback
-    return `/api/esports/player/${player.id}/image`;
-  };
+  const fallbackSrc = getPlayerFallbackUrl(player.id, player.name);
+  const [imgSrc, setImgSrc] = useState<string>(() => getPlayerImageUrl(player));
 
   // Función para obtener el indicador de nivel de títulos
   const getTitleLevel = () => {
@@ -141,8 +126,6 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
   };
 
   const titleInfo = getTitleLevel();
-  const playerImage = getPlayerImage();
-  
   return (
     <Link href={`/jugadores/${player.id}`}>
       <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 hover:border-green-500/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl">
@@ -169,8 +152,8 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
                     height={80}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     onError={() => {
-                      if (!imgSrc.includes('/api/esports/player/')) {
-                        setImgSrc(`/api/esports/player/${player.id}/image`);
+                      if (imgSrc !== fallbackSrc) {
+                        setImgSrc(fallbackSrc);
                       }
                     }}
                   />

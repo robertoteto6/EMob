@@ -238,123 +238,116 @@ async function fetchAllTournaments(): Promise<Tournament[]> {
   return allTournaments;
 }
 
-// Componente de estadísticas del juego (memoizado)
+// Componente de estadísticas del juego (memoizado) - Diseño Premium
 const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameConfig, stats: GameStats }) {
   return (
-    <Link href={`/esports/game/${game.id}`} className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${game.gradient} p-8 text-white shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 border border-white/10 cursor-pointer block`}>
-      {/* Patrón de fondo */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat"></div>
-      </div>
-      
-      {/* Icono flotante */}
-      <div className="absolute top-4 right-4 opacity-20 group-hover:opacity-30 transition-opacity duration-500" aria-hidden="true">
-  <Image src={game.icon} alt="" width={64} height={64} className="w-16 h-16 group-hover:scale-110 transition-transform duration-500" />
-      </div>
-      
-      {/* Indicador de click */}
-      <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-        <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1">
-          <span>👆</span>
-          <span>Explorar</span>
-        </div>
-      </div>
-      
-      {/* Efecto de brillo */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-      
-      <div className="relative z-10">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="relative">
-            <Image src={game.icon} alt={`Icono de ${game.name}`} width={32} height={32} className="w-8 h-8 group-hover:scale-110 transition-transform duration-300" />
-            <div className="absolute inset-0 bg-white/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true"></div>
+    <Link href={`/esports/game/${game.id}`} className="group block h-full">
+      <div className={`relative h-full overflow-hidden rounded-2xl bg-gradient-to-br ${game.gradient} p-1 shadow-xl transition-all duration-500 hover:scale-[1.03] hover:shadow-2xl`}>
+        {/* Marco con gradiente */}
+        <div className="relative h-full overflow-hidden rounded-xl bg-black/80 backdrop-blur-sm">
+          {/* Patrón de fondo sutil */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0" style={{
+              backgroundImage: `radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)`,
+              backgroundSize: '24px 24px'
+            }} />
           </div>
-          <div>
-            <h3 className="text-xl font-bold group-hover:text-white transition-colors duration-300">
-              {game.name}
-            </h3>
-            <p className="text-sm opacity-75">Estadísticas Live</p>
+          
+          {/* Efecto de brillo en hover */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" aria-hidden="true" />
+          
+          {/* Icono flotante decorativo */}
+          <div className="absolute top-3 right-3 opacity-10 group-hover:opacity-20 transition-opacity duration-500" aria-hidden="true">
+            <Image src={game.icon} alt="" width={64} height={64} className="w-14 h-14 group-hover:scale-110 transition-transform duration-500" />
           </div>
-        </div>
-        
-        {/* Estadísticas */}
-        <div className="grid grid-cols-2 gap-6">
-          <Tooltip
-            content={`Total de partidas registradas para ${game.name} en EMob.`}
-            className="block h-full"
-          >
-            <div className="bg-black/20 rounded-xl p-4 group-hover:bg-black/30 transition-colors duration-300">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-white rounded-full opacity-75"></div>
-                <p className="text-sm font-medium opacity-90">Total</p>
-              </div>
-              <p className="text-3xl font-bold group-hover:scale-105 transition-transform duration-300">
-                {stats.totalMatches}
-              </p>
-            </div>
-          </Tooltip>
           
-          <Tooltip
-            content={`Partidas de ${game.name} que están en curso en este momento.`}
-            className="block h-full"
-          >
-            <div className="bg-black/20 rounded-xl p-4 group-hover:bg-black/30 transition-colors duration-300">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
-                <p className="text-sm font-medium opacity-90">En Vivo</p>
-              </div>
-              <p className="text-3xl font-bold text-red-300 group-hover:scale-105 transition-transform duration-300">
-                {stats.liveMatches}
-              </p>
+          {/* Badge "Explorar" en hover */}
+          <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-y-2 group-hover:translate-y-0">
+            <div className="bg-white/20 backdrop-blur-sm rounded-full px-2.5 py-1 text-[10px] font-bold flex items-center gap-1.5 text-white/90">
+              <span>👆</span>
+              <span>Explorar</span>
             </div>
-          </Tooltip>
+          </div>
           
-          <Tooltip
-            content={`Enfrentamientos programados de ${game.name} que aún no comienzan.`}
-            className="block h-full"
-          >
-            <div className="bg-black/20 rounded-xl p-4 group-hover:bg-black/30 transition-colors duration-300">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                <p className="text-sm font-medium opacity-90">Próximos</p>
+          <div className="relative z-10 p-5 h-full flex flex-col">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-5">
+              <div className="relative">
+                <div className="absolute -inset-1 bg-white/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
+                <Image src={game.icon} alt={`Icono de ${game.name}`} width={36} height={36} className="relative w-9 h-9 group-hover:scale-110 transition-transform duration-300" />
               </div>
-              <p className="text-3xl font-bold text-blue-300 group-hover:scale-105 transition-transform duration-300">
-                {stats.upcomingMatches}
-              </p>
-            </div>
-          </Tooltip>
-          
-          <Tooltip
-            content={`Torneos activos o en curso asociados a ${game.name}.`}
-            className="block h-full"
-          >
-            <div className="bg-black/20 rounded-xl p-4 group-hover:bg-black/30 transition-colors duration-300">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                <p className="text-sm font-medium opacity-90">Torneos</p>
+              <div>
+                <h3 className="text-base font-bold text-white group-hover:text-white transition-colors duration-300 leading-tight">
+                  {game.name}
+                </h3>
+                <p className="text-[10px] font-medium text-white/50 uppercase tracking-wider">Live Stats</p>
               </div>
-              <p className="text-3xl font-bold text-yellow-300 group-hover:scale-105 transition-transform duration-300">
-                {stats.activeTournaments}
-              </p>
             </div>
-          </Tooltip>
-        </div>
+            
+            {/* Estadísticas en grid 2x2 */}
+            <div className="grid grid-cols-2 gap-2.5 flex-1">
+              <Tooltip content={`Total de partidas registradas para ${game.name}`} className="block">
+                <div className="bg-white/5 rounded-xl p-3 group-hover:bg-white/10 transition-colors duration-300 border border-white/5 group-hover:border-white/10">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className="w-1.5 h-1.5 bg-white/60 rounded-full" />
+                    <p className="text-[10px] font-semibold text-white/60 uppercase tracking-wide">Total</p>
+                  </div>
+                  <p className="text-2xl font-black text-white tabular-nums">
+                    {stats.totalMatches}
+                  </p>
+                </div>
+              </Tooltip>
+              
+              <Tooltip content={`Partidas en curso de ${game.name}`} className="block">
+                <div className="bg-red-500/10 rounded-xl p-3 group-hover:bg-red-500/20 transition-colors duration-300 border border-red-500/20 group-hover:border-red-500/30">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse" />
+                    <p className="text-[10px] font-semibold text-red-300/80 uppercase tracking-wide">En Vivo</p>
+                  </div>
+                  <p className="text-2xl font-black text-red-300 tabular-nums">
+                    {stats.liveMatches}
+                  </p>
+                </div>
+              </Tooltip>
+              
+              <Tooltip content={`Partidas programadas de ${game.name}`} className="block">
+                <div className="bg-blue-500/10 rounded-xl p-3 group-hover:bg-blue-500/20 transition-colors duration-300 border border-blue-500/20 group-hover:border-blue-500/30">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
+                    <p className="text-[10px] font-semibold text-blue-300/80 uppercase tracking-wide">Próximos</p>
+                  </div>
+                  <p className="text-2xl font-black text-blue-300 tabular-nums">
+                    {stats.upcomingMatches}
+                  </p>
+                </div>
+              </Tooltip>
+              
+              <Tooltip content={`Torneos activos de ${game.name}`} className="block">
+                <div className="bg-yellow-500/10 rounded-xl p-3 group-hover:bg-yellow-500/20 transition-colors duration-300 border border-yellow-500/20 group-hover:border-yellow-500/30">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full" />
+                    <p className="text-[10px] font-semibold text-yellow-300/80 uppercase tracking-wide">Torneos</p>
+                  </div>
+                  <p className="text-2xl font-black text-yellow-300 tabular-nums">
+                    {stats.activeTournaments}
+                  </p>
+                </div>
+              </Tooltip>
+            </div>
 
-        {/* Footer con indicador de actividad */}
-        <div className="mt-6 pt-4 border-t border-white/20">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-75">Última actualización</span>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-xs font-medium">Ahora</span>
+            {/* Footer con indicador de actualización */}
+            <div className="mt-4 pt-3 border-t border-white/10">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-medium text-white/40 uppercase tracking-wide">Actualizado</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                  <span className="text-[10px] font-semibold text-emerald-400">Ahora</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Efecto de hover en el borde */}
-      <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/30 transition-colors duration-500"></div>
     </Link>
   );
 });
@@ -859,137 +852,227 @@ const Home = memo(function Home() {
       <LiveScoreTicker currentGame="all" />
       
       <main className="min-h-screen pt-20">
-        {/* Hero Section */}
-        <section className="relative overflow-hidden py-24">
-          <div className="absolute inset-0 -z-20 bg-gradient-to-br from-slate-950 via-black to-slate-900" aria-hidden="true" />
-          <div className="absolute inset-0 -z-10 bg-[url('/pattern.svg')] opacity-10" aria-hidden="true" />
-          <div className="absolute -left-1/3 top-24 -z-10 h-80 w-80 rounded-full bg-emerald-500/25 blur-3xl" aria-hidden="true" />
-          <div className="absolute -right-1/4 bottom-10 -z-10 h-72 w-72 rounded-full bg-sky-500/20 blur-3xl" aria-hidden="true" />
+        {/* Hero Section - Diseño Premium */}
+        <section className="relative overflow-hidden py-20 lg:py-28">
+          {/* Fondos decorativos mejorados */}
+          <div className="absolute inset-0 -z-20 bg-gradient-to-br from-slate-950 via-[#0a0f1a] to-slate-900" aria-hidden="true" />
+          
+          {/* Patrón de grid sutil */}
+          <div className="absolute inset-0 -z-15 opacity-20" aria-hidden="true">
+            <div className="absolute inset-0" style={{
+              backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,255,128,0.15) 1px, transparent 0)`,
+              backgroundSize: '40px 40px'
+            }} />
+          </div>
+          
+          {/* Orbes de luz animados */}
+          <div className="absolute -left-40 top-10 -z-10 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-emerald-500/30 to-emerald-500/0 blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} aria-hidden="true" />
+          <div className="absolute -right-40 top-40 -z-10 h-[400px] w-[400px] rounded-full bg-gradient-to-bl from-blue-500/25 to-blue-500/0 blur-[80px] animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }} aria-hidden="true" />
+          <div className="absolute left-1/3 bottom-0 -z-10 h-[300px] w-[300px] rounded-full bg-gradient-to-t from-purple-500/20 to-purple-500/0 blur-[60px] animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} aria-hidden="true" />
 
-          <div className="container relative z-10 mx-auto px-6">
+          <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
             <div className="relative">
-              <div className="grid grid-cols-1 gap-14 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-                <div className="flex flex-col gap-8">
-                  <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
-                    Temporada 2025
+              <div className="grid grid-cols-1 gap-12 lg:gap-16 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] items-center">
+                {/* Contenido principal */}
+                <div className="flex flex-col gap-6 lg:gap-8">
+                  {/* Badge de temporada */}
+                  <div className="inline-flex w-fit items-center gap-3 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 backdrop-blur-sm">
+                    <span className="flex h-2 w-2">
+                      <span className="absolute inline-flex h-2 w-2 rounded-full bg-emerald-400 opacity-75 animate-ping"></span>
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                    </span>
+                    <span className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">
+                      Temporada 2025 · En directo
+                    </span>
                   </div>
-                  <h1 className="text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">
-                    Toda la escena esports en un solo panel en vivo
+                  
+                  {/* Título principal */}
+                  <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black leading-[1.1] tracking-tight">
+                    <span className="text-white">Toda la escena</span>
+                    <br />
+                    <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                      esports
+                    </span>
+                    <span className="text-white"> en </span>
+                    <span className="relative inline-block">
+                      <span className="relative z-10 text-white">vivo</span>
+                      <span className="absolute -inset-1 -z-10 rounded-lg bg-gradient-to-r from-emerald-500/30 to-blue-500/30 blur-sm" aria-hidden="true"></span>
+                    </span>
                   </h1>
-                  <p className="max-w-xl text-base text-white/70 sm:text-lg">
-                    Monitoriza resultados, mira horarios y recibe alertas en tiempo real de tus ligas favoritas de Dota 2, League of Legends, CS2 y más.
+                  
+                  {/* Descripción */}
+                  <p className="max-w-xl text-base sm:text-lg text-white/70 leading-relaxed">
+                    Monitoriza resultados en tiempo real, consulta horarios de las mejores ligas y recibe alertas instantáneas de 
+                    <span className="text-emerald-400 font-semibold"> Dota 2</span>, 
+                    <span className="text-blue-400 font-semibold"> League of Legends</span>, 
+                    <span className="text-orange-400 font-semibold"> CS2</span> y más.
                   </p>
-                  <div className="flex flex-col gap-3 sm:flex-row">
+                  
+                  {/* Botones de acción */}
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                     <Link
                       href="/esports"
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/40 transition-all duration-300 hover:scale-[1.02]"
+                      className="group relative inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-8 py-4 text-base font-bold text-white shadow-2xl shadow-emerald-500/30 transition-all duration-300 hover:shadow-emerald-500/50 hover:scale-[1.02] overflow-hidden"
                     >
-                      Explorar partidos
-                      <span aria-hidden="true">→</span>
+                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" aria-hidden="true" />
+                      <span className="relative z-10 flex items-center gap-2">
+                        <span>🎮</span>
+                        Explorar partidos
+                        <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </span>
                     </Link>
+                    
                     <Link
                       href="#torneos"
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-7 py-3 text-sm font-semibold text-white/80 transition-all duration-300 hover:border-emerald-400/60 hover:bg-white/10 hover:text-white"
+                      className="group inline-flex items-center justify-center gap-3 rounded-2xl border-2 border-white/15 bg-white/5 px-8 py-4 text-base font-bold text-white/90 backdrop-blur-sm transition-all duration-300 hover:border-emerald-400/50 hover:bg-white/10 hover:text-white"
                     >
+                      <span>🏆</span>
                       Ver torneos activos
-                      <span aria-hidden="true">⚡</span>
+                      <span className="text-emerald-400 transition-transform duration-300 group-hover:translate-x-1">→</span>
                     </Link>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    {heroHighlights.map((metric) => (
+                  {/* Métricas destacadas */}
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mt-4">
+                    {heroHighlights.map((metric, index) => (
                       <div
                         key={metric.label}
-                        className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 p-5 shadow-inner shadow-black/20"
+                        className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.02] p-5 backdrop-blur-sm transition-all duration-300 hover:border-emerald-500/30 hover:bg-white/[0.1]"
+                        style={{ animationDelay: `${index * 100}ms` }}
                       >
-                        <span className="text-xs font-semibold uppercase tracking-[0.28em] text-white/50">
+                        {/* Acento decorativo */}
+                        <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-emerald-500/50 via-transparent to-blue-500/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
+                        
+                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">
                           {metric.label}
                         </span>
-                        <p className="mt-3 text-3xl font-bold text-white">
+                        <p className="mt-2 text-3xl sm:text-4xl font-black text-white tabular-nums">
                           {numberFormatter.format(Math.max(metric.value, 0))}
                         </p>
-                        <p className="mt-1 text-xs text-white/60">{metric.helper}</p>
-                        <div className="absolute inset-x-4 bottom-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" aria-hidden="true" />
+                        <p className="mt-1 text-xs text-white/50">{metric.helper}</p>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex flex-wrap gap-3 text-sm text-white/70">
-                    {["Alertas en vivo", "Cobertura multijuego", "Estadísticas avanzadas"].map((feature) => (
+                  {/* Features badges */}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {[
+                      { icon: "⚡", text: "Alertas en vivo", color: "emerald" },
+                      { icon: "🎯", text: "Cobertura multijuego", color: "blue" },
+                      { icon: "📊", text: "Estadísticas avanzadas", color: "purple" }
+                    ].map((feature, index) => (
                       <span
-                        key={feature}
-                        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2"
+                        key={feature.text}
+                        className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all duration-300 hover:scale-105 ${
+                          feature.color === 'emerald' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' :
+                          feature.color === 'blue' ? 'border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20' :
+                          'border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20'
+                        }`}
+                        style={{ animationDelay: `${index * 50}ms` }}
                       >
-                        <span aria-hidden="true">✔</span>
-                        {feature}
+                        <span>{feature.icon}</span>
+                        {feature.text}
                       </span>
                     ))}
                   </div>
                 </div>
 
-                <div className="relative">
-                  <div className="absolute -right-10 top-10 h-48 w-48 rounded-full bg-emerald-500/30 blur-3xl" aria-hidden="true" />
-                  <div className="absolute -left-16 bottom-0 h-52 w-52 rounded-full bg-blue-500/20 blur-3xl" aria-hidden="true" />
-                  <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/60 backdrop-blur-2xl shadow-[0_25px_80px_-35px_rgba(16,185,129,0.6)]">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/5" aria-hidden="true" />
-                    <div className="relative flex flex-col gap-7 p-8 sm:p-10">
+                {/* Tarjeta de partido destacado */}
+                <div className="relative lg:mt-0">
+                  {/* Glows decorativos */}
+                  <div className="absolute -right-20 top-0 h-60 w-60 rounded-full bg-emerald-500/20 blur-[80px]" aria-hidden="true" />
+                  <div className="absolute -left-20 bottom-10 h-48 w-48 rounded-full bg-blue-500/15 blur-[60px]" aria-hidden="true" />
+                  
+                  {/* Tarjeta principal */}
+                  <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-black/80 via-black/60 to-black/80 backdrop-blur-2xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.05)]">
+                    {/* Borde superior brillante */}
+                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" aria-hidden="true" />
+                    
+                    {/* Efecto de reflejo */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.08] via-transparent to-transparent" aria-hidden="true" />
+                    
+                    <div className="relative flex flex-col gap-6 p-6 sm:p-8">
+                      {/* Header de la tarjeta */}
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/50">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">
                             Partido destacado
                           </p>
-                          <h3 className="mt-3 text-2xl font-semibold text-white">
+                          <h3 className="mt-2 text-xl sm:text-2xl font-bold text-white leading-tight">
                             {heroFeaturedMatch ? (
                               <>
-                                {heroFeaturedMatch.radiant} <span className="text-emerald-400">vs</span> {heroFeaturedMatch.dire}
+                                {heroFeaturedMatch.radiant}
+                                <span className="mx-2 text-emerald-400">vs</span>
+                                {heroFeaturedMatch.dire}
                               </>
                             ) : (
                               "Personaliza tu feed"
                             )}
                           </h3>
-                          <p className="mt-2 text-sm text-white/60">
-                            {heroFeaturedMatch ? heroFeaturedMatch.league || "" : "Sigue tus juegos favoritos y detecta el proximo hit."}
+                          <p className="mt-1 text-sm text-white/50">
+                            {heroFeaturedMatch ? heroFeaturedMatch.league || "Liga profesional" : "Sigue tus juegos favoritos"}
                           </p>
                         </div>
+                        
+                        {/* Badge de estado */}
                         {heroFeaturedMatch ? (
                           heroMatchIsLive ? (
                             <LiveBadge className="scale-90" />
                           ) : heroMatchIsUpcoming ? (
-                            <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-200">Próximo</span>
+                            <span className="inline-flex items-center gap-2 rounded-full bg-blue-500/15 border border-blue-500/30 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-blue-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                              Próximo
+                            </span>
                           ) : heroMatchIsFinished ? (
-                            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/70">Finalizado</span>
+                            <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white/60">Finalizado</span>
                           ) : null
                         ) : (
-                          <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/70">Explora juegos</span>
+                          <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white/60">Explorar</span>
                         )}
                       </div>
 
                       {heroFeaturedMatch ? (
                         <>
-                          <div className="rounded-2xl border border-white/10 bg-black/40 p-6">
-                            <div className="grid grid-cols-2 items-center gap-6 text-center text-white">
-                              <div className="space-y-2">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-white/50">{heroFeaturedMatch.radiant}</p>
-                                <p className={`text-4xl font-black ${heroRadiantWinner ? "text-emerald-400" : "text-white"}`}>
-                                  {typeof heroFeaturedMatch.radiant_score === "number" ? heroFeaturedMatch.radiant_score : "--"}
+                          {/* Marcador */}
+                          <div className="rounded-2xl border border-white/10 bg-black/40 p-5">
+                            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+                              {/* Equipo 1 */}
+                              <div className="text-center space-y-2">
+                                <p className="text-xs font-bold uppercase tracking-wide text-white/40 truncate">{heroFeaturedMatch.radiant}</p>
+                                <p className={`text-4xl sm:text-5xl font-black tabular-nums ${heroRadiantWinner ? "text-emerald-400" : "text-white"}`}>
+                                  {typeof heroFeaturedMatch.radiant_score === "number" ? heroFeaturedMatch.radiant_score : "—"}
                                 </p>
                               </div>
-                              <div className="space-y-2">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-white/50">{heroFeaturedMatch.dire}</p>
-                                <p className={`text-4xl font-black ${heroDireWinner ? "text-emerald-400" : "text-white"}`}>
-                                  {typeof heroFeaturedMatch.dire_score === "number" ? heroFeaturedMatch.dire_score : "--"}
+                              
+                              {/* VS */}
+                              <div className="flex flex-col items-center gap-2">
+                                <span className="text-lg font-bold text-white/30">VS</span>
+                                <div className="w-px h-8 bg-gradient-to-b from-transparent via-white/20 to-transparent" aria-hidden="true" />
+                              </div>
+                              
+                              {/* Equipo 2 */}
+                              <div className="text-center space-y-2">
+                                <p className="text-xs font-bold uppercase tracking-wide text-white/40 truncate">{heroFeaturedMatch.dire}</p>
+                                <p className={`text-4xl sm:text-5xl font-black tabular-nums ${heroDireWinner ? "text-emerald-400" : "text-white"}`}>
+                                  {typeof heroFeaturedMatch.dire_score === "number" ? heroFeaturedMatch.dire_score : "—"}
                                 </p>
                               </div>
                             </div>
-                            <div className="mt-6 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-white/50">
-                              <span>
+                            
+                            {/* Info de fecha/hora */}
+                            <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-white/40">
+                              <span className="flex items-center gap-2">
+                                <span>📅</span>
                                 {heroMatchDate?.toLocaleDateString("es-ES", {
                                   weekday: "short",
                                   day: "numeric",
                                   month: "short",
                                 })}
                               </span>
-                              <span>
+                              <span className="flex items-center gap-2">
+                                <span>🕐</span>
                                 {heroMatchDate?.toLocaleTimeString("es-ES", {
                                   hour: "2-digit",
                                   minute: "2-digit",
@@ -998,31 +1081,33 @@ const Home = memo(function Home() {
                             </div>
                           </div>
 
+                          {/* Botón de acción */}
                           <Link
                             href={`/esports/${heroFeaturedMatch.id}`}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition-all duration-300 hover:border-emerald-400/60 hover:bg-white/10"
+                            className="group inline-flex items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-bold text-white transition-all duration-300 hover:border-emerald-500/40 hover:bg-emerald-500/10"
                           >
-                            Ir al partido
-                            <span aria-hidden="true">→</span>
+                            <span>Ver detalles del partido</span>
+                            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
                           </Link>
                         </>
                       ) : (
-                        <div className="space-y-4 text-white/70">
-                          <p>
+                        /* Estado vacío */
+                        <div className="space-y-4 text-white/60">
+                          <p className="text-sm leading-relaxed">
                             Configura notificaciones y selecciona tus títulos favoritos para recibir recomendaciones personalizadas.
                           </p>
                           <div className="flex flex-col gap-3 sm:flex-row">
                             <Link
                               href="/equipos"
-                              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all duration-300 hover:scale-[1.02]"
+                              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/30 transition-all duration-300 hover:scale-[1.02]"
                             >
-                              Descubrir equipos
+                              👥 Descubrir equipos
                             </Link>
                             <Link
                               href="/esports"
-                              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white/80 transition-all duration-300 hover:border-emerald-400/60 hover:bg-white/10 hover:text-white"
+                              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white/80 transition-all duration-300 hover:border-emerald-400/50 hover:bg-white/10 hover:text-white"
                             >
-                              Ver calendario
+                              📅 Ver calendario
                             </Link>
                           </div>
                         </div>
@@ -1042,27 +1127,42 @@ const Home = memo(function Home() {
           </div>
         </section>
 
-        {/* Estadísticas por Juego */}
-        <section className="relative py-16">
-          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-white/5 to-transparent" aria-hidden="true" />
-          <div className="container mx-auto px-6">
-            <div className="mx-auto mb-12 max-w-3xl text-center">
-              <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/70">
-                Métricas en directo
-              </p>
-              <h2 className="mt-4 text-3xl font-bold text-white sm:text-4xl">
-                📊 Estadísticas en tiempo real por juego
+        {/* Estadísticas por Juego - Diseño Premium */}
+        <section className="relative py-20 overflow-hidden">
+          {/* Fondo decorativo */}
+          <div className="absolute inset-0 -z-10">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-emerald-500/10 rounded-full blur-[120px]" aria-hidden="true" />
+          </div>
+          
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Header de sección mejorado */}
+            <div className="mx-auto mb-14 max-w-3xl text-center">
+              <div className="inline-flex items-center gap-3 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-5 py-2 mb-6">
+                <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">
+                  Métricas en directo
+                </span>
+              </div>
+              
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight">
+                Estadísticas en{" "}
+                <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                  tiempo real
+                </span>
               </h2>
-              <p className="mt-3 text-base text-white/60">
-                Identifica qué escena está más activa ahora mismo y descubre oportunidades de seguir nuevas ligas.
+              <p className="mt-4 text-base sm:text-lg text-white/60 max-w-2xl mx-auto">
+                Descubre qué escena está más activa ahora mismo y encuentra nuevas ligas para seguir
               </p>
             </div>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
+            
+            {/* Grid de juegos */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 lg:gap-6">
               {GAMES.map((game, index) => (
                 <div
                   key={game.id}
                   className="animate-fadein"
-                  style={{ animationDelay: `${index * 0.1}s` }}
+                  style={{ animationDelay: `${index * 80}ms` }}
                 >
                   <GameStatsCard
                     game={game}
@@ -1562,16 +1662,74 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
           </div>
         </section>
 
-        {/* Call to Action */}
-        <section className="container mx-auto px-6 py-20 text-center">
-          <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-2xl p-12 border border-green-500/30">
-            <h2 className="text-4xl font-bold mb-6">¿Listo para sumergirte en el mundo de los esports?</h2>
-            <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              Únete a miles de usuarios que ya siguen sus equipos favoritos y nunca se pierden un partido importante.
-            </p>
-            <Link href="/esports" className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-12 py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 shadow-lg">
-              Comenzar Ahora
-            </Link>
+        {/* Call to Action - Diseño Premium */}
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          <div className="relative overflow-hidden rounded-3xl">
+            {/* Fondo con gradiente y efectos */}
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-blue-500/15 to-purple-500/20" aria-hidden="true" />
+            <div className="absolute inset-0 backdrop-blur-3xl" aria-hidden="true" />
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/30 rounded-full blur-[100px]" aria-hidden="true" />
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/30 rounded-full blur-[100px]" aria-hidden="true" />
+            
+            {/* Borde decorativo */}
+            <div className="absolute inset-0 rounded-3xl border border-white/10" aria-hidden="true" />
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" aria-hidden="true" />
+            
+            <div className="relative text-center px-6 py-16 sm:py-20 lg:py-24">
+              {/* Badge */}
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-6">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                Únete ahora
+              </span>
+              
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-6 max-w-3xl mx-auto leading-tight">
+                ¿Listo para sumergirte en el{" "}
+                <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                  mundo esports
+                </span>
+                ?
+              </h2>
+              
+              <p className="text-lg sm:text-xl text-white/60 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Únete a miles de usuarios que ya siguen sus equipos favoritos y nunca se pierden un partido importante.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link 
+                  href="/esports" 
+                  className="group relative inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-10 py-4 text-lg font-bold text-white shadow-2xl shadow-emerald-500/30 transition-all duration-300 hover:shadow-emerald-500/50 hover:scale-[1.02] overflow-hidden"
+                >
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" aria-hidden="true" />
+                  <span className="relative z-10 flex items-center gap-2">
+                    🚀 Comenzar Ahora
+                    <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </span>
+                </Link>
+                
+                <Link 
+                  href="/equipos"
+                  className="group inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-white/15 bg-white/5 px-8 py-4 text-lg font-bold text-white/90 backdrop-blur-sm transition-all duration-300 hover:border-emerald-400/50 hover:bg-white/10 hover:text-white"
+                >
+                  👥 Explorar Equipos
+                </Link>
+              </div>
+              
+              {/* Stats mini */}
+              <div className="mt-12 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+                {[
+                  { value: "50K+", label: "Usuarios activos" },
+                  { value: "1000+", label: "Partidos diarios" },
+                  { value: "5", label: "Juegos soportados" },
+                ].map((stat) => (
+                  <div key={stat.label} className="text-center">
+                    <p className="text-2xl sm:text-3xl font-black text-white tabular-nums">{stat.value}</p>
+                    <p className="text-xs sm:text-sm text-white/50 font-medium">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
       </main>

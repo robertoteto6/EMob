@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { pandaScoreFetch } from "../../../../../lib/pandaScoreFetch";
 import { getProxyAgent } from "../../../../../lib/proxyAgent";
+import { buildMonogramSvg } from "../../../../../lib/iconGenerator";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const { searchParams } = new URL(request.url);
+  const nameParam = searchParams.get("name");
+  const labelParam = searchParams.get("label");
   
   try {
     // Obtener datos del jugador desde PandaScore
@@ -34,24 +38,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       }
     }
     
-    // Si no tiene imagen o falla, generar una imagen de fallback con las iniciales
-    const playerName = playerData.name || "Player";
-    const initials = playerName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
-    
-    // SVG simple con las iniciales del jugador
-    const svg = `
-      <svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#00FF80;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#0080FF;stop-opacity:1" />
-          </linearGradient>
-        </defs>
-        <rect width="128" height="128" fill="url(#grad1)" rx="64"/>
-        <text x="64" y="74" font-family="Arial, sans-serif" font-size="48" font-weight="bold" 
-              text-anchor="middle" fill="white">${initials}</text>
-      </svg>
-    `;
+    // Si no tiene imagen o falla, generar una imagen de fallback con un monograma
+    const playerName = playerData.name || nameParam || "Player";
+    const svg = buildMonogramSvg({
+      name: playerName,
+      label: labelParam,
+      size: 128,
+      shape: "circle",
+      maxLen: 4,
+    });
     
     return new NextResponse(svg, {
       headers: {
@@ -63,14 +58,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   } catch (error) {
     console.error("Error fetching player image:", error);
     
-    // Imagen de fallback en caso de error
-    const fallbackSvg = `
-      <svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
-        <rect width="128" height="128" fill="#374151" rx="64"/>
-        <circle cx="64" cy="48" r="20" fill="#9CA3AF"/>
-        <path d="M64 76c-20 0-36 16-36 36v16h72v-16c0-20-16-36-36-36z" fill="#9CA3AF"/>
-      </svg>
-    `;
+    const playerName = nameParam || "Player";
+    const fallbackSvg = buildMonogramSvg({
+      name: playerName,
+      label: labelParam,
+      size: 128,
+      shape: "circle",
+      maxLen: 4,
+    });
     
     return new NextResponse(fallbackSvg, {
       headers: {
