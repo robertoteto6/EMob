@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    domains: ['cdn.pandascore.co', 'static.pandascore.co', 'images.unsplash.com'],
+    domains: ['cdn.pandascore.co', 'static.pandascore.co', 'images.unsplash.com', 'img.youtube.com', 'i.ytimg.com'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -29,6 +29,24 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'static.pandascore.co',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'yt3.ggpht.com',
         port: '',
         pathname: '/**',
       },

@@ -1,8 +1,20 @@
 // YouTube Data API v3 Service for fetching player highlights
-// API Key: AIzaSyCJS066qlp31BZzUmZWRH0_wrrcosjdwS0
+// API Key should be set in environment variables
 
-const YOUTUBE_API_KEY = 'AIzaSyCJS066qlp31BZzUmZWRH0_wrrcosjdwS0';
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
+
+if (!YOUTUBE_API_KEY) {
+  console.warn('YouTube API key not found. Please set YOUTUBE_API_KEY or NEXT_PUBLIC_YOUTUBE_API_KEY environment variable.');
+}
+
+// Helper function to ensure API key is available
+function getApiKey(): string {
+  if (!YOUTUBE_API_KEY) {
+    throw new Error('YouTube API key not configured. Please set YOUTUBE_API_KEY environment variable.');
+  }
+  return YOUTUBE_API_KEY;
+}
 
 export interface YouTubeVideo {
   id: string;
@@ -59,7 +71,7 @@ export async function searchPlayerHighlights(
       maxResults: maxResults.toString(),
       order: 'relevance',
       videoDuration: 'medium', // Filter for medium length videos (4-20 min)
-      key: YOUTUBE_API_KEY,
+      key: getApiKey(),
     });
 
     const response = await fetch(`${YOUTUBE_API_BASE}/search?${searchParams}`, {
@@ -84,7 +96,7 @@ export async function searchPlayerHighlights(
     const detailsParams = new URLSearchParams({
       part: 'contentDetails,statistics',
       id: videoIds,
-      key: YOUTUBE_API_KEY,
+      key: getApiKey(),
     });
 
     const detailsResponse = await fetch(`${YOUTUBE_API_BASE}/videos?${detailsParams}`, {
@@ -152,7 +164,7 @@ export async function searchMatchHighlights(
       type: 'video',
       maxResults: maxResults.toString(),
       order: 'relevance',
-      key: YOUTUBE_API_KEY,
+      key: getApiKey(),
     });
 
     const response = await fetch(`${YOUTUBE_API_BASE}/search?${searchParams}`, {
@@ -211,7 +223,7 @@ export async function searchPlayerContent(
       type: 'video',
       maxResults: maxResults.toString(),
       order: 'date',
-      key: YOUTUBE_API_KEY,
+      key: getApiKey(),
     });
 
     const response = await fetch(`${YOUTUBE_API_BASE}/search?${searchParams}`, {
@@ -251,7 +263,7 @@ export async function getVideoById(videoId: string): Promise<YouTubeVideo | null
     const params = new URLSearchParams({
       part: 'snippet,contentDetails,statistics',
       id: videoId,
-      key: YOUTUBE_API_KEY,
+      key: getApiKey(),
     });
 
     const response = await fetch(`${YOUTUBE_API_BASE}/videos?${params}`, {
