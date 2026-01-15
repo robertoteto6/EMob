@@ -1075,13 +1075,14 @@ const Home = memo(function Home() {
         </section>
 
         {/* Filtros Avanzados */}
-        <section className="relative pb-16">
-          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-500/10 via-transparent to-sky-500/10" aria-hidden="true" />
+        <section className="relative py-16">
+          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-white/5 to-transparent" aria-hidden="true" />
           <div className="container mx-auto px-6">
             <div
-              className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-[0_20px_70px_-45px_rgba(16,185,129,0.6)] sm:p-10"
+              className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/60 p-8 backdrop-blur-xl shadow-[0_20px_70px_-45px_rgba(16,185,129,0.6)] sm:p-10"
               aria-busy={isFiltering}
             >
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-sky-500/10" aria-hidden="true" />
               <div className="absolute -right-28 -top-28 h-72 w-72 rounded-full bg-emerald-400/20 blur-3xl" aria-hidden="true" />
               <div className="absolute -left-24 bottom-0 h-64 w-64 rounded-full bg-sky-500/20 blur-3xl" aria-hidden="true" />
               <div className={`relative transition-opacity duration-300 ${isFiltering ? "opacity-60" : "opacity-100"}`}>
