@@ -52,7 +52,7 @@ const nextConfig: NextConfig = {
       // Imágenes locales/remotas y data/blob
       "img-src 'self' data: https: blob:",
       // Cargar fuentes locales y gstatic
-      "font-src 'self' data: https://fonts.gstatic.com",
+      "font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai",
       // HMR/WebSocket + APIs externas necesarias
       "connect-src 'self' http: https: ws: wss: https://api.pandascore.co https://vercel.live",
       "media-src 'self'",
@@ -60,6 +60,8 @@ const nextConfig: NextConfig = {
       "base-uri 'self'",
       "form-action 'self'",
       "frame-ancestors 'none'",
+      // Permitir iframes de Twitch y YouTube
+      "frame-src 'self' https://player.twitch.tv https://www.youtube.com https://youtube.com",
     ].join('; ');
 
     const cspProd = [
@@ -67,13 +69,14 @@ const nextConfig: NextConfig = {
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: https: blob:",
-      "font-src 'self' https://fonts.gstatic.com",
+      "font-src 'self' https://fonts.gstatic.com https://r2cdn.perplexity.ai",
       "connect-src 'self' https://api.pandascore.co https://vercel.live",
       "media-src 'self'",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
       "frame-ancestors 'none'",
+      "frame-src 'self' https://player.twitch.tv https://www.youtube.com https://youtube.com",
       'upgrade-insecure-requests',
     ].join('; ');
 
