@@ -70,6 +70,10 @@ export interface MatchDetail extends Match {
   number_of_games: number;
   games: GameInfo[];
   streams: StreamInfo[];
+  players?: {
+    radiant: Player[];
+    dire: Player[];
+  };
 }
 
 /**

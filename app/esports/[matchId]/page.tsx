@@ -4,9 +4,11 @@ import { useEffect, useState, useCallback } from "react";
 import MatchHeader from "../../components/MatchHeader";
 import MatchCard from "../../components/MatchCard";
 import MatchStreams from "../../components/MatchStreams";
+import MatchGames from "../../components/MatchGames";
+import MatchLineups from "../../components/MatchLineups";
 import PredictionSystem from "../../components/PredictionSystem";
 import Spinner from "../../components/Spinner";
-import { MatchDetail, Notification, Language } from "../../lib/types";
+import { MatchDetail, Notification, Language, Player } from "../../lib/types";
 
 // Las animaciones personalizadas se han movido a app/globals.css
 
@@ -41,72 +43,95 @@ const CACHE_DURATION = 30000;
 const AUTO_REFRESH_INTERVAL_MS = 30000;
 
 async function fetchMatchAPI(matchId: string): Promise<any> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const res = await fetch(`/api/esports/match/${matchId}`, { cache: "no-store", signal: controller.signal, headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } });
-    clearTimeout(timeoutId);
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
-    const data = await res.json();
-    if (!data || typeof data !== 'object') throw new Error('Invalid match data received');
-    return data;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const res = await fetch(`/api/esports/match/${matchId}`, { cache: "no-store", signal: controller.signal, headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } });
+  clearTimeout(timeoutId);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  if (!data || typeof data !== 'object') throw new Error('Invalid match data received');
+  return data;
 }
 
 function transformApiDataToMatchDetail(apiData: any): MatchDetail {
-    const team1 = apiData.opponents?.[0]?.opponent;
-    const team2 = apiData.opponents?.[1]?.opponent;
-    const results = Array.isArray(apiData.results) ? apiData.results : [];
-    const scoresByTeam = new Map<number, number>();
-    for (const result of results) {
-        const teamId = result?.team_id ?? result?.opponent_id;
-        if (typeof teamId === "number" && typeof result?.score === "number") {
-            scoresByTeam.set(teamId, result.score);
-        }
+  const team1 = apiData.opponents?.[0]?.opponent;
+  const team2 = apiData.opponents?.[1]?.opponent;
+  const results = Array.isArray(apiData.results) ? apiData.results : [];
+  const scoresByTeam = new Map<number, number>();
+  for (const result of results) {
+    const teamId = result?.team_id ?? result?.opponent_id;
+    if (typeof teamId === "number" && typeof result?.score === "number") {
+      scoresByTeam.set(teamId, result.score);
     }
-    const fallbackScore = (index: number) => {
-        const score = results[index]?.score;
-        return typeof score === "number" ? score : 0;
-    };
-    return {
-        id: apiData.id,
-        name: apiData.name ?? `${team1?.name ?? "TBD"} vs ${team2?.name ?? "TBD"}`,
-        radiant: team1?.name ?? "TBD",
-        dire: team2?.name ?? "TBD",
-        radiant_id: team1?.id ?? null,
-        dire_id: team2?.id ?? null,
-        radiant_score: typeof team1?.id === "number" && scoresByTeam.has(team1.id) ? (scoresByTeam.get(team1.id) ?? 0) : fallbackScore(0),
-        dire_score: typeof team2?.id === "number" && scoresByTeam.has(team2.id) ? (scoresByTeam.get(team2.id) ?? 0) : fallbackScore(1),
-        start_time: new Date(apiData.begin_at ?? apiData.scheduled_at).getTime() / 1000,
-        end_time: apiData.end_at ? new Date(apiData.end_at).getTime() / 1000 : null,
-        league: apiData.league?.name ?? "",
-        serie: apiData.serie?.full_name ?? "",
-        tournament: apiData.tournament?.name ?? "",
-        match_type: apiData.match_type ?? "",
-        number_of_games: apiData.number_of_games ?? apiData.games?.length ?? 0,
-        radiant_win: apiData.winner?.id !== undefined && team1?.id !== undefined ? apiData.winner.id === team1.id : null,
-        game: apiData.videogame?.slug ?? "unknown",
-        games: (apiData.games ?? []).map((g: any) => ({ id: g.id, position: g.position, status: g.status, begin_at: g.begin_at, end_at: g.end_at, winner_id: g.winner?.id ?? null })),
-        streams: (apiData.streams_list ?? []).map((s: any) => ({ embed_url: s.embed_url || "", raw_url: s.raw_url || "", language: s.language || "en-US" })),
-    };
+  }
+  const fallbackScore = (index: number) => {
+    const score = results[index]?.score;
+    return typeof score === "number" ? score : 0;
+  };
+
+  // Helper to map players if available in the match response (PandaScore usually provides lineups inside opponents in some endpoints)
+  // Note: The structure depends heavily on the specific API plan/endpoint. We attempt to extract if present.
+  const mapPlayers = (team: any): Player[] => {
+    if (!team?.players && !team?.roster) return [];
+    const source = team.players || team.roster;
+    return Array.isArray(source) ? source.map((p: any) => ({
+      id: String(p.id),
+      name: p.name || p.slug || "Unknown",
+      realName: p.first_name && p.last_name ? `${p.first_name} ${p.last_name}` : undefined,
+      team: team.name,
+      game: apiData.videogame?.slug || "unknown",
+      avatar: p.image_url,
+      nationality: p.nationality,
+      role: p.role,
+      stats: {}
+    })) : [];
+  };
+
+  return {
+    id: apiData.id,
+    name: apiData.name ?? `${team1?.name ?? "TBD"} vs ${team2?.name ?? "TBD"}`,
+    radiant: team1?.name ?? "TBD",
+    dire: team2?.name ?? "TBD",
+    radiant_id: team1?.id ?? null,
+    dire_id: team2?.id ?? null,
+    radiant_score: typeof team1?.id === "number" && scoresByTeam.has(team1.id) ? (scoresByTeam.get(team1.id) ?? 0) : fallbackScore(0),
+    dire_score: typeof team2?.id === "number" && scoresByTeam.has(team2.id) ? (scoresByTeam.get(team2.id) ?? 0) : fallbackScore(1),
+    start_time: new Date(apiData.begin_at ?? apiData.scheduled_at).getTime() / 1000,
+    end_time: apiData.end_at ? new Date(apiData.end_at).getTime() / 1000 : null,
+    league: apiData.league?.name ?? "",
+    serie: apiData.serie?.full_name ?? "",
+    tournament: apiData.tournament?.name ?? "",
+    match_type: apiData.match_type ?? "",
+    number_of_games: apiData.number_of_games ?? apiData.games?.length ?? 0,
+    radiant_win: apiData.winner?.id !== undefined && team1?.id !== undefined ? apiData.winner.id === team1.id : null,
+    game: apiData.videogame?.slug ?? "unknown",
+    games: (apiData.games ?? []).map((g: any) => ({ id: g.id, position: g.position, status: g.status, begin_at: g.begin_at, end_at: g.end_at, winner_id: g.winner?.id ?? null })),
+    streams: (apiData.streams_list ?? []).map((s: any) => ({ embed_url: s.embed_url || "", raw_url: s.raw_url || "", language: s.language || "en-US" })),
+    players: {
+      radiant: mapPlayers(team1),
+      dire: mapPlayers(team2)
+    }
+  };
 }
 
 async function fetchMatch(matchId: string, forceRefresh = false): Promise<MatchDetail | null> {
-    if (!forceRefresh) {
-        const cached = matchCache.get(matchId);
-        if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-            return cached.data;
-        }
+  if (!forceRefresh) {
+    const cached = matchCache.get(matchId);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return cached.data;
     }
-    try {
-        const apiData = await fetchMatchAPI(matchId);
-        const matchData = transformApiDataToMatchDetail(apiData);
-        matchCache.set(matchId, { data: matchData, timestamp: Date.now() });
-        return matchData;
-    } catch (error) {
-        console.error('Error fetching match data:', error);
-        const cached = matchCache.get(matchId);
-        if (cached?.data) return cached.data;
-        return null;
-    }
+  }
+  try {
+    const apiData = await fetchMatchAPI(matchId);
+    const matchData = transformApiDataToMatchDetail(apiData);
+    matchCache.set(matchId, { data: matchData, timestamp: Date.now() });
+    return matchData;
+  } catch (error) {
+    console.error('Error fetching match data:', error);
+    const cached = matchCache.get(matchId);
+    if (cached?.data) return cached.data;
+    return null;
+  }
 }
 
 const LANGS: Language[] = [{ code: "es-ES", label: "Español" }, { code: "en-US", label: "English" }];
@@ -232,7 +257,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
         {notifications.length > 0 && (
           <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
             {notifications.map(n => (
-              <div key={n.id} className={`px-4 py-3 rounded-lg shadow-xl border backdrop-blur-sm animate-slide-in-right ${ n.type === 'success' ? 'bg-green-900/95 border-green-400 text-green-50' : n.type === 'error' ? 'bg-red-900/95 border-red-400 text-red-50' : 'bg-blue-900/95 border-blue-400 text-blue-50' }`}>
+              <div key={n.id} className={`px-4 py-3 rounded-lg shadow-xl border backdrop-blur-sm animate-slide-in-right ${n.type === 'success' ? 'bg-green-900/95 border-green-400 text-green-50' : n.type === 'error' ? 'bg-red-900/95 border-red-400 text-red-50' : 'bg-blue-900/95 border-blue-400 text-blue-50'}`}>
                 {n.message}
               </div>
             ))}
@@ -240,12 +265,29 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
         )}
 
         <MatchCard match={match} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} lang={lang} />
-        
-        <PredictionSystem matchId={match.id} matchTitle={match.name} game="esports" radiantTeam={match.radiant} direTeam={match.dire} isFinished={match.radiant_win !== null} actualWinner={match.radiant_win === true ? 'radiant' : match.radiant_win === false ? 'dire' : null} startTime={match.start_time} />
 
-        <MatchStreams streams={match.streams} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+          {/* Left/Main Column: Games, Lineups, Predictions */}
+          <div className="lg:col-span-2 space-y-8">
+            <MatchGames games={match.games} radiantName={match.radiant} direName={match.dire} />
 
-        {/* Resto de la UI (mapa a mapa, VODs, etc.) que también podría ser extraída */}
+            <MatchLineups
+              radiantName={match.radiant}
+              direName={match.dire}
+              radiantPlayers={match.players?.radiant}
+              direPlayers={match.players?.dire}
+            />
+
+            <PredictionSystem matchId={match.id} matchTitle={match.name} game="esports" radiantTeam={match.radiant} direTeam={match.dire} isFinished={match.radiant_win !== null} actualWinner={match.radiant_win === true ? 'radiant' : match.radiant_win === false ? 'dire' : null} startTime={match.start_time} />
+          </div>
+
+          {/* Right Column: Streams */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-6">
+              <MatchStreams streams={match.streams} />
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   );
