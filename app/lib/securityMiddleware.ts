@@ -84,6 +84,25 @@ export class SecurityMiddleware {
     const origin = request.headers.get('origin');
     const requestOrigin = request.nextUrl.origin;
     const isSameOrigin = origin !== null && origin === requestOrigin;
+    const isDev = process.env.NODE_ENV !== 'production';
+
+    // In development we relax origin checks to avoid local dev issues
+    if (isDev) {
+      if (request.method === 'OPTIONS') {
+        return new NextResponse(null, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': origin ?? requestOrigin,
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-CSRF-Token',
+            'Access-Control-Max-Age': '86400',
+            'Access-Control-Allow-Credentials': 'true',
+          },
+        });
+      }
+
+      return null;
+    }
     
     // Para requests preflight
     if (request.method === 'OPTIONS') {
@@ -281,8 +300,9 @@ export class SecurityMiddleware {
     // CORS headers si es necesario
     const origin = request.headers.get('origin');
     const requestOrigin = request.nextUrl.origin;
-    if (origin && (origin === requestOrigin || this.isAllowedOrigin(origin))) {
-      response.headers.set('Access-Control-Allow-Origin', origin);
+    const isDev = process.env.NODE_ENV !== 'production';
+    if (origin && (isDev || origin === requestOrigin || this.isAllowedOrigin(origin))) {
+      response.headers.set('Access-Control-Allow-Origin', origin ?? requestOrigin);
       response.headers.set('Access-Control-Allow-Credentials', 'true');
     }
 
