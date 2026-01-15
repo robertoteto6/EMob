@@ -1,13 +1,10 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useEffect, useState, useMemo, Suspense } from "react";
 import nextDynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import Header from "../components/Header";
 import { PlayerSkeleton } from "../components/Skeleton";
 import LiveScoreTicker from "../components/LiveScoreTicker";
 import { useNotifications } from "../hooks/useNotifications";
@@ -468,9 +465,6 @@ function PlayersPageContent() {
 
   return (
     <>
-      <Suspense fallback={null}>
-        <Header />
-      </Suspense>
       <LiveScoreTicker currentGame={game} />
       
       <main className="min-h-screen pt-20">

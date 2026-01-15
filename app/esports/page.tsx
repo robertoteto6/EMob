@@ -1,14 +1,11 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useEffect, useState, useMemo, Suspense, useCallback, useRef } from "react";
 import nextDynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import LiveBadge from "../components/LiveBadge";
 import { useRouter, useSearchParams } from "next/navigation";
-import Header from "../components/Header";
 import Countdown from "../components/Countdown";
 import { MatchSkeleton, TournamentSkeleton } from "../components/Skeleton";
 import LiveScoreTicker from "../components/LiveScoreTicker";
@@ -695,9 +692,6 @@ function EsportsPageContent() {
 
   return (
     <>
-      <Suspense fallback={null}>
-        <Header />
-      </Suspense>
       <LiveScoreTicker currentGame={game} />
       
       <main className="min-h-screen pt-20">

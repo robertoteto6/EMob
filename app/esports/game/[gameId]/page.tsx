@@ -5,7 +5,6 @@ import nextDynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import Header from "../../../components/Header";
 import { useNotifications } from "../../../hooks/useNotifications";
 import { useDeferredClientRender } from "../../../hooks/useDeferredClientRender";
 
@@ -435,7 +434,6 @@ function GamePageContent({ gameId }: { gameId: string }) {
   if (loading) {
     return (
       <>
-        <Header />
         <main className="min-h-screen pt-20">
           <div className="container mx-auto px-6 py-8">
             <div className="animate-pulse">
@@ -456,7 +454,6 @@ function GamePageContent({ gameId }: { gameId: string }) {
   if (error) {
     return (
       <>
-        <Header />
         <main className="min-h-screen pt-20">
           <div className="container mx-auto px-6 py-8">
             <div className="text-center py-16">
@@ -478,8 +475,6 @@ function GamePageContent({ gameId }: { gameId: string }) {
 
   return (
     <>
-      <Header />
-      
       <main className="min-h-screen pt-20">
         {/* Hero Section del Juego */}
         <section className={`relative overflow-hidden bg-gradient-to-br ${game.gradient} py-20`}>

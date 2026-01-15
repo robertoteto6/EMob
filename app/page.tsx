@@ -1,11 +1,8 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useEffect, useState, useMemo, useCallback, useRef, memo } from "react";
 import nextDynamic from "next/dynamic";
 import Link from "next/link";
-import Header from "./components/Header";
 import Image from "next/image";
 import LiveScoreTicker from "./components/LiveScoreTicker";
 import ScrollToTop from "./components/ScrollToTop";
@@ -859,7 +856,6 @@ const Home = memo(function Home() {
 
   return (
     <>
-      <Header />
       <LiveScoreTicker currentGame="all" />
       
       <main className="min-h-screen pt-20">

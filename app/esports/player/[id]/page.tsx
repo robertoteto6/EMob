@@ -1,9 +1,8 @@
 "use client";
 
-import { use, useEffect, useState, Suspense } from "react";
+import { use, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import Header from "../../../components/Header";
 import { useRouter } from "next/navigation";
 
 interface RegionInfo {
@@ -419,9 +418,6 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
   if (loading) {
     return (
       <>
-        <Suspense fallback={null}>
-          <Header />
-        </Suspense>
         <main className="min-h-screen pt-20">
           <div className="container mx-auto px-6 py-8">
             <div className="flex items-center justify-center min-h-[60vh]">
@@ -440,9 +436,6 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
   if (!player) {
     return (
       <>
-        <Suspense fallback={null}>
-          <Header />
-        </Suspense>
         <main className="min-h-screen pt-20">
           <div className="container mx-auto px-6 py-8">
             <div className="text-center py-16">
@@ -468,9 +461,6 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <>
-      <Suspense fallback={null}>
-        <Header />
-      </Suspense>
       <main className="min-h-screen bg-gradient-to-br from-background via-background to-background text-foreground pt-20">
         <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-5"></div>
         

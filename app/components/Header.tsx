@@ -1,16 +1,18 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import Search from "./Search";
 import ThemeToggle from "./ThemeToggle";
+import { optimizeScroll } from "../lib/utils";
 
 function HeaderContent() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const isScrolledRef = useRef(false);
   const pathname = usePathname();
 
   // Ocultar header en páginas de detalles de esports que tienen su propio header local
@@ -19,14 +21,18 @@ function HeaderContent() {
   useEffect(() => {
     setIsClient(true);
 
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+    const handleScroll = optimizeScroll(() => {
+      const nextScrolled = window.scrollY > 20;
+      if (isScrolledRef.current !== nextScrolled) {
+        isScrolledRef.current = nextScrolled;
+        setIsScrolled(nextScrolled);
+      }
+    });
 
     // Establecer el estado inicial del scroll
     handleScroll();
     
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 

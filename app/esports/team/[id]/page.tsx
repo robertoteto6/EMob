@@ -1,12 +1,9 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { use, useEffect, useState, Suspense, useCallback, useMemo } from "react";
 import nextDynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import Header from "../../../components/Header";
 import { TeamSkeleton, PlayerSkeleton } from "../../../components/Skeleton";
 import { useNotifications } from "../../../hooks/useNotifications";
 import { useDeferredClientRender } from "../../../hooks/useDeferredClientRender";
@@ -216,8 +213,6 @@ function TeamContent({ id }: { id: string }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
-        <Header />
-        
         <main className="pt-20 pb-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             {/* Breadcrumb Skeleton */}
@@ -262,8 +257,6 @@ function TeamContent({ id }: { id: string }) {
   if (!team) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
-        <Header />
-        
         <main className="pt-20 pb-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center">
             <div className="bg-gradient-to-br from-red-900/20 via-red-800/10 to-red-900/20 rounded-2xl border border-red-700/50 p-12">
@@ -293,8 +286,6 @@ function TeamContent({ id }: { id: string }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
-      <Header />
-      
       <main className="pt-20 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb */}
@@ -496,7 +487,6 @@ export default function TeamPage({ params }: { params: Promise<{ id: string }> }
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
-        <Header />
         <main className="pt-20 pb-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <TeamSkeleton />
