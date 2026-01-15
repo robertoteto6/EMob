@@ -143,6 +143,7 @@ export async function GET(req: Request) {
         current_videogame: t.current_videogame,
         players: t.players?.length || 0,
         modified_at: t.modified_at,
+        tournaments: [],
         gloryScore: Math.max(0, gloryScore)
       };
     });
