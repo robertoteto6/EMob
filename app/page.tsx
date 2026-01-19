@@ -46,6 +46,7 @@ const ChatBot = nextDynamic(() => import("./components/ChatBot"), {
 
 const TIME_UPDATE_INTERVAL = 15_000;
 const MATCH_REFRESH_INTERVAL = 30_000;
+const TOURNAMENT_REFRESH_INTERVAL = 60_000;
 
 // Custom hook to handle time consistently between server and client
 function useCurrentTime(updateInterval = TIME_UPDATE_INTERVAL) {
@@ -705,6 +706,7 @@ const Home = memo(function Home() {
 
   useEffect(() => {
     if (!isClient) return;
+    // Partidos se refrescan más seguido que los torneos para reflejar resultados en vivo.
     const interval = window.setInterval(loadData, MATCH_REFRESH_INTERVAL);
     return () => window.clearInterval(interval);
   }, [isClient, loadData]);
@@ -712,7 +714,7 @@ const Home = memo(function Home() {
   useEffect(() => {
     if (!isClient) return;
     loadTournaments();
-    const interval = window.setInterval(loadTournaments, 60000); // refresh cada 60s
+    const interval = window.setInterval(loadTournaments, TOURNAMENT_REFRESH_INTERVAL); // torneos cambian menos seguido
     return () => window.clearInterval(interval);
   }, [isClient, loadTournaments]);
 
@@ -750,6 +752,10 @@ const Home = memo(function Home() {
   }, [currentTime, matchesByGame, tournamentsByGame]);
 
   const numberFormatter = useMemo(() => new Intl.NumberFormat("es-ES"), []);
+  const matchRefreshSeconds = useMemo(
+    () => Math.round(MATCH_REFRESH_INTERVAL / 1000),
+    []
+  );
 
   const aggregatedStats = useMemo(() => {
     return Object.values(gameStats).reduce(
@@ -1437,7 +1443,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                   <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  Actualización automática cada 30s
+                  Actualización automática cada {matchRefreshSeconds}s
                 </div>
 
                 <div className="bg-gradient-to-r from-blue-600/20 to-green-600/20 px-4 py-2 rounded-xl text-sm text-white border border-blue-500/30">
