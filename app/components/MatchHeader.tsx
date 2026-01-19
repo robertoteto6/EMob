@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { memo } from "react";
-import Search from "./Search";
+import SearchLazy from "./SearchLazy";
 import { LangFlag } from "./LangFlag";
 
 // Tipos para las props del componente
@@ -58,7 +58,7 @@ const MatchHeader = ({ matchName, lang, langs, onLangChange, showNotification }:
 
       {/* Barra de búsqueda centrada */}
       <div className="flex-1 w-full lg:max-w-2xl lg:mx-6">
-        <Search />
+        <SearchLazy />
       </div>
 
       {/* Controles del lado derecho */}

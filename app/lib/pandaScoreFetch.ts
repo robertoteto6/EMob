@@ -16,7 +16,7 @@ if (typeof window === 'undefined') {
 }
 // In server context, prefer the server cache implementation
 import { getGlobalCache, cached } from './advancedCache.server';
-import { reportApiError } from './apiErrorReporter';
+import { reportApiError, reportApiSuccess } from './apiErrorReporter';
 
 export async function pandaScoreFetch(
   baseUrl: string,
@@ -56,17 +56,22 @@ export async function pandaScoreFetch(
       timestamp: new Date().toISOString(),
       method: (options as any)?.method || 'GET',
       params: searchParams.toString(),
+      duration: 0,
+      retryCount: 0,
     });
     throw new Error('Missing PandaScore API keys in environment variables');
   }
 
   let lastError: Error | null = null;
+  let retryCount = 0;
 
   for (const key of keys) {
     const url = new URL(baseUrl);
     const finalParams = new URLSearchParams(baseParams);
     finalParams.set('token', key);
     url.search = finalParams.toString();
+
+    const startTime = Date.now();
 
     try {
       const fetchOptions: RequestInit = {
@@ -78,15 +83,19 @@ export async function pandaScoreFetch(
           ...options.headers,
         },
       };
-      
+
       // Solo usar proxy agent en el servidor
       if (typeof window === 'undefined' && getProxyAgent) {
         (fetchOptions as any).dispatcher = getProxyAgent();
       }
-      
+
       const res = await fetch(url.toString(), fetchOptions);
+      const duration = Date.now() - startTime;
 
       if (res.ok) {
+        // Reportar éxito para monitoreo
+        reportApiSuccess('pandascore', baseUrl, duration, res.status);
+
         // Cachear la respuesta exitosa
         try {
           const responseData = await res.clone().json();
@@ -115,6 +124,8 @@ export async function pandaScoreFetch(
           bodySnippet: body?.slice(0, 500),
           tokenTail: key.slice(-4),
           timestamp: new Date().toISOString(),
+          duration,
+          retryCount,
         });
         throw new Error(`API error: ${res.status} - ${body}`);
       }
@@ -122,6 +133,9 @@ export async function pandaScoreFetch(
       lastError = new Error(`Rate limit hit with key ending in ${key.slice(-4)}`);
     } catch (err: unknown) {
       lastError = (err instanceof Error) ? err : new Error(String(err));
+      const duration = Date.now() - startTime;
+      retryCount++;
+
       // Network or other unexpected error
       reportApiError({
         service: 'pandascore',
@@ -131,6 +145,8 @@ export async function pandaScoreFetch(
         method: (options as any)?.method || 'GET',
         params: baseParams.toString(),
         timestamp: new Date().toISOString(),
+        duration,
+        retryCount,
       });
     }
   }

@@ -5,3 +5,12 @@ export { default as PlayerMediaGallery } from './PlayerMediaGallery';
 export { default as PlayerStatsProgressive } from './PlayerStatsProgressive';
 export { default as PlayerMatches } from './PlayerMatches';
 export { default as PlayerProfileSkeleton } from './PlayerProfileSkeleton';
+
+// Lazy loaded player components for better performance
+export {
+  PlayerHeroSectionLazy,
+  PlayerStatsProgressiveLazy,
+  PlayerMatchesLazy,
+  PlayerAchievementsLazy,
+  PlayerMediaGalleryLazy,
+} from './PlayerComponentsLazy';

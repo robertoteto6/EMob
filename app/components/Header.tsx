@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bars3Icon, BellIcon, XMarkIcon, SparklesIcon } from "@heroicons/react/24/outline";
-import Search from "./Search";
+import SearchLazy from "./SearchLazy";
 import ThemeToggle from "./ThemeToggle";
 import { optimizeScroll } from "../lib/utils";
 
@@ -130,7 +130,7 @@ function HeaderContent() {
 
           {/* Search Bar mejorado */}
           <div className="hidden lg:block w-72 xl:w-80">
-            <Search globalSearch={true} placeholder="Buscar equipos, jugadores..." />
+            <SearchLazy globalSearch={true} placeholder="Buscar equipos, jugadores..." />
           </div>
 
           {/* Actions mejoradas */}
@@ -191,7 +191,7 @@ function HeaderContent() {
           <div className="bg-black/95 backdrop-blur-2xl border-b border-emerald-500/20 shadow-2xl shadow-black/50">
             {/* Barra de búsqueda móvil */}
             <div className="p-4 border-b border-white/5">
-              <Search globalSearch={true} compact={true} placeholder="Buscar equipos, jugadores..." />
+              <SearchLazy globalSearch={true} compact={true} placeholder="Buscar equipos, jugadores..." />
             </div>
             
             {/* Links de navegación */}

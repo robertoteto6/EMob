@@ -4,13 +4,13 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-// Import player components
+// Import player components (lazy loaded for better performance)
 import {
-  PlayerHeroSection,
-  PlayerAchievements,
-  PlayerMediaGallery,
-  PlayerStatsProgressive,
-  PlayerMatches,
+  PlayerHeroSectionLazy,
+  PlayerAchievementsLazy,
+  PlayerMediaGalleryLazy,
+  PlayerStatsProgressiveLazy,
+  PlayerMatchesLazy,
   PlayerProfileSkeleton
 } from "../../../components/player";
 
@@ -337,7 +337,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
         </motion.nav>
 
         {/* Hero Section - Información principal del jugador */}
-        <PlayerHeroSection 
+        <PlayerHeroSectionLazy 
           player={player} 
           onToggleFavorite={toggleFavorite}
           isFavorite={isFavorite}
@@ -345,7 +345,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
 
         {/* Logros y Achievements - Primero para jugadores importantes */}
         {player.achievements && player.achievements.length > 0 && (
-          <PlayerAchievements 
+          <PlayerAchievementsLazy 
             achievements={player.achievements} 
             playerName={player.name}
             isVeteran={player.is_veteran}
@@ -354,7 +354,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
 
         {/* Galería Multimedia - Videos y highlights */}
         {player.media_gallery && player.media_gallery.length > 0 && (
-          <PlayerMediaGallery 
+          <PlayerMediaGalleryLazy 
             media={player.media_gallery} 
             playerName={player.name}
           />
@@ -455,10 +455,10 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
           {/* Columna derecha - Estadísticas y partidos */}
           <div className="lg:col-span-2 space-y-8">
             {/* Estadísticas Progresivas */}
-            <PlayerStatsProgressive player={player} />
+            <PlayerStatsProgressiveLazy player={player} />
 
             {/* Partidos */}
-            <PlayerMatches
+            <PlayerMatchesLazy
               recentMatches={player.recent_matches || []}
               historicalMatches={player.historical_matches || []}
               isVeteran={player.is_veteran}

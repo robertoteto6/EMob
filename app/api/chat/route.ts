@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProxyAgent } from "../../lib/proxyAgent";
+import { reportApiError, reportApiSuccess } from "../../lib/apiErrorReporter";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = "models/gemini-2.5-flash";
@@ -53,6 +54,8 @@ function validateChatRequest(body: unknown): { isValid: boolean; error?: string;
 }
 
 export async function POST(req: Request) {
+  const startTime = Date.now();
+
   try {
     // Check API key first
     if (!GEMINI_API_KEY) {
@@ -109,15 +112,28 @@ export async function POST(req: Request) {
       if (!res.ok) {
         const errorText = await res.text();
         console.error('Gemini API error:', res.status, errorText);
-        
+
+        const duration = Date.now() - startTime;
+        reportApiError({
+          service: 'gemini',
+          url: `https://generativelanguage.googleapis.com/v1beta/${GEMINI_MODEL}:generateContent`,
+          status: res.status,
+          ok: res.ok,
+          method: 'POST',
+          message: `Gemini API error: ${res.status} - ${errorText}`,
+          bodySnippet: errorText.slice(0, 500),
+          timestamp: new Date().toISOString(),
+          duration,
+        });
+
         if (res.status === 429) {
-          return new NextResponse('Rate limit exceeded. Please try again later.', { 
+          return new NextResponse('Rate limit exceeded. Please try again later.', {
             status: 429,
             headers
           });
         }
-        
-        return new NextResponse('Failed to generate response', { 
+
+        return new NextResponse('Failed to generate response', {
           status: 500,
           headers
         });
@@ -127,11 +143,26 @@ export async function POST(req: Request) {
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
 
       if (!text) {
-        return new NextResponse('No response generated', { 
+        const duration = Date.now() - startTime;
+        reportApiError({
+          service: 'gemini',
+          url: `https://generativelanguage.googleapis.com/v1beta/${GEMINI_MODEL}:generateContent`,
+          status: 200,
+          ok: true,
+          method: 'POST',
+          message: 'Gemini API returned empty response',
+          timestamp: new Date().toISOString(),
+          duration,
+        });
+        return new NextResponse('No response generated', {
           status: 500,
           headers
         });
       }
+
+      // Reportar éxito
+      const duration = Date.now() - startTime;
+      reportApiSuccess('gemini', `https://generativelanguage.googleapis.com/v1beta/${GEMINI_MODEL}:generateContent`, duration, res.status);
 
       return NextResponse.json({ text, response: text }, { headers });
 

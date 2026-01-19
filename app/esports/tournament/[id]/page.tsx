@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import Search from "../../../components/Search";
+import SearchLazy from "../../../components/SearchLazy";
 import { getTeamImageUrl } from "../../../lib/imageFallback";
 
 interface TournamentDetail {
@@ -97,7 +97,7 @@ export default function TournamentPage({ params }: { params: Promise<{ id: strin
       <Link href="/esports" className="text-[var(--accent)] hover:underline">
         ← Volver
       </Link>
-      <Search />
+      <SearchLazy />
       <div className="card p-4 space-y-2">
         <h1 className="text-2xl font-bold">
           {tournament.league} {tournament.serie}
