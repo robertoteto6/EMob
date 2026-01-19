@@ -14,6 +14,11 @@ const isTwitchUrl = (url?: string | null) => typeof url === "string" && url.incl
 const supportsDocumentPiP = typeof window !== "undefined" && "documentPictureInPicture" in window;
 const supportsVideoPiP = typeof document !== "undefined" && !!document.pictureInPictureEnabled;
 
+// Type for DocumentPictureInPicture API
+interface DocumentPictureInPictureAPI {
+  requestWindow: (options?: { width?: number; height?: number }) => Promise<Window>;
+}
+
 const extractTwitchChannel = (rawUrl: string): string | null => {
   try {
     const parsed = new URL(rawUrl);
@@ -59,7 +64,7 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
   const [embedSrc, setEmbedSrc] = useState<string | null>(null);
   const [pipActive, setPipActive] = useState(false);
   const [pipError, setPipError] = useState<string | null>(null);
-  const [pipSupported] = useState(supportsDocumentPiP || supportsVideoPiP);
+  const pipSupported = supportsDocumentPiP || supportsVideoPiP;
   const playerContainerRef = useRef<HTMLDivElement | null>(null);
   const pipWindowRef = useRef<Window | null>(null);
   const pipFrameRef = useRef<HTMLIFrameElement | null>(null);
@@ -121,7 +126,9 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
       }
 
       // Simplified type checking for DocumentPictureInPicture
-      const docPiP = supportsDocumentPiP ? (window as { documentPictureInPicture?: { requestWindow: (options?: { width?: number; height?: number }) => Promise<Window> } }).documentPictureInPicture : undefined;
+      const docPiP = supportsDocumentPiP 
+        ? (window as { documentPictureInPicture?: DocumentPictureInPictureAPI }).documentPictureInPicture 
+        : undefined;
 
       if (docPiP?.requestWindow) {
         const pipWindow = await docPiP.requestWindow({ width: 480, height: 270 });
