@@ -98,13 +98,13 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
     const iframe = pipIframeRef.current;
     if (!iframe) return;
     if (!embedSrc) {
-      console.warn('embedSrc es nulo mientras Picture-in-Picture está activo; no se actualiza el stream.');
+      console.warn('embedSrc is null while Picture-in-Picture is active; stream update skipped.');
       return;
     }
     try {
       iframe.src = embedSrc;
     } catch (error) {
-      console.error('No se pudo actualizar el stream en Picture-in-Picture', error);
+      console.error('Failed to update Picture-in-Picture stream', error);
     }
   }, [embedSrc, pipWindow]);
 
@@ -140,7 +140,7 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
       setPipWindow(pip);
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
-      console.error(`No se pudo activar Picture-in-Picture: ${reason}`, error);
+      console.error(`Failed to activate Picture-in-Picture: ${reason}`, error);
     } finally {
       setIsOpeningPip(false);
     }
