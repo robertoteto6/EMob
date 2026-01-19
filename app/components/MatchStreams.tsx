@@ -59,9 +59,21 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
   const playerContainerRef = useRef<HTMLDivElement | null>(null);
   const pipWindowRef = useRef<Window | null>(null);
   const pipFrameRef = useRef<HTMLIFrameElement | null>(null);
+  const pagehideHandlerRef = useRef<(() => void) | null>(null);
 
   const supportsDocumentPiP = typeof window !== "undefined" && "documentPictureInPicture" in window;
   const supportsVideoPiP = typeof document !== "undefined" && !!document.pictureInPictureEnabled;
+
+  // Simple hash function for generating stable keys
+  const hashString = (str: string): number => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
+  };
 
   // Initialize active stream
   useEffect(() => {
@@ -84,15 +96,21 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
   }, [supportsDocumentPiP, supportsVideoPiP]);
 
   useEffect(() => {
-    if (pipFrameRef.current && embedSrc) {
-      pipFrameRef.current.src = embedSrc;
+    const pipFrame = pipFrameRef.current;
+    if (pipFrame && embedSrc) {
+      pipFrame.src = embedSrc;
     }
   }, [embedSrc]);
 
   useEffect(() => {
     return () => {
-      if (pipWindowRef.current && !pipWindowRef.current.closed) {
-        pipWindowRef.current.close();
+      const pipWindow = pipWindowRef.current;
+      if (pipWindow && !pipWindow.closed) {
+        // Clean up pagehide listener if it exists
+        if (pagehideHandlerRef.current) {
+          pipWindow.removeEventListener("pagehide", pagehideHandlerRef.current);
+        }
+        pipWindow.close();
       }
     };
   }, []);
@@ -132,11 +150,16 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
         pipWindowRef.current = pipWindow;
         pipFrameRef.current = iframe;
         setPipActive(true);
-        pipWindow.addEventListener("pagehide", () => {
+        
+        // Store handler reference for cleanup
+        const handlePageHide = () => {
           pipWindowRef.current = null;
           pipFrameRef.current = null;
+          pagehideHandlerRef.current = null;
           setPipActive(false);
-        });
+        };
+        pagehideHandlerRef.current = handlePageHide;
+        pipWindow.addEventListener("pagehide", handlePageHide);
         return;
       }
 
@@ -181,6 +204,7 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
                   allowFullScreen
                   className="w-full h-full"
                   title="Live Stream"
+                  aria-label={`Transmisión en directo en ${activeStream.language}`}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-500 flex-col gap-6 bg-[radial-gradient(circle_at_center,_#111_0%,_#000_100%)]">
@@ -235,10 +259,10 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
             </div>
           )}
           {pipError && (
-            <p className="mt-3 px-4 text-xs font-semibold text-red-300">{pipError}</p>
+            <p role="alert" className="mt-3 px-4 text-xs font-semibold text-red-300">{pipError}</p>
           )}
           {!pipSupported && (
-            <p className="mt-3 px-4 text-xs font-semibold text-gray-500">
+            <p role="status" className="mt-3 px-4 text-xs font-semibold text-gray-500">
               PiP no disponible para este navegador o proveedor. Usa &quot;Abrir externo&quot; para continuar viendo el directo.
             </p>
           )}
@@ -255,12 +279,14 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
           </div>
 
           <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar lg:pb-10">
-            {streams.map((stream, idx) => {
+            {streams.map((stream) => {
               const isActive = activeStream === stream;
               const isTwitch = isTwitchUrl(stream.raw_url);
+              // Create stable, short key using hash of URL and language
+              const streamKey = `stream-${hashString(stream.raw_url + stream.language)}`;
               return (
                 <button
-                  key={idx}
+                  key={streamKey}
                   onClick={() => setActiveStream(stream)}
                   className={`w-full text-left group flex items-center gap-4 p-5 rounded-[1.5rem] border transition-all duration-700 relative overflow-hidden ${isActive
                       ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-[var(--accent,#00FF80)]/40 shadow-2xl'
