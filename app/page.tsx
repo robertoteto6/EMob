@@ -45,6 +45,7 @@ const ChatBot = nextDynamic(() => import("./components/ChatBot"), {
 });
 
 const TIME_UPDATE_INTERVAL = 15_000;
+const MATCH_REFRESH_INTERVAL = 30_000;
 
 // Custom hook to handle time consistently between server and client
 function useCurrentTime(updateInterval = TIME_UPDATE_INTERVAL) {
@@ -565,6 +566,7 @@ const Home = memo(function Home() {
   const [loadingTournaments, setLoadingTournaments] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState<"today" | "week" | "all">("today");
   const [selectedGame, setSelectedGame] = useState<string>("all");
+  const [showLiveOnly, setShowLiveOnly] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
   const filterAnimationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
@@ -596,6 +598,11 @@ const Home = memo(function Home() {
     setSelectedGame(gameId);
     return true;
   }, [selectedGame, triggerFilterFeedback]);
+
+  const handleLiveOnlyToggle = useCallback(() => {
+    triggerFilterFeedback();
+    setShowLiveOnly((prev) => !prev);
+  }, [triggerFilterFeedback]);
 
   useEffect(() => {
     return () => {
@@ -676,6 +683,12 @@ const Home = memo(function Home() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    if (!isClient) return;
+    const interval = window.setInterval(loadData, MATCH_REFRESH_INTERVAL);
+    return () => window.clearInterval(interval);
+  }, [isClient, loadData]);
 
   useEffect(() => {
     if (!isClient) return;
@@ -781,17 +794,29 @@ const Home = memo(function Home() {
 
     let todayCount = 0;
     let weekCount = 0;
+    let allCount = 0;
 
     for (const match of baseMatches) {
       const matchMs = match.start_time * 1000;
       const isToday = matchMs >= todayStartMs && matchMs < todayEndMs;
+      const isLive = match.start_time <= nowSeconds && match.radiant_win === null;
+      const passesLiveFilter = !showLiveOnly || isLive;
+
+      if (passesLiveFilter) {
+        allCount += 1;
+      }
+
       if (isToday) {
-        todayCount += 1;
+        if (passesLiveFilter) {
+          todayCount += 1;
+        }
       }
 
       const isWithinWeek = matchMs >= nowMs && matchMs <= weekEndMs;
       if (isWithinWeek) {
-        weekCount += 1;
+        if (passesLiveFilter) {
+          weekCount += 1;
+        }
       }
 
       let include = true;
@@ -801,7 +826,7 @@ const Home = memo(function Home() {
         include = isWithinWeek;
       }
 
-      if (include) {
+      if (include && passesLiveFilter) {
         filtered.push(match);
       }
     }
@@ -821,10 +846,10 @@ const Home = memo(function Home() {
       timeframeCounts: {
         today: todayCount,
         week: weekCount,
-        all: baseMatches.length,
+        all: allCount,
       },
     };
-  }, [matches, matchesByGame, selectedGame, selectedTimeframe, currentTime]);
+  }, [matches, matchesByGame, selectedGame, selectedTimeframe, currentTime, showLiveOnly]);
 
   const timeframeOptions = useMemo(
     () => ([
@@ -1386,7 +1411,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
               </div>
             </div>
 
-            {/* Información de resultados y acciones */}
+        {/* Información de resultados y acciones */}
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-700">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 bg-gray-700/50 px-4 py-2 rounded-xl text-sm text-gray-300">
@@ -1395,18 +1420,42 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                   </svg>
                   Actualización automática cada 30s
                 </div>
-                
+
                 <div className="bg-gradient-to-r from-blue-600/20 to-green-600/20 px-4 py-2 rounded-xl text-sm text-white border border-blue-500/30">
                   <span className="font-bold">{filteredMatches.length}</span> partidos encontrados
                 </div>
+                {showLiveOnly && (
+                  <div className="flex items-center gap-2 bg-red-500/10 px-4 py-2 rounded-xl text-sm text-red-200 border border-red-500/30">
+                    <span className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
+                    Solo en vivo activo
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-3">
+                <button
+                  onClick={handleLiveOnlyToggle}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                    showLiveOnly
+                      ? "bg-red-500/20 text-red-100 border border-red-400/60"
+                      : "bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 hover:text-white"
+                  }`}
+                  aria-label={showLiveOnly ? "Desactivar filtro de partidos en vivo" : "Filtrar solo partidos en vivo"}
+                  aria-pressed={showLiveOnly}
+                >
+                  {showLiveOnly ? "🔴 En vivo" : "🔴 Solo en vivo"}
+                </button>
                 <button 
                   onClick={() => {
                     const timeframeChanged = handleTimeframeChange("today");
                     const gameChanged = handleGameChange("all");
-                    if (!timeframeChanged && !gameChanged) {
+                    const liveOnlyChanged = showLiveOnly;
+                    if (showLiveOnly) {
+                      setShowLiveOnly(false);
+                    }
+                    if (!timeframeChanged && !gameChanged && !liveOnlyChanged) {
+                      triggerFilterFeedback();
+                    } else if (liveOnlyChanged && !(timeframeChanged || gameChanged)) {
                       triggerFilterFeedback();
                     }
                   }}
@@ -1533,10 +1582,16 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                     ⭐ Mis Favoritos
                   </button>
                   <button 
-                    className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"
-                    aria-label="Filtrar solo partidos en vivo"
+                    onClick={handleLiveOnlyToggle}
+                    className={`text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2 ${
+                      showLiveOnly
+                        ? "bg-gradient-to-r from-red-500 to-red-600 ring-2 ring-red-300/60"
+                        : "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
+                    }`}
+                    aria-label={showLiveOnly ? "Desactivar filtro de partidos en vivo" : "Filtrar solo partidos en vivo"}
+                    aria-pressed={showLiveOnly}
                   >
-                    🔴 Solo En Vivo
+                    {showLiveOnly ? "🔴 En vivo activo" : "🔴 Solo En Vivo"}
                   </button>
                 </div>
               </div>
@@ -1545,7 +1600,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
         </section>
 
         {/* Torneos Activos */}
-        <section className="container mx-auto px-6 py-16 relative">
+        <section id="torneos" className="container mx-auto px-6 py-16 relative">
           {/* Fondo con gradiente */}
           <div className="absolute inset-0 bg-gradient-to-br from-gray-900/50 via-black/30 to-gray-900/50 rounded-3xl"></div>
           
