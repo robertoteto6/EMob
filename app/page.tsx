@@ -816,15 +816,17 @@ const Home = memo(function Home() {
     const todayStartMs = startOfToday.getTime();
     const todayEndMs = todayStartMs + dayMs;
     const weekEndMs = nowMs + 7 * dayMs;
-    const matchesForCounts = showLiveOnly
-      ? baseMatches.filter((match) => match.start_time <= nowSeconds && match.radiant_win === null)
+    const isLiveMatch = (match: Match) =>
+      match.start_time <= nowSeconds && match.radiant_win === null;
+    const matchesForFiltering = showLiveOnly
+      ? baseMatches.filter(isLiveMatch)
       : baseMatches;
-    const allCount = matchesForCounts.length;
+    const allCount = matchesForFiltering.length;
 
     let todayCount = 0;
     let weekCount = 0;
 
-    for (const match of matchesForCounts) {
+    for (const match of matchesForFiltering) {
       const matchMs = match.start_time * 1000;
       const isToday = matchMs >= todayStartMs && matchMs < todayEndMs;
       if (isToday) {
@@ -849,8 +851,8 @@ const Home = memo(function Home() {
     }
 
     filtered.sort((a, b) => {
-      const aIsLive = a.start_time <= nowSeconds && a.radiant_win === null;
-      const bIsLive = b.start_time <= nowSeconds && b.radiant_win === null;
+      const aIsLive = isLiveMatch(a);
+      const bIsLive = isLiveMatch(b);
 
       if (aIsLive && !bIsLive) return -1;
       if (!aIsLive && bIsLive) return 1;
