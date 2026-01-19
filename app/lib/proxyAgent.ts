@@ -20,7 +20,7 @@ export function getProxyAgent(): Dispatcher | undefined {
   
   try {
     // Use require in Node context only; ESLint rule disabled at file level via override
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const undici = require("undici");
     return new undici.ProxyAgent(proxyUrl);
   } catch (error) {

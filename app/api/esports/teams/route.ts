@@ -121,7 +121,7 @@ export async function GET(req: Request) {
     }
     
     // Enriquecer los datos de equipos con información básica (sin muchas requests para evitar rate limit)
-    const enrichedTeams = data.slice(0, 30).map((t: any, index: number) => {
+    const enrichedTeams = data.slice(0, 30).map((t: any, _index: number) => {
       let gloryScore = 0;
       
       // Calcular gloria usando solo datos reales del equipo

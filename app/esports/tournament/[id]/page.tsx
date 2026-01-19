@@ -93,7 +93,7 @@ export default function TournamentPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <main className="p-4 sm:p-8 font-sans space-y-4">
+    <main className="pt-20 p-4 sm:p-8 font-sans space-y-4">
       <Link href="/esports" className="text-[var(--accent)] hover:underline">
         ← Volver
       </Link>

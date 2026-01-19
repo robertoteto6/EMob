@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { getTeamImageUrl } from "../lib/imageFallback";
+import { Team } from "../lib/types";
 
 export interface TeamFollow {
-  teamId: number;
+  teamId: string;
   teamName: string;
   game: string;
   notifications: boolean;
@@ -21,7 +22,7 @@ interface TeamFollowSystemProps {
 export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: TeamFollowSystemProps) {
   const [followedTeams, setFollowedTeams] = useState<TeamFollow[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<Team[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showFollowModal, setShowFollowModal] = useState(false);
 
@@ -69,14 +70,14 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
     }
   };
 
-  const followTeam = (team: any) => {
+  const followTeam = (team: Team) => {
     const newFollow: TeamFollow = {
       teamId: team.id,
       teamName: team.name,
       game: currentGame,
       notifications: true,
       addedAt: Date.now(),
-      teamLogo: getTeamImageUrl({ id: team.id, name: team.name, image_url: team.image_url })
+      teamLogo: getTeamImageUrl({ id: team.id, name: team.name, image_url: team.logo })
     };
 
     setFollowedTeams(prev => {
@@ -89,13 +90,13 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
     setSearchResults([]);
   };
 
-  const unfollowTeam = (teamId: number, game: string) => {
+  const unfollowTeam = (teamId: string, game: string) => {
     setFollowedTeams(prev => 
       prev.filter(t => !(t.teamId === teamId && t.game === game))
     );
   };
 
-  const toggleNotifications = (teamId: number, game: string) => {
+  const toggleNotifications = (teamId: string, game: string) => {
     setFollowedTeams(prev => 
       prev.map(t => 
         t.teamId === teamId && t.game === game 
@@ -221,7 +222,7 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                         className={`w-full text-left p-2 flex items-center gap-2 hover:bg-[#222] border-b border-[#333] last:border-b-0 ${isFollowed ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <Image
-                          src={getTeamImageUrl({ id: team.id, name: team.name, image_url: team.image_url })}
+                          src={getTeamImageUrl({ id: team.id, name: team.name, image_url: team.logo })}
                           alt={team.name}
                           width={24}
                           height={24}

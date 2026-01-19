@@ -3,7 +3,26 @@
 import { useState, useEffect, useCallback, memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { apiCache, throttle } from "../lib/utils";
+import { apiCache } from "../lib/utils";
+
+interface PandaScoreMatch {
+  id: number;
+  begin_at: string | null;
+  scheduled_at: string | null;
+  winner: any;
+  status: string;
+  opponents?: Array<{
+    opponent: {
+      name: string;
+    };
+  }>;
+  results?: Array<{
+    score: number;
+  }>;
+  league?: {
+    name: string;
+  };
+}
 
 interface LiveMatch {
   id: number;
@@ -71,12 +90,12 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
             const data = await res.json();
             const now = Date.now() / 1000;
             return data
-              .filter((m: any) => {
+              .filter((m: PandaScoreMatch) => {
                 const dateStr = m.begin_at ?? m.scheduled_at;
                 const startTime = dateStr ? new Date(dateStr).getTime() / 1000 : null;
                 return startTime && startTime <= now && !m.winner && m.status !== "finished";
               })
-              .map((m: any) => {
+              .map((m: PandaScoreMatch) => {
                 const dateStr = m.begin_at ?? m.scheduled_at;
                 return {
                   id: m.id,

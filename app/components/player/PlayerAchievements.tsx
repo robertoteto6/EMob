@@ -146,7 +146,7 @@ function AchievementCard({ achievement, index }: { achievement: Achievement; ind
   );
 }
 
-export default function PlayerAchievements({ achievements, playerName, isVeteran }: PlayerAchievementsProps) {
+export default function PlayerAchievements({ achievements, playerName, isVeteran: _isVeteran }: PlayerAchievementsProps) {
   const [filter, setFilter] = useState<Achievement['rarity'] | 'all'>('all');
   const [typeFilter, setTypeFilter] = useState<Achievement['type'] | 'all'>('all');
 
@@ -166,8 +166,8 @@ export default function PlayerAchievements({ achievements, playerName, isVeteran
   });
 
   // Stats
-  const legendaryCount = achievements.filter(a => a.rarity === 'legendary').length;
-  const epicCount = achievements.filter(a => a.rarity === 'epic').length;
+  const _legendaryCount = achievements.filter(a => a.rarity === 'legendary').length;
+  const _epicCount = achievements.filter(a => a.rarity === 'epic').length;
   const championshipCount = achievements.filter(a => a.type === 'championship').length;
   const mvpCount = achievements.filter(a => a.type === 'mvp').length;
 

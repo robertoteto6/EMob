@@ -491,7 +491,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       if (matchesRes.ok) {
         recentMatches = await matchesRes.json();
       }
-    } catch (e) {
+    } catch {
       console.log("No matches data available");
     }
 
@@ -564,7 +564,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         if (teamRes.ok) {
           teamData = await teamRes.json();
         }
-      } catch (e) {
+      } catch {
         console.log("No team data available");
       }
     }

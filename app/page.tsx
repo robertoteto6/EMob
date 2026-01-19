@@ -13,6 +13,28 @@ import { SUPPORTED_GAMES, type GameConfig } from "./lib/gameConfig";
 import { useNotifications } from "./hooks/useNotifications";
 import { useDeferredClientRender } from "./hooks/useDeferredClientRender";
 
+interface PandaScoreMatch {
+  id: number;
+  begin_at: string | null;
+  scheduled_at: string | null;
+  opponents?: Array<{
+    opponent: {
+      id: number;
+      name: string;
+    };
+  }>;
+  results?: Array<{
+    score: number;
+  }>;
+  league?: {
+    name: string;
+  };
+  winner?: {
+    id: number;
+  };
+  status: string;
+}
+
 const NotificationSystem = nextDynamic(() => import("./components/NotificationSystem"), {
   ssr: false,
 });
@@ -125,7 +147,7 @@ async function fetchAllMatches(): Promise<Match[]> {
       }
       
       const gameMatches = data
-        .map((m: any) => {
+        .map((m: PandaScoreMatch) => {
           // Validar datos requeridos
           if (!m || typeof m.id !== 'number') {
             return null;

@@ -9,14 +9,11 @@ import ThemeToggle from "./ThemeToggle";
 import { optimizeScroll } from "../lib/utils";
 
 function HeaderContent() {
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const isScrolledRef = useRef(false);
-  const pathname = usePathname();
-
-  // Ocultar header en páginas de detalles de esports que tienen su propio header local
-  const shouldHideHeader = pathname?.includes('/esports/') && pathname?.split('/').length > 2;
 
   useEffect(() => {
     setIsClient(true);
@@ -42,11 +39,6 @@ function HeaderContent() {
     { name: "Equipos", href: "/equipos", icon: "👥" },
     { name: "Jugadores", href: "/jugadores", icon: "🎮" },
   ];
-
-  // Early return for esports detail pages
-  if (shouldHideHeader) {
-    return null;
-  }
 
   return (
     <header

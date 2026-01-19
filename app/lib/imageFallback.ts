@@ -1,18 +1,18 @@
 interface PlayerImageInput {
-  id: number;
+  id: string | number;
   name: string;
   image_url?: string | null;
   current_team_image?: string | null;
 }
 
 interface TeamImageInput {
-  id: number;
+  id: string | number;
   name: string;
   acronym?: string | null;
   image_url?: string | null;
 }
 
-export function getPlayerFallbackUrl(id: number, name: string) {
+export function getPlayerFallbackUrl(id: string | number, name: string) {
   const params = new URLSearchParams();
   if (name) {
     params.set("name", name);

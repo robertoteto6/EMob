@@ -69,7 +69,7 @@ class PerformanceMonitor {
         });
         lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
         this.observers.set('lcp', lcpObserver);
-      } catch (e) {
+      } catch {
         console.warn('LCP observer not supported');
       }
 
@@ -93,7 +93,7 @@ class PerformanceMonitor {
         });
         fidObserver.observe({ entryTypes: ['first-input'] });
         this.observers.set('fid', fidObserver);
-      } catch (e) {
+      } catch {
         console.warn('FID observer not supported');
       }
 
@@ -118,7 +118,7 @@ class PerformanceMonitor {
         });
         clsObserver.observe({ entryTypes: ['layout-shift'] });
         this.observers.set('cls', clsObserver);
-      } catch (e) {
+      } catch {
         console.warn('CLS observer not supported');
       }
 
@@ -142,7 +142,7 @@ class PerformanceMonitor {
         });
         navigationObserver.observe({ entryTypes: ['navigation'] });
         this.observers.set('navigation', navigationObserver);
-      } catch (e) {
+      } catch {
         console.warn('Navigation observer not supported');
       }
 
@@ -167,7 +167,7 @@ class PerformanceMonitor {
         });
         resourceObserver.observe({ entryTypes: ['resource'] });
         this.observers.set('resource', resourceObserver);
-      } catch (e) {
+      } catch {
         console.warn('Resource observer not supported');
       }
     }

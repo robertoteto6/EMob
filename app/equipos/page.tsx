@@ -21,7 +21,7 @@ const ChatBot = nextDynamic(() => import("../components/ChatBot"), {
 });
 
 // Icono de favorito (estrella)
-function Star({ filled, ...props }: { filled: boolean; [key: string]: any }) {
+function Star({ filled, ...props }: { filled: boolean; [key: string]: unknown }) {
   return (
     <svg
       width="22"
@@ -264,7 +264,7 @@ function TeamCard({ team, onToggleFavorite, favoriteTeams }: {
                 🏆 Trofeos Principales
               </h4>
               <div className="flex flex-wrap gap-1 mb-2">
-                {team.tournaments.slice(0, 3).map((tournament, index) => (
+                {team.tournaments.slice(0, 3).map((tournament, _index) => (
                   <div
                     key={tournament.id}
                     className="group/trophy relative"

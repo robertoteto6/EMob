@@ -15,6 +15,45 @@ import Spinner from "../components/Spinner";
 import { useNotifications } from "../hooks/useNotifications";
 import { useDeferredClientRender } from "../hooks/useDeferredClientRender";
 
+interface PandaScoreMatch {
+  id: number;
+  begin_at: string | null;
+  scheduled_at: string | null;
+  opponents?: Array<{
+    opponent: {
+      id: number;
+      name: string;
+    };
+  }>;
+  results?: Array<{
+    score: number;
+  }>;
+  league?: {
+    name: string;
+  };
+  winner?: {
+    id: number;
+  };
+  status: string;
+}
+
+interface PandaScoreTournament {
+  id: number;
+  name: string;
+  begin_at: string | null;
+  end_at: string | null;
+  league?: {
+    name: string;
+  };
+  serie?: {
+    full_name: string;
+  };
+  prizepool: string | null;
+  tier: string | null;
+  region: string | null;
+  live_supported: boolean;
+}
+
 const NotificationSystem = nextDynamic(() => import("../components/NotificationSystem"), {
   ssr: false,
 });
@@ -25,7 +64,7 @@ const ChatBot = nextDynamic(() => import("../components/ChatBot"), {
 });
 
 // Icono de favorito (estrella)
-function Star({ filled, ...props }: { filled: boolean; [key: string]: any }) {
+function Star({ filled, ...props }: { filled: boolean; [key: string]: unknown }) {
   return (
     <svg
       width="22"
@@ -94,7 +133,7 @@ async function fetchMatches(game: string): Promise<Match[]> {
   }
   const data = await res.json();
   return data
-    .map((m: any) => {
+    .map((m: PandaScoreMatch) => {
       const team1 = m.opponents?.[0]?.opponent;
       const team2 = m.opponents?.[1]?.opponent;
       // Validar fecha
@@ -130,7 +169,7 @@ async function fetchTournaments(game: string): Promise<Tournament[]> {
     return [];
   }
   const data = await res.json();
-  return data.map((t: any) => ({
+  return data.map((t: PandaScoreTournament) => ({
     id: t.id,
     name: t.name ?? "",
     begin_at: t.begin_at ? new Date(t.begin_at).getTime() / 1000 : null,
@@ -588,7 +627,7 @@ function EsportsPageContent() {
   }, [game]);
 
   function matchOnSelectedTimeframe(match: Match) {
-    const now = Date.now();
+    const _now = Date.now();
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const matchTime = match.start_time * 1000;
@@ -1022,7 +1061,7 @@ ${t.description}. Ajusta la lista de partidos al período indicado.`}
                     <Star filled={true} /> Partidos Favoritos
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-                    {favoriteList.slice(0, 4).map((match, index) => (
+                    {favoriteList.slice(0, 4).map((match, _index) => (
                       <FeaturedMatch key={match.id} match={match} onToggleFavorite={setFavoriteMatches} favoriteMatches={favoriteMatches} />
                     ))}
                   </div>
@@ -1055,7 +1094,7 @@ ${t.description}. Ajusta la lista de partidos al período indicado.`}
                   </div>
                 ) : paginated.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-                    {paginated.map((match, index) => (
+                    {paginated.map((match, _index) => (
                       <FeaturedMatch key={match.id} match={match} onToggleFavorite={setFavoriteMatches} favoriteMatches={favoriteMatches} />
                     ))}
                   </div>
@@ -1229,7 +1268,7 @@ ${t.description}. Ajusta la lista de partidos al período indicado.`}
                           }
                           return true;
                         })
-                        .map((tournament, index) => (
+                        .map((tournament, _index) => (
                           <TournamentCard key={tournament.id} tournament={tournament} game={GAMES.find(g => g.id === game)} />
                         ))}
                     </div>

@@ -4,7 +4,7 @@ if (typeof window === 'undefined') {
   try {
     // En algunos entornos (Edge/Browser) `require` no existe.
     // Obtenemos una referencia segura desde globalThis para evitar errores de tipos.
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+     
     const req = (globalThis as any).require as undefined | ((id: string) => any);
     if (typeof req === 'function') {
       const mod = req('./proxyAgent');
@@ -180,7 +180,6 @@ export function clearApiCache(tags?: string[]) {
 
 // Función para precarga de datos críticos
 export async function preloadCriticalData() {
-  const cache = getGlobalCache();
   const criticalEndpoints = [
     'https://api.pandascore.co/matches/running',
     'https://api.pandascore.co/matches/upcoming',

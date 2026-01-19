@@ -2,7 +2,6 @@
 
 import { memo } from 'react';
 import { Player } from '../lib/types';
-import Link from 'next/link';
 
 interface MatchLineupsProps {
     radiantName: string;

@@ -9,7 +9,7 @@ interface MatchGamesProps {
     direName: string;
 }
 
-const MatchGames = ({ games, radiantName, direName }: MatchGamesProps) => {
+const MatchGames = ({ games, radiantName: _radiantName, direName: _direName }: MatchGamesProps) => {
     if (!games || games.length === 0) return null;
 
     // Sort games by position just in case
@@ -23,12 +23,12 @@ const MatchGames = ({ games, radiantName, direName }: MatchGamesProps) => {
             </h3>
 
             <div className="space-y-3">
-                {sortedGames.map((game, index) => {
+                {sortedGames.map((game, _index) => {
                     const duration = game.end_at && game.begin_at
                         ? Math.floor((new Date(game.end_at).getTime() - new Date(game.begin_at).getTime()) / 1000 / 60)
                         : null;
 
-                    const isWinnerDefined = game.winner_id !== null;
+                    const _isWinnerDefined = game.winner_id !== null;
                     // Assuming we don't have easy access to team IDs here to map winner_id to name without passing more props.
                     // But for now, let's just show the status and duration.
 

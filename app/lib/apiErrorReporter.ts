@@ -1,7 +1,7 @@
 // Enhanced error reporter for server-side API calls
 // Logs structured errors to console and external services in production
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 export interface ApiErrorReport {
   service: string; // e.g., 'pandascore'
@@ -56,11 +56,11 @@ export function reportApiError(report: ApiErrorReport) {
 
   // Always log to console for visibility
   try {
-    // eslint-disable-next-line no-console
+     
     console.error('[API ERROR]', JSON.stringify(entry, null, 2));
   } catch {
     // Fallback if JSON stringify fails
-    // eslint-disable-next-line no-console
+     
     console.error('[API ERROR]', entry);
   }
 
@@ -74,16 +74,16 @@ export function reportApiError(report: ApiErrorReport) {
   // In development, persist locally to aid debugging
   if (typeof window === 'undefined' && process.env.NODE_ENV === 'development') {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
+       
       const fs = require('fs') as typeof import('fs');
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
+       
       const path = require('path') as typeof import('path');
       const logsDir = path.join(process.cwd(), 'logs');
       const filePath = path.join(logsDir, 'api-errors.log');
       if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir);
       fs.appendFileSync(filePath, `${new Date().toISOString()} ${JSON.stringify(entry)}\n`);
     } catch (e) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Failed to write API error log file:', e);
     }
   }
@@ -104,7 +104,7 @@ export function reportApiSuccess(service: string, url: string, duration: number,
 
   // Log successful requests in development or with verbose logging
   if (process.env.NODE_ENV === 'development' || process.env.API_VERBOSE_LOGGING === 'true') {
-    // eslint-disable-next-line no-console
+     
     console.log('[API SUCCESS]', JSON.stringify(entry));
   }
 

@@ -77,7 +77,7 @@ const GAMES = [
 ];
 
 // Componente de estadísticas principales
-function GameOverview({ game, matches, tournaments, teams, players }: {
+function GameOverview({ game: _game, matches, tournaments, teams, players: _players }: {
   game: typeof GAMES[0];
   matches: Match[];
   tournaments: Tournament[];

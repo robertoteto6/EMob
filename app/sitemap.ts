@@ -70,7 +70,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 // Esta función podría ser llamada desde una API route para generar
 // entradas de sitemap basadas en datos reales
 export async function generateMatchesSitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://emob.vercel.app';
+  const _baseUrl = 'https://emob.vercel.app';
   
   try {
     // Aquí podrías hacer una llamada a tu API para obtener partidos recientes

@@ -270,7 +270,7 @@ export class SecurityMiddleware {
         }
         
         // Recrear el request con datos sanitizados
-        const sanitizedRequest = new NextRequest(request.url, {
+        const _sanitizedRequest = new NextRequest(request.url, {
           method: request.method,
           headers: request.headers,
           body: JSON.stringify(body),
@@ -280,7 +280,7 @@ export class SecurityMiddleware {
         (request as any).sanitizedBody = body;
       }
       
-    } catch (error) {
+    } catch {
       return new NextResponse('Invalid JSON', { status: 400 });
     }
     

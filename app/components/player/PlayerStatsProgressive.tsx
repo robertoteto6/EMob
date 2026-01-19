@@ -197,7 +197,7 @@ function GameStatsSection({ gameStats, selectedLevel }: { gameStats: GameSpecifi
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {statsToShow.map((statConfig, idx) => {
+        {statsToShow.map((statConfig, _idx) => {
           const statData = gameStats.stats.find(s => s.key === statConfig.key);
           if (!statData) return null;
           

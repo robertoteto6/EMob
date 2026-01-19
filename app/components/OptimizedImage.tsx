@@ -43,7 +43,7 @@ export default function OptimizedImage({
 }: OptimizedImageProps) {
   const [imageSrc, setImageSrc] = useState(src);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+  const [_hasError, setHasError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const imgRef = useRef<HTMLImageElement>(null);
   const maxRetries = 3;

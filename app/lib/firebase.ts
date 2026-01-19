@@ -27,9 +27,8 @@ let app: ReturnType<typeof initializeApp> | null = null;
 if (typeof window !== 'undefined' && firebaseEnabled) {
   try {
     app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-  } catch (e) {
+  } catch {
     // If already initialized or any benign error, ignore
-    // console.warn('Firebase init warning:', e);
     app = null;
   }
 }

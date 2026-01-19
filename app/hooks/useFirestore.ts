@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { FirestoreService, FirestoreDocument } from '../lib/firestore';
-import { Unsubscribe } from 'firebase/firestore';
 
 interface UseFirestoreState<T> {
   data: T[];

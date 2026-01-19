@@ -153,7 +153,7 @@ export default function CompressedImage({
 }
 
 // Hook para precargar imágenes críticas
-export function useImagePreloader(urls: string[], options?: ImageCompressionOptions) {
+export function useImagePreloader(urls: string[], _options?: ImageCompressionOptions) {
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
 
@@ -203,7 +203,7 @@ export function OptimizedGallery({
   itemClassName,
   compressionOptions,
 }: OptimizedGalleryProps) {
-  const { preloadImages, isImageLoaded } = useImagePreloader(
+  const { preloadImages, isImageLoaded: _isImageLoaded } = useImagePreloader(
     images.slice(0, 3).map(img => img.src), // Precargar las primeras 3 imágenes
     compressionOptions
   );

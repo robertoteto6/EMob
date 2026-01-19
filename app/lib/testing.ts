@@ -5,8 +5,8 @@ import { ComponentType } from 'react';
 import { ReactElement } from 'react';
 
 // Tipos temporales para evitar errores de build
-type RenderOptions = any;
-type RenderResult = any;
+type _RenderOptions = any;
+type _RenderResult = any;
 
 // ============================================================================
 // SETUP DE TESTING
@@ -15,7 +15,7 @@ type RenderResult = any;
 /**
  * Wrapper personalizado para testing con providers
  */
-export function createTestWrapper(providers: ComponentType<any>[] = []) {
+export function createTestWrapper(_providers: ComponentType<any>[] = []) {
   return function TestWrapper({ children }: { children: React.ReactNode }) {
     // Comentado temporalmente para evitar errores de build
     return children;
@@ -27,8 +27,8 @@ export function createTestWrapper(providers: ComponentType<any>[] = []) {
  * Comentado temporalmente para evitar errores de build
  */
 export function customRender(
-  ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'> & {
+  _ui: ReactElement,
+  _options?: Omit<_RenderOptions, 'wrapper'> & {
     providers?: ComponentType<any>[];
   }
 ): any {
@@ -228,7 +228,7 @@ export const generateMockPlayer = (overrides: Partial<any> = {}) => ({
 /**
  * Verificar que un componente se renderiza sin errores
  */
-export function testComponentRender(Component: ComponentType<any>, props: any = {}) {
+export function testComponentRender(Component: ComponentType<any>, _props: any = {}) {
   return () => {
     // Comentado temporalmente para evitar errores de build
     // expect(() => customRender(<Component {...props} />)).not.toThrow();
@@ -238,7 +238,7 @@ export function testComponentRender(Component: ComponentType<any>, props: any = 
 /**
  * Verificar que un componente maneja props requeridas
  */
-export function testRequiredProps(Component: ComponentType<any>, requiredProps: Record<string, any>) {
+export function testRequiredProps(_Component: ComponentType<any>, _requiredProps: Record<string, any>) {
   return () => {
     // Comentado temporalmente para evitar errores de build
     // expect(() => customRender(<Component {...requiredProps} />)).not.toThrow();
@@ -248,7 +248,7 @@ export function testRequiredProps(Component: ComponentType<any>, requiredProps: 
 /**
  * Verificar que un componente maneja props opcionales
  */
-export function testOptionalProps(Component: ComponentType<any>, baseProps: Record<string, any>, optionalProps: Record<string, any>) {
+export function testOptionalProps(_Component: ComponentType<any>, _baseProps: Record<string, any>, _optionalProps: Record<string, any>) {
   return () => {
     // Comentado temporalmente para evitar errores de build
     // expect(() => customRender(<Component {...baseProps} {...optionalProps} />)).not.toThrow();

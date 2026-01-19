@@ -72,12 +72,12 @@ interface LazyImageProps {
   onError?: () => void;
 }
 
-export const LazyImage = memo<LazyImageProps>(({ 
-  src, 
-  alt, 
-  width, 
-  height, 
-  className, 
+export const LazyImage = memo<LazyImageProps>(({
+  src,
+  alt,
+  width,
+  height,
+  className,
   placeholder,
   blurDataURL,
   priority = false,
@@ -132,7 +132,7 @@ export const LazyImage = memo<LazyImageProps>(({
   if (hasError) {
     return (
       <div 
-        ref={elementRef as any}
+        ref={elementRef as React.RefObject<HTMLDivElement>}
         className={cn(
           'flex items-center justify-center bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
           className
@@ -147,8 +147,8 @@ export const LazyImage = memo<LazyImageProps>(({
   }
 
   return (
-    <div 
-      ref={elementRef as any}
+    <div
+      ref={elementRef as React.RefObject<HTMLDivElement>}
       className={cn('relative overflow-hidden', className)}
       style={{ width, height }}
     >
@@ -219,7 +219,7 @@ export const LazySection = memo<LazySectionProps>(({
   });
 
   return (
-    <div ref={elementRef as any} className={className}>
+    <div ref={elementRef as React.RefObject<HTMLDivElement>} className={className}>
       {isIntersecting ? children : (fallback || <Skeleton variant="rectangular" height={200} />)}
     </div>
   );
@@ -361,7 +361,7 @@ export const usePreloader = () => {
   }, [preloadImage]);
 
   const preloadComponent = useCallback(async (
-    importFn: () => Promise<any>
+    importFn: () => Promise<unknown>
   ) => {
     try {
       await importFn();

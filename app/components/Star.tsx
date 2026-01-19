@@ -6,7 +6,7 @@ import { memo } from 'react';
 interface StarProps {
   filled: boolean;
   onClick?: () => void;
-  [key: string]: any; // Permite pasar otros props como `aria-label`, etc.
+  [key: string]: unknown; // Permite pasar otros props como `aria-label`, etc.
 }
 
 // Icono de favorito (estrella) reutilizable con tooltip y animación mejorada

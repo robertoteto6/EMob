@@ -2,6 +2,7 @@
 
 import { lazy, Suspense } from "react";
 import { Spinner } from "../LoadingOptimized";
+import { PlayerDetail, RecentMatch, Achievement, MediaItem } from "../../lib/types/player";
 
 // Lazy load player components
 const PlayerHeroSection = lazy(() => import("./PlayerHeroSection"));
@@ -11,30 +12,30 @@ const PlayerAchievements = lazy(() => import("./PlayerAchievements"));
 const PlayerMediaGallery = lazy(() => import("./PlayerMediaGallery"));
 
 interface PlayerHeroSectionLazyProps {
-  player: any;
+  player: PlayerDetail;
   onToggleFavorite?: () => void;
   isFavorite?: boolean;
 }
 
 interface PlayerStatsProgressiveLazyProps {
-  player: any;
+  player: PlayerDetail;
 }
 
 interface PlayerMatchesLazyProps {
-  recentMatches: any[];
-  historicalMatches: any[];
+  recentMatches: RecentMatch[];
+  historicalMatches: RecentMatch[];
   isVeteran: boolean;
   playerTeamId?: number | null;
 }
 
 interface PlayerAchievementsLazyProps {
-  achievements: any[];
+  achievements: Achievement[];
   playerName: string;
   isVeteran?: boolean;
 }
 
 interface PlayerMediaGalleryLazyProps {
-  media: any[];
+  media: MediaItem[];
   playerName: string;
 }
 

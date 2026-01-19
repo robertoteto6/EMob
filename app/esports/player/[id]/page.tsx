@@ -18,7 +18,7 @@ import {
 import type { PlayerDetail, VeteranAnalysis } from "../../../lib/types/player";
 
 // Componente para mostrar análisis de IA para veteranos
-function VeteranAnalysisCard({ playerId, playerName }: { playerId: number; playerName: string }) {
+function VeteranAnalysisCard({ playerId, playerName: _playerName }: { playerId: number; playerName: string }) {
   const [analysis, setAnalysis] = useState<VeteranAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
 

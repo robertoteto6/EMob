@@ -1,5 +1,5 @@
 // Service Worker optimizado para EMob
-const CACHE_NAME = 'emob-v2';
+const _CACHE_NAME = 'emob-v2';
 const STATIC_CACHE = 'emob-static-v2';
 const DYNAMIC_CACHE = 'emob-dynamic-v2';
 const API_CACHE = 'emob-api-v2';
@@ -18,7 +18,7 @@ const STATIC_ASSETS = [
 ];
 
 // URLs de API que se pueden cachear
-const API_URLS = [
+const _API_URLS = [
   '/api/esports/matches',
   '/api/esports/teams',
   '/api/esports/players'
@@ -104,12 +104,24 @@ self.addEventListener('fetch', (event) => {
         return response;
       }).catch(() => {
         // Fallback a cache o página offline
-        // Service Worker desactivado (reservado para uso futuro)
-        self.addEventListener('install', (event) => {
-          event.waitUntil(self.skipWaiting());
-        });
+        return caches.match('/offline.html') || new Response('Offline', { status: 503 });
+      })
+    );
+    return;
+  }
 
-        self.addEventListener('activate', (event) => {
-          event.waitUntil(self.clients.claim());
-        });
   // Estrategia para otros recursos (Cache First)
+  event.respondWith(
+    caches.match(request).then(response => {
+      return response || fetch(request).then(response => {
+        // Cachear recursos dinámicos
+        if (response.status === 200) {
+          caches.open(DYNAMIC_CACHE).then(cache => {
+            cache.put(request, response.clone());
+          });
+        }
+        return response;
+      });
+    })
+  );
+});

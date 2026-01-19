@@ -320,7 +320,7 @@ export default function Search({
                 </button>
               </div>
               <div className="space-y-1">
-                {recentSearches.map((item, index) => (
+                {recentSearches.map((item, _index) => (
                   <button
                     key={`recent-${item.type}-${item.id}`}
                     onClick={() => select(item)}

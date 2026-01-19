@@ -23,7 +23,7 @@ interface SEOConfig {
   noIndex?: boolean;
   noFollow?: boolean;
   canonical?: string;
-  structuredData?: any;
+  structuredData?: Record<string, unknown>;
 }
 
 interface BreadcrumbItem {
@@ -254,7 +254,7 @@ export function SEOBreadcrumbs({ items, className }: BreadcrumbsProps) {
 }
 
 // Hook para generar structured data automáticamente
-export function useStructuredData(type: string, data: any) {
+export function useStructuredData(type: string, data: Record<string, unknown>) {
   return useMemo(() => {
     const baseStructure = {
       '@context': 'https://schema.org',

@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { LangFlag } from './LangFlag';
 import type { StreamInfo } from '../lib/types';
 

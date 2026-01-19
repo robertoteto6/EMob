@@ -58,11 +58,6 @@ function generateVeteranAnalysis(playerData: PlayerData, matches: MatchData[]): 
 
   // Análisis de carrera basado en datos
   if (matches.length > 0) {
-    const recentMatches = matches.slice(0, 10);
-    const wins = recentMatches.filter(m => m.winner && m.opponents?.some(opp =>
-      opp.opponent?.id === playerData.id && opp.opponent?.id === m.winner?.id
-    )).length;
-
     // Detectar momentos destacados
     const importantMatches = matches.filter((match) => {
       const matchName = match.name?.toLowerCase() || '';
