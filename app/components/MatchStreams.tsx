@@ -10,6 +10,10 @@ interface MatchStreamsProps {
 
 const isTwitchUrl = (url?: string | null) => typeof url === "string" && url.includes("twitch.tv");
 
+// Browser capability checks - moved outside component to avoid re-evaluation on every render
+const supportsDocumentPiP = typeof window !== "undefined" && "documentPictureInPicture" in window;
+const supportsVideoPiP = typeof document !== "undefined" && !!document.pictureInPictureEnabled;
+
 const extractTwitchChannel = (rawUrl: string): string | null => {
   try {
     const parsed = new URL(rawUrl);
@@ -55,13 +59,11 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
   const [embedSrc, setEmbedSrc] = useState<string | null>(null);
   const [pipActive, setPipActive] = useState(false);
   const [pipError, setPipError] = useState<string | null>(null);
-  const [pipSupported, setPipSupported] = useState(false);
+  const [pipSupported] = useState(supportsDocumentPiP || supportsVideoPiP);
   const playerContainerRef = useRef<HTMLDivElement | null>(null);
   const pipWindowRef = useRef<Window | null>(null);
   const pipFrameRef = useRef<HTMLIFrameElement | null>(null);
-
-  const supportsDocumentPiP = typeof window !== "undefined" && "documentPictureInPicture" in window;
-  const supportsVideoPiP = typeof document !== "undefined" && !!document.pictureInPictureEnabled;
+  const isMountedRef = useRef(true);
 
   // Initialize active stream
   useEffect(() => {
@@ -80,10 +82,6 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
   }, [activeStream]);
 
   useEffect(() => {
-    setPipSupported(supportsDocumentPiP || supportsVideoPiP);
-  }, [supportsDocumentPiP, supportsVideoPiP]);
-
-  useEffect(() => {
     if (pipFrameRef.current && embedSrc) {
       pipFrameRef.current.src = embedSrc;
     }
@@ -91,6 +89,7 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
 
   useEffect(() => {
     return () => {
+      isMountedRef.current = false;
       if (pipWindowRef.current && !pipWindowRef.current.closed) {
         pipWindowRef.current.close();
       }
@@ -105,6 +104,7 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
     }
 
     try {
+      // Check if Document PiP window is open
       if (pipWindowRef.current && !pipWindowRef.current.closed) {
         pipWindowRef.current.close();
         pipWindowRef.current = null;
@@ -113,9 +113,15 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
         return;
       }
 
-      const docPiP = supportsDocumentPiP
-        ? ((window as unknown as { documentPictureInPicture?: { requestWindow: (options?: { width?: number; height?: number }) => Promise<Window> } }).documentPictureInPicture)
-        : undefined;
+      // Check if Video PiP is active
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+        setPipActive(false);
+        return;
+      }
+
+      // Simplified type checking for DocumentPictureInPicture
+      const docPiP = supportsDocumentPiP ? (window as { documentPictureInPicture?: { requestWindow: (options?: { width?: number; height?: number }) => Promise<Window> } }).documentPictureInPicture : undefined;
 
       if (docPiP?.requestWindow) {
         const pipWindow = await docPiP.requestWindow({ width: 480, height: 270 });
@@ -133,29 +139,33 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
         pipFrameRef.current = iframe;
         setPipActive(true);
         pipWindow.addEventListener("pagehide", () => {
-          pipWindowRef.current = null;
-          pipFrameRef.current = null;
-          setPipActive(false);
+          if (isMountedRef.current) {
+            pipWindowRef.current = null;
+            pipFrameRef.current = null;
+            setPipActive(false);
+          }
         });
         return;
       }
 
       const video = playerContainerRef.current?.querySelector("video");
       if (video && document.pictureInPictureEnabled) {
-        if (document.pictureInPictureElement) {
-          await document.exitPictureInPicture();
-          setPipActive(false);
-          return;
-        }
         await video.requestPictureInPicture();
         setPipActive(true);
-        video.addEventListener("leavepictureinpicture", () => setPipActive(false), { once: true });
+        const handleLeavePictureInPicture = () => {
+          if (isMountedRef.current) {
+            setPipActive(false);
+          }
+          video.removeEventListener("leavepictureinpicture", handleLeavePictureInPicture);
+        };
+        video.addEventListener("leavepictureinpicture", handleLeavePictureInPicture);
         return;
       }
 
       setPipError("Tu navegador no soporta Picture-in-Picture para este reproductor.");
     } catch (error) {
       console.error("Error activating PiP:", error);
+      setPipActive(false);
       setPipError("No se pudo activar Picture-in-Picture. Intenta con otra transmisión.");
     }
   };
@@ -213,7 +223,7 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
                   onClick={handleTogglePiP}
                   disabled={!pipSupported || !embedSrc}
                   className="group/btn flex items-center gap-3 px-6 py-3 rounded-2xl bg-gray-900/70 hover:bg-gray-800 text-xs font-black text-gray-300 hover:text-white transition-all border border-gray-700/50 hover:border-gray-500 backdrop-blur-md shadow-lg active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                  aria-live="polite"
+                  aria-pressed={pipActive}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover/btn:-translate-y-0.5 transition-transform">
                     <rect x="3" y="7" width="18" height="12" rx="2" />
@@ -236,11 +246,6 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
           )}
           {pipError && (
             <p className="mt-3 px-4 text-xs font-semibold text-red-300">{pipError}</p>
-          )}
-          {!pipSupported && (
-            <p className="mt-3 px-4 text-xs font-semibold text-gray-500">
-              PiP no disponible para este navegador o proveedor. Usa &quot;Abrir externo&quot; para continuar viendo el directo.
-            </p>
           )}
         </div>
 
