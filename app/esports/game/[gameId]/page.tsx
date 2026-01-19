@@ -717,13 +717,13 @@ function GamePageContent({ gameId }: { gameId: string }) {
                 Ver Todos los Partidos
               </Link>
               <Link 
-                href={`/esports/teams?game=${game.id}`}
+                href={`/equipos?game=${game.id}`}
                 className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
               >
                 Explorar Equipos
               </Link>
               <Link 
-                href={`/esports/players?game=${game.id}`}
+                href={`/jugadores?game=${game.id}`}
                 className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
               >
                 Ver Jugadores

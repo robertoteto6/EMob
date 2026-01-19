@@ -328,7 +328,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
               Esports
             </Link>
             <span className="text-gray-600">›</span>
-            <Link href="/esports" className="text-gray-400 hover:text-green-400 transition-colors">
+            <Link href="/jugadores" className="text-gray-400 hover:text-green-400 transition-colors">
               Jugadores
             </Link>
             <span className="text-gray-600">›</span>

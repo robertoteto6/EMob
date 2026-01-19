@@ -296,7 +296,7 @@ function TeamContent({ id }: { id: string }) {
           {/* Breadcrumb */}
           <div className="mb-8">
             <Link 
-              href="/esports/teams" 
+              href="/equipos" 
               className="text-green-400 hover:text-green-300 transition-colors duration-200 flex items-center gap-2 group"
             >
               <svg 
