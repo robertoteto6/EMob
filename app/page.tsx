@@ -693,8 +693,8 @@ const Home = memo(function Home() {
   useEffect(() => {
     if (!isClient) return;
     loadTournaments();
-    const interval = setInterval(loadTournaments, 60000); // refresh cada 60s
-    return () => clearInterval(interval);
+    const interval = window.setInterval(loadTournaments, 60000); // refresh cada 60s
+    return () => window.clearInterval(interval);
   }, [isClient, loadTournaments]);
 
   // Estadísticas por juego
@@ -1449,13 +1449,11 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                   onClick={() => {
                     const timeframeChanged = handleTimeframeChange("today");
                     const gameChanged = handleGameChange("all");
-                    const liveOnlyChanged = showLiveOnly;
+                    const shouldTriggerFeedback = !timeframeChanged && !gameChanged;
                     if (showLiveOnly) {
                       setShowLiveOnly(false);
                     }
-                    if (!timeframeChanged && !gameChanged && !liveOnlyChanged) {
-                      triggerFilterFeedback();
-                    } else if (liveOnlyChanged && !(timeframeChanged || gameChanged)) {
+                    if (shouldTriggerFeedback) {
                       triggerFilterFeedback();
                     }
                   }}
