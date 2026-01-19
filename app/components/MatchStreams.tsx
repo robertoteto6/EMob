@@ -1,12 +1,22 @@
 "use client";
 
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { LangFlag } from './LangFlag';
 import type { StreamInfo } from '../lib/types';
 
 interface MatchStreamsProps {
   streams: StreamInfo[];
 }
+
+type DocumentPictureInPictureAPI = {
+  requestWindow: (options?: { width?: number; height?: number }) => Promise<Window>;
+  window?: Window | null;
+  onenter?: ((event: Event) => void) | null;
+  onleave?: ((event: Event) => void) | null;
+  onclose?: ((event: Event) => void) | null;
+  addEventListener?: (type: 'enter' | 'leave' | 'close', listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => void;
+  removeEventListener?: (type: 'enter' | 'leave' | 'close', listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions) => void;
+};
 
 const isTwitchUrl = (url?: string | null) => typeof url === "string" && url.includes("twitch.tv");
 
@@ -54,6 +64,7 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
   const [activeStream, setActiveStream] = useState<StreamInfo | null>(null);
   const [embedSrc, setEmbedSrc] = useState<string | null>(null);
   const [pipWindow, setPipWindow] = useState<Window | null>(null);
+  const [isOpeningPip, setIsOpeningPip] = useState(false);
   const pipIframeRef = useRef<HTMLIFrameElement | null>(null);
 
   // Initialize active stream
@@ -83,22 +94,35 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
   }, [pipWindow]);
 
   useEffect(() => {
-    if (pipIframeRef.current && embedSrc) {
-      pipIframeRef.current.src = embedSrc;
+    if (!pipWindow) return;
+    const iframe = pipIframeRef.current;
+    if (!iframe) return;
+    if (!embedSrc) {
+      console.warn('embedSrc es nulo mientras Picture-in-Picture está activo; no se actualiza el stream.');
+      return;
     }
-  }, [embedSrc]);
+    try {
+      iframe.src = embedSrc;
+    } catch (error) {
+      console.error('No se pudo actualizar el stream en Picture-in-Picture', error);
+    }
+  }, [embedSrc, pipWindow]);
 
   const handlePictureInPicture = async () => {
     if (!embedSrc) return;
     if (pipWindow) {
       pipWindow.close();
+      pipIframeRef.current = null;
+      setPipWindow(null);
       return;
     }
+    if (isOpeningPip) return;
     if (typeof window === "undefined") return;
     const documentPictureInPicture = (window as Window & {
-      documentPictureInPicture?: { requestWindow: (options?: { width?: number; height?: number }) => Promise<Window> };
+      documentPictureInPicture?: DocumentPictureInPictureAPI;
     }).documentPictureInPicture;
     if (!documentPictureInPicture) return;
+    setIsOpeningPip(true);
     try {
       const pip = await documentPictureInPicture.requestWindow({ width: 480, height: 270 });
       pip.document.title = 'Picture-in-Picture';
@@ -115,15 +139,18 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
       pipIframeRef.current = pipIframe;
       setPipWindow(pip);
     } catch (error) {
-      console.error('No se pudo activar Picture-in-Picture', error);
+      const reason = error instanceof Error ? error.message : String(error);
+      console.error(`No se pudo activar Picture-in-Picture: ${reason}`, error);
+    } finally {
+      setIsOpeningPip(false);
     }
   };
 
 
   if (!streams || streams.length === 0) return null;
 
-  const pipSupported = typeof window !== "undefined" && "documentPictureInPicture" in window;
-  const pipDisabled = !pipSupported || !embedSrc;
+  const pipSupported = useMemo(() => typeof window !== "undefined" && "documentPictureInPicture" in window, []);
+  const pipDisabled = !pipSupported || !embedSrc || isOpeningPip;
 
   return (
     <div className="mb-0 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
@@ -186,7 +213,7 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
                   type="button"
                   onClick={handlePictureInPicture}
                   disabled={pipDisabled}
-                  aria-pressed={Boolean(pipWindow)}
+                  aria-label={pipWindow ? 'Cerrar Picture-in-Picture' : 'Abrir Picture-in-Picture'}
                   className={`group/btn flex items-center gap-3 px-6 py-3 rounded-2xl text-xs font-black transition-all border backdrop-blur-md shadow-lg active:scale-95 ${
                     pipDisabled
                       ? 'bg-gray-900/40 text-gray-500 border-gray-800/60 cursor-not-allowed'
@@ -198,7 +225,7 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
                     <path d="M15 3h6v6" />
                     <path d="M21 3l-6 6" />
                   </svg>
-                  {pipWindow ? 'CERRAR PIP' : 'PIP'}
+                  {isOpeningPip ? 'ABRIENDO PIP' : pipWindow ? 'CERRAR PIP' : 'PIP'}
                 </button>
                 <a
                   href={activeStream.raw_url}
