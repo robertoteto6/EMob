@@ -18,7 +18,7 @@ const securityMiddleware = getSecurityMiddleware({
   rateLimitMax: 100, // 100 requests por ventana
 });
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Aplicar middleware de seguridad solo a rutas de API
@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Configurar qué rutas deben pasar por el middleware
+// Configurar qué rutas deben pasar por el proxy
 export const config = {
   matcher: [
     /*

@@ -130,7 +130,6 @@ const nextConfig: NextConfig = {
   
   // Optimización experimental
   experimental: {
-    optimizeCss: true,
     optimizePackageImports: ['react', 'react-dom', 'framer-motion'],
     webpackBuildWorker: true,
     parallelServerCompiles: true,
