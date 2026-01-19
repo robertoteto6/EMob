@@ -604,6 +604,25 @@ const Home = memo(function Home() {
     setShowLiveOnly((prev) => !prev);
   }, [triggerFilterFeedback]);
 
+  const handleResetFilters = useCallback(() => {
+    const defaultTimeframe = "today";
+    const defaultGame = "all";
+    const timeframeChanged = selectedTimeframe !== defaultTimeframe;
+    const gameChanged = selectedGame !== defaultGame;
+
+    if (timeframeChanged) {
+      setSelectedTimeframe(defaultTimeframe);
+    }
+    if (gameChanged) {
+      setSelectedGame(defaultGame);
+    }
+    if (showLiveOnly) {
+      setShowLiveOnly(false);
+    }
+
+    triggerFilterFeedback();
+  }, [selectedTimeframe, selectedGame, showLiveOnly, triggerFilterFeedback]);
+
   useEffect(() => {
     return () => {
       if (filterAnimationTimeoutRef.current) {
@@ -1446,17 +1465,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                   {showLiveOnly ? "🔴 En vivo" : "🔴 Solo en vivo"}
                 </button>
                 <button 
-                  onClick={() => {
-                    const timeframeChanged = handleTimeframeChange("today");
-                    const gameChanged = handleGameChange("all");
-                    const shouldTriggerFeedback = !timeframeChanged && !gameChanged;
-                    if (showLiveOnly) {
-                      setShowLiveOnly(false);
-                    }
-                    if (shouldTriggerFeedback) {
-                      triggerFilterFeedback();
-                    }
-                  }}
+                  onClick={handleResetFilters}
                   className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2"
                   aria-label="Restablecer filtros a valores por defecto"
                 >
