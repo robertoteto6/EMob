@@ -706,7 +706,7 @@ const Home = memo(function Home() {
 
   useEffect(() => {
     if (!isClient) return;
-    // Partidos se refrescan más seguido que los torneos para reflejar resultados en vivo.
+    // Matches refresh more frequently than tournaments to reflect live results.
     const interval = window.setInterval(loadData, MATCH_REFRESH_INTERVAL);
     return () => window.clearInterval(interval);
   }, [isClient, loadData]);
@@ -714,7 +714,7 @@ const Home = memo(function Home() {
   useEffect(() => {
     if (!isClient) return;
     loadTournaments();
-    const interval = window.setInterval(loadTournaments, TOURNAMENT_REFRESH_INTERVAL); // torneos cambian menos seguido
+    const interval = window.setInterval(loadTournaments, TOURNAMENT_REFRESH_INTERVAL); // Tournaments update less frequently.
     return () => window.clearInterval(interval);
   }, [isClient, loadTournaments]);
 
@@ -816,32 +816,25 @@ const Home = memo(function Home() {
     const todayStartMs = startOfToday.getTime();
     const todayEndMs = todayStartMs + dayMs;
     const weekEndMs = nowMs + 7 * dayMs;
+    const matchesForCounts = showLiveOnly
+      ? baseMatches.filter((match) => match.start_time <= nowSeconds && match.radiant_win === null)
+      : baseMatches;
+    const allCount = matchesForCounts.length;
 
     let todayCount = 0;
     let weekCount = 0;
-    let allCount = 0;
 
-    for (const match of baseMatches) {
+    for (const match of matchesForCounts) {
       const matchMs = match.start_time * 1000;
       const isToday = matchMs >= todayStartMs && matchMs < todayEndMs;
-      const isLive = match.start_time <= nowSeconds && match.radiant_win === null;
-      const passesLiveFilter = !showLiveOnly || isLive;
-
-      if (passesLiveFilter) {
-        allCount += 1;
-      }
 
       if (isToday) {
-        if (passesLiveFilter) {
-          todayCount += 1;
-        }
+        todayCount += 1;
       }
 
       const isWithinWeek = matchMs >= nowMs && matchMs <= weekEndMs;
       if (isWithinWeek) {
-        if (passesLiveFilter) {
-          weekCount += 1;
-        }
+        weekCount += 1;
       }
 
       let include = true;
@@ -851,7 +844,7 @@ const Home = memo(function Home() {
         include = isWithinWeek;
       }
 
-      if (include && passesLiveFilter) {
+      if (include) {
         filtered.push(match);
       }
     }
