@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { LangFlag } from './LangFlag';
 import type { StreamInfo } from '../lib/types';
 
@@ -53,6 +53,8 @@ const buildTwitchEmbedUrl = (stream: StreamInfo, parent: string | null): string 
 const MatchStreams = ({ streams }: MatchStreamsProps) => {
   const [activeStream, setActiveStream] = useState<StreamInfo | null>(null);
   const [embedSrc, setEmbedSrc] = useState<string | null>(null);
+  const [pipWindow, setPipWindow] = useState<Window | null>(null);
+  const pipIframeRef = useRef<HTMLIFrameElement | null>(null);
 
   // Initialize active stream
   useEffect(() => {
@@ -70,8 +72,58 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
     }
   }, [activeStream]);
 
+  useEffect(() => {
+    if (!pipWindow) return;
+    const handleClose = () => {
+      pipIframeRef.current = null;
+      setPipWindow(null);
+    };
+    pipWindow.addEventListener('pagehide', handleClose);
+    return () => pipWindow.removeEventListener('pagehide', handleClose);
+  }, [pipWindow]);
+
+  useEffect(() => {
+    if (pipIframeRef.current && embedSrc) {
+      pipIframeRef.current.src = embedSrc;
+    }
+  }, [embedSrc]);
+
+  const handlePictureInPicture = async () => {
+    if (!embedSrc) return;
+    if (pipWindow) {
+      pipWindow.close();
+      return;
+    }
+    if (typeof window === "undefined") return;
+    const documentPictureInPicture = (window as Window & {
+      documentPictureInPicture?: { requestWindow: (options?: { width?: number; height?: number }) => Promise<Window> };
+    }).documentPictureInPicture;
+    if (!documentPictureInPicture) return;
+    try {
+      const pip = await documentPictureInPicture.requestWindow({ width: 480, height: 270 });
+      pip.document.title = 'Picture-in-Picture';
+      pip.document.body.style.margin = '0';
+      pip.document.body.style.background = 'black';
+      const pipIframe = pip.document.createElement('iframe');
+      pipIframe.src = embedSrc;
+      pipIframe.allow = 'autoplay; fullscreen; picture-in-picture';
+      pipIframe.allowFullscreen = true;
+      pipIframe.style.border = '0';
+      pipIframe.style.width = '100%';
+      pipIframe.style.height = '100%';
+      pip.document.body.append(pipIframe);
+      pipIframeRef.current = pipIframe;
+      setPipWindow(pip);
+    } catch (error) {
+      console.error('No se pudo activar Picture-in-Picture', error);
+    }
+  };
+
 
   if (!streams || streams.length === 0) return null;
+
+  const pipSupported = typeof window !== "undefined" && "documentPictureInPicture" in window;
+  const pipDisabled = !pipSupported || !embedSrc;
 
   return (
     <div className="mb-0 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
@@ -83,15 +135,27 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
             <div className="absolute -inset-2 bg-gradient-to-r from-purple-600 via-[var(--accent,#00FF80)] to-blue-600 rounded-[2rem] opacity-[0.08] group-hover:opacity-[0.15] transition-opacity duration-1000 blur-3xl mx-4" />
 
             <div className="relative aspect-video bg-black rounded-[1.5rem] overflow-hidden z-10 m-2 border border-gray-800/80">
-              {activeStream && embedSrc ? (
+              {activeStream && embedSrc && !pipWindow ? (
                 <iframe
                   src={embedSrc}
                   width="100%"
                   height="100%"
+                  allow="autoplay; fullscreen; picture-in-picture"
                   allowFullScreen
                   className="w-full h-full"
                   title="Live Stream"
                 />
+              ) : pipWindow ? (
+                <div className="w-full h-full flex items-center justify-center text-gray-500 flex-col gap-4 bg-[radial-gradient(circle_at_center,_#111_0%,_#000_100%)]">
+                  <div className="text-xs font-black tracking-[0.3em] uppercase text-gray-600">Picture-in-Picture activo</div>
+                  <button
+                    type="button"
+                    onClick={handlePictureInPicture}
+                    className="px-4 py-2 rounded-xl text-xs font-black bg-gray-800/70 border border-gray-700/60 text-gray-300 hover:text-white hover:border-gray-500 transition-all"
+                  >
+                    Cerrar PIP
+                  </button>
+                </div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-500 flex-col gap-6 bg-[radial-gradient(circle_at_center,_#111_0%,_#000_100%)]">
                   <div className="p-5 rounded-full bg-gray-900/50 border border-gray-800 animate-pulse">
@@ -118,6 +182,24 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
               </div>
 
               <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handlePictureInPicture}
+                  disabled={pipDisabled}
+                  aria-pressed={Boolean(pipWindow)}
+                  className={`group/btn flex items-center gap-3 px-6 py-3 rounded-2xl text-xs font-black transition-all border backdrop-blur-md shadow-lg active:scale-95 ${
+                    pipDisabled
+                      ? 'bg-gray-900/40 text-gray-500 border-gray-800/60 cursor-not-allowed'
+                      : 'bg-gray-800/50 hover:bg-gray-700 text-gray-300 hover:text-white border-gray-700/50 hover:border-gray-500'
+                  }`}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="transition-transform group-hover/btn:scale-110">
+                    <rect x="3" y="6" width="18" height="14" rx="2" />
+                    <path d="M15 3h6v6" />
+                    <path d="M21 3l-6 6" />
+                  </svg>
+                  {pipWindow ? 'CERRAR PIP' : 'PIP'}
+                </button>
                 <a
                   href={activeStream.raw_url}
                   target="_blank"
