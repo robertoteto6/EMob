@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { LangFlag } from './LangFlag';
 import type { StreamInfo } from '../lib/types';
 
@@ -53,6 +53,15 @@ const buildTwitchEmbedUrl = (stream: StreamInfo, parent: string | null): string 
 const MatchStreams = ({ streams }: MatchStreamsProps) => {
   const [activeStream, setActiveStream] = useState<StreamInfo | null>(null);
   const [embedSrc, setEmbedSrc] = useState<string | null>(null);
+  const [pipActive, setPipActive] = useState(false);
+  const [pipError, setPipError] = useState<string | null>(null);
+  const [pipSupported, setPipSupported] = useState(false);
+  const playerContainerRef = useRef<HTMLDivElement | null>(null);
+  const pipWindowRef = useRef<Window | null>(null);
+  const pipFrameRef = useRef<HTMLIFrameElement | null>(null);
+
+  const supportsDocumentPiP = typeof window !== "undefined" && "documentPictureInPicture" in window;
+  const supportsVideoPiP = typeof document !== "undefined" && !!document.pictureInPictureEnabled;
 
   // Initialize active stream
   useEffect(() => {
@@ -70,6 +79,86 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
     }
   }, [activeStream]);
 
+  useEffect(() => {
+    setPipSupported(supportsDocumentPiP || supportsVideoPiP);
+  }, [supportsDocumentPiP, supportsVideoPiP]);
+
+  useEffect(() => {
+    if (pipFrameRef.current && embedSrc) {
+      pipFrameRef.current.src = embedSrc;
+    }
+  }, [embedSrc]);
+
+  useEffect(() => {
+    return () => {
+      if (pipWindowRef.current && !pipWindowRef.current.closed) {
+        pipWindowRef.current.close();
+      }
+    };
+  }, []);
+
+  const handleTogglePiP = async () => {
+    setPipError(null);
+    if (!embedSrc) {
+      setPipError("Selecciona una transmisión para activar PiP.");
+      return;
+    }
+
+    try {
+      if (pipWindowRef.current && !pipWindowRef.current.closed) {
+        pipWindowRef.current.close();
+        pipWindowRef.current = null;
+        pipFrameRef.current = null;
+        setPipActive(false);
+        return;
+      }
+
+      const docPiP = supportsDocumentPiP
+        ? ((window as unknown as { documentPictureInPicture?: { requestWindow: (options?: { width?: number; height?: number }) => Promise<Window> } }).documentPictureInPicture)
+        : undefined;
+
+      if (docPiP?.requestWindow) {
+        const pipWindow = await docPiP.requestWindow({ width: 480, height: 270 });
+        pipWindow.document.body.style.margin = "0";
+        pipWindow.document.body.style.background = "black";
+        const iframe = pipWindow.document.createElement("iframe");
+        iframe.src = embedSrc;
+        iframe.allow = "autoplay; fullscreen; picture-in-picture";
+        iframe.allowFullscreen = true;
+        iframe.style.border = "0";
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        pipWindow.document.body.appendChild(iframe);
+        pipWindowRef.current = pipWindow;
+        pipFrameRef.current = iframe;
+        setPipActive(true);
+        pipWindow.addEventListener("pagehide", () => {
+          pipWindowRef.current = null;
+          pipFrameRef.current = null;
+          setPipActive(false);
+        });
+        return;
+      }
+
+      const video = playerContainerRef.current?.querySelector("video");
+      if (video && document.pictureInPictureEnabled) {
+        if (document.pictureInPictureElement) {
+          await document.exitPictureInPicture();
+          setPipActive(false);
+          return;
+        }
+        await video.requestPictureInPicture();
+        setPipActive(true);
+        video.addEventListener("leavepictureinpicture", () => setPipActive(false), { once: true });
+        return;
+      }
+
+      setPipError("Tu navegador no soporta Picture-in-Picture para este reproductor.");
+    } catch (error) {
+      console.error("Error activating PiP:", error);
+      setPipError("No se pudo activar Picture-in-Picture. Intenta con otra transmisión.");
+    }
+  };
 
   if (!streams || streams.length === 0) return null;
 
@@ -82,12 +171,13 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
             {/* Ultra-premium Glow effect */}
             <div className="absolute -inset-2 bg-gradient-to-r from-purple-600 via-[var(--accent,#00FF80)] to-blue-600 rounded-[2rem] opacity-[0.08] group-hover:opacity-[0.15] transition-opacity duration-1000 blur-3xl mx-4" />
 
-            <div className="relative aspect-video bg-black rounded-[1.5rem] overflow-hidden z-10 m-2 border border-gray-800/80">
+            <div ref={playerContainerRef} className="relative aspect-video bg-black rounded-[1.5rem] overflow-hidden z-10 m-2 border border-gray-800/80">
               {activeStream && embedSrc ? (
                 <iframe
                   src={embedSrc}
                   width="100%"
                   height="100%"
+                  allow="autoplay; fullscreen; picture-in-picture"
                   allowFullScreen
                   className="w-full h-full"
                   title="Live Stream"
@@ -117,7 +207,21 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center flex-wrap gap-3 justify-center sm:justify-end">
+                <button
+                  type="button"
+                  onClick={handleTogglePiP}
+                  disabled={!pipSupported || !embedSrc}
+                  className="group/btn flex items-center gap-3 px-6 py-3 rounded-2xl bg-gray-900/70 hover:bg-gray-800 text-xs font-black text-gray-300 hover:text-white transition-all border border-gray-700/50 hover:border-gray-500 backdrop-blur-md shadow-lg active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-live="polite"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover/btn:-translate-y-0.5 transition-transform">
+                    <rect x="3" y="7" width="18" height="12" rx="2" />
+                    <path d="M15 3h6v6" />
+                    <path d="M21 3l-7 7" />
+                  </svg>
+                  {pipActive ? "CERRAR PiP" : "PiP"}
+                </button>
                 <a
                   href={activeStream.raw_url}
                   target="_blank"
@@ -129,6 +233,14 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
                 </a>
               </div>
             </div>
+          )}
+          {pipError && (
+            <p className="mt-3 px-4 text-xs font-semibold text-red-300">{pipError}</p>
+          )}
+          {!pipSupported && (
+            <p className="mt-3 px-4 text-xs font-semibold text-gray-500">
+              PiP no disponible para este navegador o proveedor. Usa &quot;Abrir externo&quot; para continuar viendo el directo.
+            </p>
           )}
         </div>
 
