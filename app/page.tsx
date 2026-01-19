@@ -47,6 +47,7 @@ const ChatBot = nextDynamic(() => import("./components/ChatBot"), {
 const TIME_UPDATE_INTERVAL = 15_000;
 const MATCH_REFRESH_INTERVAL = 30_000;
 const TOURNAMENT_REFRESH_INTERVAL = 60_000;
+const TOURNAMENT_REFRESH_STEPS = Math.max(1, Math.round(TOURNAMENT_REFRESH_INTERVAL / MATCH_REFRESH_INTERVAL));
 
 // Custom hook to handle time consistently between server and client
 function useCurrentTime(updateInterval = TIME_UPDATE_INTERVAL) {
@@ -701,22 +702,21 @@ const Home = memo(function Home() {
 
   // Cargar datos
   useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  useEffect(() => {
     if (!isClient) return;
-    // Matches refresh more frequently than tournaments to reflect live results.
-    const interval = window.setInterval(loadData, MATCH_REFRESH_INTERVAL);
-    return () => window.clearInterval(interval);
-  }, [isClient, loadData]);
+    let refreshTick = 0;
+    const runRefresh = () => {
+      loadData();
+      // Refresh tournaments every few match refreshes.
+      if (refreshTick % TOURNAMENT_REFRESH_STEPS === 0) {
+        loadTournaments();
+      }
+      refreshTick += 1;
+    };
 
-  useEffect(() => {
-    if (!isClient) return;
-    loadTournaments();
-    const interval = window.setInterval(loadTournaments, TOURNAMENT_REFRESH_INTERVAL); // Tournaments update less frequently.
+    runRefresh();
+    const interval = window.setInterval(runRefresh, MATCH_REFRESH_INTERVAL);
     return () => window.clearInterval(interval);
-  }, [isClient, loadTournaments]);
+  }, [isClient, loadData, loadTournaments]);
 
   // Estadísticas por juego
   const gameStats = useMemo(() => {
@@ -827,7 +827,6 @@ const Home = memo(function Home() {
     for (const match of matchesForCounts) {
       const matchMs = match.start_time * 1000;
       const isToday = matchMs >= todayStartMs && matchMs < todayEndMs;
-
       if (isToday) {
         todayCount += 1;
       }
