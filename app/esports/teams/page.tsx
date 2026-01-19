@@ -15,11 +15,12 @@ function buildQuery(searchParams: SearchParams) {
   return query ? `?${query}` : "";
 }
 
-export default async function TeamsRedirect({
-  searchParams,
-}: {
-  searchParams?: Promise<SearchParams>;
-}) {
+export default async function TeamsRedirect(
+  props: {
+    searchParams?: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   redirect(`/equipos${buildQuery(resolvedSearchParams)}`);
 }

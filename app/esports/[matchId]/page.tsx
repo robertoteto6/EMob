@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, use } from "react";
 import MatchHeader from "../../components/MatchHeader";
 import MatchCard from "../../components/MatchCard";
 import MatchStreams from "../../components/MatchStreams";
@@ -136,11 +136,9 @@ async function fetchMatch(matchId: string, forceRefresh = false): Promise<MatchD
 
 const LANGS: Language[] = [{ code: "es-ES", label: "Español" }, { code: "en-US", label: "English" }];
 
-export default function MatchPage({ params }: { params: Promise<{ matchId: string }> }) {
-  const [matchId, setMatchId] = useState<string | null>(null);
-  useEffect(() => {
-    params.then(p => setMatchId(p.matchId)).catch(console.error);
-  }, [params]);
+export default function MatchPage(props: { params: Promise<{ matchId: string }> }) {
+  const params = use(props.params);
+  const matchId = params.matchId;
 
   const [match, setMatch] = useState<MatchDetail | null>(null);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);

@@ -15,11 +15,12 @@ function buildQuery(searchParams: SearchParams) {
   return query ? `?${query}` : "";
 }
 
-export default async function PlayersRedirect({
-  searchParams,
-}: {
-  searchParams?: Promise<SearchParams>;
-}) {
+export default async function PlayersRedirect(
+  props: {
+    searchParams?: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   redirect(`/jugadores${buildQuery(resolvedSearchParams)}`);
 }

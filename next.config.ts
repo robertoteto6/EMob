@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Configuración para Turbopack (Next.js 16 usa Turbopack por defecto)
+  turbopack: {},
   // Optimización de rendimiento
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
