@@ -64,6 +64,17 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
   const supportsDocumentPiP = typeof window !== "undefined" && "documentPictureInPicture" in window;
   const supportsVideoPiP = typeof document !== "undefined" && !!document.pictureInPictureEnabled;
 
+  // Simple hash function for generating stable keys
+  const hashString = (str: string): number => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
+  };
+
   // Initialize active stream
   useEffect(() => {
     if (streams.length > 0 && !activeStream) {
@@ -271,8 +282,8 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
             {streams.map((stream) => {
               const isActive = activeStream === stream;
               const isTwitch = isTwitchUrl(stream.raw_url);
-              // Use unique combination of raw_url and language as key
-              const streamKey = `${stream.raw_url}-${stream.language}`;
+              // Create stable, short key using hash of URL and language
+              const streamKey = `stream-${hashString(stream.raw_url + stream.language)}`;
               return (
                 <button
                   key={streamKey}
