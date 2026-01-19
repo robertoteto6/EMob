@@ -1430,8 +1430,8 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
               </div>
             </div>
 
-        {/* Información de resultados y acciones */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-700">
+              {/* Información de resultados y acciones */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-700">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 bg-gray-700/50 px-4 py-2 rounded-xl text-sm text-gray-300">
                   <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
@@ -1439,7 +1439,6 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                   </svg>
                   Actualización automática cada {matchRefreshSeconds}s
                 </div>
-
                 <div className="bg-gradient-to-r from-blue-600/20 to-green-600/20 px-4 py-2 rounded-xl text-sm text-white border border-blue-500/30">
                   <span className="font-bold">{filteredMatches.length}</span> partidos encontrados
                 </div>
