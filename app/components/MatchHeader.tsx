@@ -39,7 +39,7 @@ const MatchHeader = ({ matchName, lang, langs, onLangChange, showNotification }:
   };
 
   return (
-    <header className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 gap-4 lg:gap-6">
+    <header className="sticky top-16 z-40 flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 gap-4 lg:gap-6 py-4 px-4 -mx-4 bg-gradient-to-b from-black/95 via-gray-900/95 to-transparent backdrop-blur-md border-b border-gray-800/50">
       {/* Navegación y título */}
       <div className="flex items-center gap-4 min-w-0">
         <Link

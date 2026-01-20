@@ -247,8 +247,8 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
   if (!match) return <main className="p-4 sm:p-8 font-sans min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex items-center justify-center"><div>Partido no encontrado</div></main>;
 
   return (
-    <main className="pt-20 p-4 sm:p-8 font-sans min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white" role="main" aria-labelledby="match-title">
-      <div className="w-full max-w-6xl mx-auto">
+    <main className="pt-16 font-sans min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white" role="main" aria-labelledby="match-title">
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-8">
         <MatchHeader matchName={match.name} lang={lang} langs={LANGS} onLangChange={handleLangChange} showNotification={showNotification} />
 
         {/* Notificaciones */}
@@ -262,7 +262,9 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
           </div>
         )}
 
-        <MatchCard match={match} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} lang={lang} />
+        <div className="mt-4">
+          <MatchCard match={match} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} lang={lang} />
+        </div>
 
         <div className="mb-10">
           <MatchStreams streams={match.streams} />
