@@ -134,30 +134,56 @@ const MatchCard = ({ match, isFavorite, onToggleFavorite, lang }: MatchCardProps
   );
 };
 
-const TeamSide = ({ team, teamId, score, isWinner }: { team: string; teamId: number | null; score: number; isWinner: boolean }) => (
-  <div className="flex flex-col items-center gap-4 min-w-[120px]">
-    <Link href={`/esports/team/${teamId}`} aria-label={`Ver equipo ${team}`} className="group relative">
-      <div className={`p-4 rounded-2xl bg-gray-900/50 border transition-all duration-300 ${isWinner ? 'border-[var(--accent,#00FF80)] shadow-[0_0_20px_rgba(0,255,128,0.2)]' : 'border-gray-700 group-hover:border-gray-500'}`}>
-        <TeamLogo id={teamId} name={team} size={80} />
-      </div>
-      {isWinner && (
-        <div className="absolute -top-3 -right-3 bg-[var(--accent,#00FF80)] text-black p-1.5 rounded-full shadow-lg">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+const TeamSide = ({ team, teamId, score, isWinner }: { team: string; teamId: number | null; score: number; isWinner: boolean }) => {
+  // Si no hay teamId válido, no mostramos el enlace
+  const hasValidId = teamId !== null && teamId !== undefined;
+  
+  const TeamContent = () => (
+    <div className={`p-4 rounded-2xl bg-gray-900/50 border transition-all duration-300 ${isWinner ? 'border-[var(--accent,#00FF80)] shadow-[0_0_20px_rgba(0,255,128,0.2)]' : 'border-gray-700 group-hover:border-gray-500'}`}>
+      <TeamLogo id={teamId} name={team} size={80} />
+    </div>
+  );
+  
+  return (
+    <div className="flex flex-col items-center gap-4 min-w-[120px]">
+      {hasValidId ? (
+        <Link href={`/esports/team/${teamId}`} aria-label={`Ver equipo ${team}`} className="group relative">
+          <TeamContent />
+          {isWinner && (
+            <div className="absolute -top-3 -right-3 bg-[var(--accent,#00FF80)] text-black p-1.5 rounded-full shadow-lg" aria-label="Ganador">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+            </div>
+          )}
+        </Link>
+      ) : (
+        <div className="group relative">
+          <TeamContent />
+          {isWinner && (
+            <div className="absolute -top-3 -right-3 bg-[var(--accent,#00FF80)] text-black p-1.5 rounded-full shadow-lg" aria-label="Ganador">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+            </div>
+          )}
         </div>
       )}
-    </Link>
-    <div className="text-center">
-      <Link href={`/esports/team/${teamId}`} className="text-white font-bold text-lg mb-2 truncate max-w-[140px] block hover:text-[var(--accent,#00FF80)] transition-colors" title={team}>
-        {team}
-      </Link>
-      <span className={`inline-block px-5 py-2 rounded-xl text-3xl font-black shadow-lg transition-all duration-300 font-mono ${isWinner
-          ? 'bg-gradient-to-br from-[var(--accent,#00FF80)] to-green-600 text-black shadow-green-900/50'
-          : 'bg-gray-800 text-gray-300 border border-gray-700'
-        }`}>
-        {score}
-      </span>
+      <div className="text-center">
+        {hasValidId ? (
+          <Link href={`/esports/team/${teamId}`} className="text-white font-bold text-lg mb-2 truncate max-w-[140px] block hover:text-[var(--accent,#00FF80)] transition-colors" title={team}>
+            {team}
+          </Link>
+        ) : (
+          <span className="text-white font-bold text-lg mb-2 truncate max-w-[140px] block" title={team}>
+            {team}
+          </span>
+        )}
+        <span className={`inline-block px-5 py-2 rounded-xl text-3xl font-black shadow-lg transition-all duration-300 font-mono ${isWinner
+            ? 'bg-gradient-to-br from-[var(--accent,#00FF80)] to-green-600 text-black shadow-green-900/50'
+            : 'bg-gray-800 text-gray-300 border border-gray-700'
+          }`} aria-label={`Puntuación: ${score}`}>
+          {score}
+        </span>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default memo(MatchCard);

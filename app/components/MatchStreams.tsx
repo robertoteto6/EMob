@@ -66,14 +66,20 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
   const [pipWindow, setPipWindow] = useState<Window | null>(null);
   const [isOpeningPip, setIsOpeningPip] = useState(false);
   const pipIframeRef = useRef<HTMLIFrameElement | null>(null);
+  
+  // Mover el useMemo antes de cualquier early return para cumplir con las reglas de hooks
+  const pipSupported = useMemo(() => typeof window !== "undefined" && "documentPictureInPicture" in window, []);
+
+  // Verificar si hay streams disponibles antes de continuar
+  const hasStreams = streams && streams.length > 0;
 
   // Initialize active stream
   useEffect(() => {
-    if (streams.length > 0 && !activeStream) {
+    if (hasStreams && !activeStream) {
       const twitchStream = streams.find(s => isTwitchUrl(s.embed_url) || isTwitchUrl(s.raw_url));
       setActiveStream(twitchStream || streams[0]);
     }
-  }, [streams, activeStream]);
+  }, [streams, activeStream, hasStreams]);
 
   // Update embed source when active stream changes
   useEffect(() => {
@@ -146,10 +152,9 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
     }
   };
 
+  // Early return si no hay streams disponibles
+  if (!hasStreams) return null;
 
-  if (!streams || streams.length === 0) return null;
-
-  const pipSupported = useMemo(() => typeof window !== "undefined" && "documentPictureInPicture" in window, []);
   const pipDisabled = !pipSupported || !embedSrc || isOpeningPip;
 
   return (
