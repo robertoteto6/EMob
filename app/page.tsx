@@ -260,13 +260,13 @@ async function fetchAllTournaments(): Promise<Tournament[]> {
   return allTournaments;
 }
 
-// Componente de estadísticas del juego (memoizado) - Diseño Premium
+// Componente de estadísticas del juego (memoizado) - Diseño Minimalista
 const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameConfig, stats: GameStats }) {
   return (
     <Link href={`/esports/game/${game.id}`} className="group block h-full">
-      <div className={`relative h-full overflow-hidden rounded-2xl bg-gradient-to-br ${game.gradient} p-1 shadow-xl transition-all duration-500 hover:scale-[1.03] hover:shadow-2xl`}>
-        {/* Marco con gradiente */}
-        <div className="relative h-full overflow-hidden rounded-xl bg-black/80 backdrop-blur-sm">
+      <div className="relative h-full overflow-hidden rounded-xl border border-white/10 bg-black/80 p-1 transition-all duration-500 hover:scale-[1.02] hover:border-white/20">
+        {/* Marco */}
+        <div className="relative h-full overflow-hidden rounded-lg bg-black/60 backdrop-blur-sm">
           {/* Patrón de fondo sutil */}
           <div className="absolute inset-0 opacity-5">
             <div className="absolute inset-0" style={{
@@ -276,7 +276,7 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
           </div>
           
           {/* Efecto de brillo en hover */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" aria-hidden="true" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" aria-hidden="true" />
           
           {/* Icono flotante decorativo */}
           <div className="absolute top-3 right-3 opacity-10 group-hover:opacity-20 transition-opacity duration-500" aria-hidden="true">
@@ -285,7 +285,7 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
           
           {/* Badge "Explorar" en hover */}
           <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-y-2 group-hover:translate-y-0">
-            <div className="bg-white/20 backdrop-blur-sm rounded-full px-2.5 py-1 text-[10px] font-bold flex items-center gap-1.5 text-white/90">
+            <div className="bg-white/10 backdrop-blur-sm rounded-full px-2.5 py-1 text-[10px] font-bold flex items-center gap-1.5 text-white/70">
               <span>👆</span>
               <span>Explorar</span>
             </div>
@@ -295,24 +295,24 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
             {/* Header */}
             <div className="flex items-center gap-3 mb-5">
               <div className="relative">
-                <div className="absolute -inset-1 bg-white/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
+                <div className="absolute -inset-1 bg-white/10 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
                 <Image src={game.icon} alt={`Icono de ${game.name}`} width={36} height={36} className="relative w-9 h-9 group-hover:scale-110 transition-transform duration-300" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-white group-hover:text-white transition-colors duration-300 leading-tight">
                   {game.name}
                 </h3>
-                <p className="text-[10px] font-medium text-white/50 uppercase tracking-wider">Live Stats</p>
+                <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Live Stats</p>
               </div>
             </div>
             
             {/* Estadísticas en grid 2x2 */}
             <div className="grid grid-cols-2 gap-2.5 flex-1">
               <Tooltip content={`Total de partidas registradas para ${game.name}`} className="block">
-                <div className="bg-white/5 rounded-xl p-3 group-hover:bg-white/10 transition-colors duration-300 border border-white/5 group-hover:border-white/10">
+                <div className="bg-white/5 rounded-lg p-3 group-hover:bg-white/10 transition-colors duration-300 border border-white/5 group-hover:border-white/10">
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <div className="w-1.5 h-1.5 bg-white/60 rounded-full" />
-                    <p className="text-[10px] font-semibold text-white/60 uppercase tracking-wide">Total</p>
+                    <div className="w-1.5 h-1.5 bg-white/40 rounded-full" />
+                    <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wide">Total</p>
                   </div>
                   <p className="text-2xl font-black text-white tabular-nums">
                     {stats.totalMatches}
@@ -321,36 +321,36 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
               </Tooltip>
               
               <Tooltip content={`Partidas en curso de ${game.name}`} className="block">
-                <div className="bg-red-500/10 rounded-xl p-3 group-hover:bg-red-500/20 transition-colors duration-300 border border-red-500/20 group-hover:border-red-500/30">
+                <div className="bg-white/5 rounded-lg p-3 group-hover:bg-white/10 transition-colors duration-300 border border-white/10">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <div className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse" />
-                    <p className="text-[10px] font-semibold text-red-300/80 uppercase tracking-wide">En Vivo</p>
+                    <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wide">En Vivo</p>
                   </div>
-                  <p className="text-2xl font-black text-red-300 tabular-nums">
+                  <p className="text-2xl font-black text-white tabular-nums">
                     {stats.liveMatches}
                   </p>
                 </div>
               </Tooltip>
               
               <Tooltip content={`Partidas programadas de ${game.name}`} className="block">
-                <div className="bg-blue-500/10 rounded-xl p-3 group-hover:bg-blue-500/20 transition-colors duration-300 border border-blue-500/20 group-hover:border-blue-500/30">
+                <div className="bg-white/5 rounded-lg p-3 group-hover:bg-white/10 transition-colors duration-300 border border-white/5 group-hover:border-white/10">
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <div className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
-                    <p className="text-[10px] font-semibold text-blue-300/80 uppercase tracking-wide">Próximos</p>
+                    <div className="w-1.5 h-1.5 bg-white/40 rounded-full" />
+                    <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wide">Próximos</p>
                   </div>
-                  <p className="text-2xl font-black text-blue-300 tabular-nums">
+                  <p className="text-2xl font-black text-white tabular-nums">
                     {stats.upcomingMatches}
                   </p>
                 </div>
               </Tooltip>
               
               <Tooltip content={`Torneos activos de ${game.name}`} className="block">
-                <div className="bg-yellow-500/10 rounded-xl p-3 group-hover:bg-yellow-500/20 transition-colors duration-300 border border-yellow-500/20 group-hover:border-yellow-500/30">
+                <div className="bg-white/5 rounded-lg p-3 group-hover:bg-white/10 transition-colors duration-300 border border-white/5 group-hover:border-white/10">
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full" />
-                    <p className="text-[10px] font-semibold text-yellow-300/80 uppercase tracking-wide">Torneos</p>
+                    <div className="w-1.5 h-1.5 bg-white/40 rounded-full" />
+                    <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wide">Torneos</p>
                   </div>
-                  <p className="text-2xl font-black text-yellow-300 tabular-nums">
+                  <p className="text-2xl font-black text-white tabular-nums">
                     {stats.activeTournaments}
                   </p>
                 </div>
@@ -360,10 +360,10 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
             {/* Footer con indicador de actualización */}
             <div className="mt-4 pt-3 border-t border-white/10">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-medium text-white/40 uppercase tracking-wide">Actualizado</span>
+                <span className="text-[10px] font-medium text-white/30 uppercase tracking-wide">Actualizado</span>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                  <span className="text-[10px] font-semibold text-emerald-400">Ahora</span>
+                  <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-pulse" />
+                  <span className="text-[10px] font-semibold text-white/60">Ahora</span>
                 </div>
               </div>
             </div>
@@ -374,7 +374,7 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
   );
 });
 
-// Componente de partido destacado (memoizado)
+// Componente de partido destacado (memoizado) - Diseño Minimalista
 const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { match: Match; currentTime: number }) {
   const game = GAMES.find(g => g.id === match.game);
   const isLive = match.start_time <= currentTime && match.radiant_win === null;
@@ -384,8 +384,8 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
   return (
     <Link href={`/esports/${match.id}`}>
       <div
-        className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 hover:border-green-500/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl ${
-          isLive ? "ring-2 ring-red-500/40 shadow-[0_0_35px_rgba(239,68,68,0.45)]" : ""
+        className={`group relative overflow-hidden rounded-xl bg-black/80 border border-white/10 hover:border-white/20 transition-all duration-500 hover:scale-[1.02] ${
+          isLive ? "ring-1 ring-red-500/30" : ""
         }`}
       >
         {/* Efecto de brillo animado */}
@@ -393,8 +393,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
         
         {/* Indicador de estado */}
         {isLive && (
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-red-600 animate-pulse">
-            <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-red-500 animate-pulse"></div>
+          <div className="absolute top-0 left-0 right-0 h-px bg-red-500/50">
           </div>
         )}
         
@@ -411,13 +410,12 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
                     height={32}
                     className="w-8 h-8 group-hover:scale-110 transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-green-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true"></div>
                 </div>
               )}
               <div>
-                <span className="text-sm font-medium text-gray-300">{match.league}</span>
+                <span className="text-sm font-medium text-white/60">{match.league}</span>
                 {game && (
-                  <p className="text-xs text-gray-500">{game.name}</p>
+                  <p className="text-xs text-white/40">{game.name}</p>
                 )}
               </div>
             </div>
@@ -428,7 +426,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
             )}
             
             {isUpcoming && (
-              <span className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold px-3 py-2 rounded-full shadow-lg flex items-center gap-2">
+              <span className="bg-white/10 text-white text-xs font-bold px-3 py-2 rounded-full flex items-center gap-2 border border-white/10">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                 </svg>
@@ -437,7 +435,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
             )}
 
             {isFinished && (
-              <span className="bg-gradient-to-r from-gray-600 to-gray-700 text-white text-xs font-bold px-3 py-2 rounded-full shadow-lg">
+              <span className="bg-white/10 text-white/60 text-xs font-bold px-3 py-2 rounded-full border border-white/10">
                 FINALIZADO
               </span>
             )}
@@ -447,17 +445,17 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
           <div className="flex items-center justify-between mb-6">
             {/* Equipo 1 */}
             <div className="text-center flex-1 group/team">
-              <div className="bg-gray-800/50 rounded-xl p-4 group-hover/team:bg-gray-700/50 transition-colors duration-300">
-                <p className="font-bold text-lg text-white mb-2 group-hover/team:text-green-400 transition-colors duration-300">
+              <div className="bg-white/5 rounded-lg p-4 group-hover/team:bg-white/10 transition-colors duration-300">
+                <p className="font-bold text-lg text-white mb-2 group-hover/team:text-white transition-colors duration-300">
                   {match.radiant}
                 </p>
                 {typeof match.radiant_score === "number" ? (
-                  <p className="text-4xl font-bold text-green-400 group-hover/team:scale-110 transition-transform duration-300">
+                  <p className="text-4xl font-bold text-white group-hover/team:scale-110 transition-transform duration-300">
                     {match.radiant_score}
                   </p>
                 ) : (
-                  <div className="text-gray-500 text-sm">
-                    <div className="w-8 h-8 bg-gray-700 rounded-full mx-auto flex items-center justify-center">
+                  <div className="text-white/40 text-sm">
+                    <div className="w-8 h-8 bg-white/10 rounded-full mx-auto flex items-center justify-center">
                       <span className="text-xs font-bold">?</span>
                     </div>
                   </div>
@@ -468,13 +466,12 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
             {/* VS y tiempo */}
             <div className="text-center px-6">
               <div className="relative">
-                <span className="text-gray-400 font-bold text-xl group-hover:text-white transition-colors duration-300">
+                <span className="text-white/30 font-bold text-xl group-hover:text-white/50 transition-colors duration-300">
                   VS
                 </span>
-                <div className="absolute -inset-2 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
               </div>
               {typeof match.radiant_score !== "number" && (
-                <p className="text-sm text-gray-500 mt-2 font-medium">
+                <p className="text-sm text-white/40 mt-2 font-medium">
                   {new Date(match.start_time * 1000).toLocaleTimeString("es-ES", {
                     hour: "2-digit",
                     minute: "2-digit"
@@ -485,17 +482,17 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
             
             {/* Equipo 2 */}
             <div className="text-center flex-1 group/team">
-              <div className="bg-gray-800/50 rounded-xl p-4 group-hover/team:bg-gray-700/50 transition-colors duration-300">
-                <p className="font-bold text-lg text-white mb-2 group-hover/team:text-green-400 transition-colors duration-300">
+              <div className="bg-white/5 rounded-lg p-4 group-hover/team:bg-white/10 transition-colors duration-300">
+                <p className="font-bold text-lg text-white mb-2 group-hover/team:text-white transition-colors duration-300">
                   {match.dire}
                 </p>
                 {typeof match.dire_score === "number" ? (
-                  <p className="text-4xl font-bold text-green-400 group-hover/team:scale-110 transition-transform duration-300">
+                  <p className="text-4xl font-bold text-white group-hover/team:scale-110 transition-transform duration-300">
                     {match.dire_score}
                   </p>
                 ) : (
-                  <div className="text-gray-500 text-sm">
-                    <div className="w-8 h-8 bg-gray-700 rounded-full mx-auto flex items-center justify-center">
+                  <div className="text-white/40 text-sm">
+                    <div className="w-8 h-8 bg-white/10 rounded-full mx-auto flex items-center justify-center">
                       <span className="text-xs font-bold">?</span>
                     </div>
                   </div>
@@ -505,9 +502,9 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
           </div>
           
           {/* Footer con fecha y acciones */}
-          <div className="flex items-center justify-between pt-4 border-t border-gray-700">
+          <div className="flex items-center justify-between pt-4 border-t border-white/10">
             <div className="text-left">
-              <p className="text-sm text-gray-400 font-medium">
+              <p className="text-sm text-white/50 font-medium">
                 {new Date(match.start_time * 1000).toLocaleDateString("es-ES", {
                   weekday: "short",
                   day: "numeric",
@@ -515,7 +512,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
                 })}
               </p>
               {isLive && (
-                <p className="text-xs text-red-400 font-semibold mt-1">
+                <p className="text-xs text-red-400/80 font-semibold mt-1">
                   {(() => {
                     const duration = Math.floor(currentTime - match.start_time);
                     const minutes = Math.floor(duration / 60);
@@ -526,24 +523,24 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
             </div>
             
             <div className="flex items-center gap-2">
-              <button 
-                className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600/50 text-gray-400 hover:text-white transition-all duration-300 group/btn"
+              <button
+                className="touch-target touch-ripple p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-all duration-300 group/btn"
                 aria-label="Agregar a favoritos"
               >
                 <svg className="w-4 h-4 group-hover/btn:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </button>
-              <button 
-                className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600/50 text-gray-400 hover:text-white transition-all duration-300 group/btn"
+              <button
+                className="touch-target touch-ripple p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-all duration-300 group/btn"
                 aria-label="Compartir partido"
               >
                 <svg className="w-4 h-4 group-hover/btn:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                 </svg>
               </button>
-              <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 p-2 rounded-lg">
-                <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+              <div className="bg-white/5 p-2 rounded-lg">
+                <svg className="w-4 h-4 text-white/40" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm8 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1v-2z" clipRule="evenodd" />
                 </svg>
               </div>
@@ -552,7 +549,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
         </div>
 
         {/* Efecto de hover en el fondo */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] via-transparent to-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       </div>
     </Link>
   );
@@ -874,23 +871,22 @@ const Home = memo(function Home() {
       <LiveScoreTicker currentGame="all" />
       
       <main className="min-h-screen pt-20">
-        {/* Hero Section - Diseño Premium */}
+        {/* Hero Section - Diseño Minimalista */}
         <section className="relative overflow-hidden py-20 lg:py-28">
-          {/* Fondos decorativos mejorados */}
-          <div className="absolute inset-0 -z-20 bg-gradient-to-br from-slate-950 via-[#0a0f1a] to-slate-900" aria-hidden="true" />
+          {/* Fondo negro puro */}
+          <div className="absolute inset-0 -z-20 bg-black" aria-hidden="true" />
           
           {/* Patrón de grid sutil */}
-          <div className="absolute inset-0 -z-15 opacity-20" aria-hidden="true">
+          <div className="absolute inset-0 -z-15 opacity-10" aria-hidden="true">
             <div className="absolute inset-0" style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,255,128,0.15) 1px, transparent 0)`,
+              backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.1) 1px, transparent 0)`,
               backgroundSize: '40px 40px'
             }} />
           </div>
           
-          {/* Orbes de luz animados */}
-          <div className="absolute -left-40 top-10 -z-10 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-emerald-500/30 to-emerald-500/0 blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} aria-hidden="true" />
-          <div className="absolute -right-40 top-40 -z-10 h-[400px] w-[400px] rounded-full bg-gradient-to-bl from-blue-500/25 to-blue-500/0 blur-[80px] animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }} aria-hidden="true" />
-          <div className="absolute left-1/3 bottom-0 -z-10 h-[300px] w-[300px] rounded-full bg-gradient-to-t from-purple-500/20 to-purple-500/0 blur-[60px] animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} aria-hidden="true" />
+          {/* Orbes de luz sutiles */}
+          <div className="absolute -left-40 top-10 -z-10 h-[500px] w-[500px] rounded-full bg-white/5 blur-[100px]" aria-hidden="true" />
+          <div className="absolute -right-40 top-40 -z-10 h-[400px] w-[400px] rounded-full bg-white/5 blur-[80px]" aria-hidden="true" />
 
           <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
             <div className="relative">
@@ -898,12 +894,12 @@ const Home = memo(function Home() {
                 {/* Contenido principal */}
                 <div className="flex flex-col gap-6 lg:gap-8">
                   {/* Badge de temporada */}
-                  <div className="inline-flex w-fit items-center gap-3 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 backdrop-blur-sm">
+                  <div className="inline-flex w-fit items-center gap-3 rounded-full border border-white/20 bg-white/5 px-4 py-2 backdrop-blur-sm">
                     <span className="flex h-2 w-2">
-                      <span className="absolute inline-flex h-2 w-2 rounded-full bg-emerald-400 opacity-75 animate-ping"></span>
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                      <span className="absolute inline-flex h-2 w-2 rounded-full bg-white opacity-75 animate-ping"></span>
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-white"></span>
                     </span>
-                    <span className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">
+                    <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">
                       Temporada 2025 · En directo
                     </span>
                   </div>
@@ -912,31 +908,31 @@ const Home = memo(function Home() {
                   <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black leading-[1.1] tracking-tight">
                     <span className="text-white">Toda la escena</span>
                     <br />
-                    <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                    <span className="text-white">
                       esports
                     </span>
-                    <span className="text-white"> en </span>
+                    <span className="text-white/60"> en </span>
                     <span className="relative inline-block">
                       <span className="relative z-10 text-white">vivo</span>
-                      <span className="absolute -inset-1 -z-10 rounded-lg bg-gradient-to-r from-emerald-500/30 to-blue-500/30 blur-sm" aria-hidden="true"></span>
+                      <span className="absolute -inset-1 -z-10 rounded-lg bg-white/10 blur-sm" aria-hidden="true"></span>
                     </span>
                   </h1>
                   
                   {/* Descripción */}
-                  <p className="max-w-xl text-base sm:text-lg text-white/70 leading-relaxed">
+                  <p className="max-w-xl text-base sm:text-lg text-white/50 leading-relaxed">
                     Monitoriza resultados en tiempo real, consulta horarios de las mejores ligas y recibe alertas instantáneas de 
-                    <span className="text-emerald-400 font-semibold"> Dota 2</span>, 
-                    <span className="text-blue-400 font-semibold"> League of Legends</span>, 
-                    <span className="text-orange-400 font-semibold"> CS2</span> y más.
+                    <span className="text-white font-semibold"> Dota 2</span>, 
+                    <span className="text-white font-semibold"> League of Legends</span>, 
+                    <span className="text-white font-semibold"> CS2</span> y más.
                   </p>
                   
                   {/* Botones de acción */}
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                     <Link
                       href="/esports"
-                      className="group relative inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-8 py-4 text-base font-bold text-white shadow-2xl shadow-emerald-500/30 transition-all duration-300 hover:shadow-emerald-500/50 hover:scale-[1.02] overflow-hidden"
+                      className="group relative touch-target touch-ripple inline-flex items-center justify-center gap-3 rounded-xl bg-white px-8 py-4 text-base font-bold text-black transition-all duration-300 hover:bg-white/90 hover:scale-[1.02] overflow-hidden"
                     >
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" aria-hidden="true" />
+                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" aria-hidden="true" />
                       <span className="relative z-10 flex items-center gap-2">
                         <span>🎮</span>
                         Explorar partidos
@@ -948,11 +944,11 @@ const Home = memo(function Home() {
                     
                     <Link
                       href="#torneos"
-                      className="group inline-flex items-center justify-center gap-3 rounded-2xl border-2 border-white/15 bg-white/5 px-8 py-4 text-base font-bold text-white/90 backdrop-blur-sm transition-all duration-300 hover:border-emerald-400/50 hover:bg-white/10 hover:text-white"
+                      className="group touch-target touch-ripple inline-flex items-center justify-center gap-3 rounded-xl border border-white/20 bg-transparent px-8 py-4 text-base font-bold text-white/80 backdrop-blur-sm transition-all duration-300 hover:border-white/40 hover:bg-white/5 hover:text-white"
                     >
                       <span>🏆</span>
                       Ver torneos activos
-                      <span className="text-emerald-400 transition-transform duration-300 group-hover:translate-x-1">→</span>
+                      <span className="text-white/60 transition-transform duration-300 group-hover:translate-x-1">→</span>
                     </Link>
                   </div>
 
@@ -961,19 +957,19 @@ const Home = memo(function Home() {
                     {heroHighlights.map((metric, index) => (
                       <div
                         key={metric.label}
-                        className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.02] p-5 backdrop-blur-sm transition-all duration-300 hover:border-emerald-500/30 hover:bg-white/[0.1]"
+                        className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08]"
                         style={{ animationDelay: `${index * 100}ms` }}
                       >
                         {/* Acento decorativo */}
-                        <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-emerald-500/50 via-transparent to-blue-500/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
+                        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/20 via-transparent to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
                         
-                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">
+                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/40">
                           {metric.label}
                         </span>
                         <p className="mt-2 text-3xl sm:text-4xl font-black text-white tabular-nums">
                           {numberFormatter.format(Math.max(metric.value, 0))}
                         </p>
-                        <p className="mt-1 text-xs text-white/50">{metric.helper}</p>
+                        <p className="mt-1 text-xs text-white/40">{metric.helper}</p>
                       </div>
                     ))}
                   </div>
@@ -981,17 +977,13 @@ const Home = memo(function Home() {
                   {/* Features badges */}
                   <div className="flex flex-wrap gap-2 mt-2">
                     {[
-                      { icon: "⚡", text: "Alertas en vivo", color: "emerald" },
-                      { icon: "🎯", text: "Cobertura multijuego", color: "blue" },
-                      { icon: "📊", text: "Estadísticas avanzadas", color: "purple" }
+                      { icon: "⚡", text: "Alertas en vivo" },
+                      { icon: "🎯", text: "Cobertura multijuego" },
+                      { icon: "📊", text: "Estadísticas avanzadas" }
                     ].map((feature, index) => (
                       <span
                         key={feature.text}
-                        className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all duration-300 hover:scale-105 ${
-                          feature.color === 'emerald' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' :
-                          feature.color === 'blue' ? 'border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20' :
-                          'border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20'
-                        }`}
+                        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/60 transition-all duration-300 hover:scale-105 hover:bg-white/10 hover:text-white/80"
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
                         <span>{feature.icon}</span>
@@ -1004,36 +996,36 @@ const Home = memo(function Home() {
                 {/* Tarjeta de partido destacado */}
                 <div className="relative lg:mt-0">
                   {/* Glows decorativos */}
-                  <div className="absolute -right-20 top-0 h-60 w-60 rounded-full bg-emerald-500/20 blur-[80px]" aria-hidden="true" />
-                  <div className="absolute -left-20 bottom-10 h-48 w-48 rounded-full bg-blue-500/15 blur-[60px]" aria-hidden="true" />
+                  <div className="absolute -right-20 top-0 h-60 w-60 rounded-full bg-white/5 blur-[80px]" aria-hidden="true" />
+                  <div className="absolute -left-20 bottom-10 h-48 w-48 rounded-full bg-white/5 blur-[60px]" aria-hidden="true" />
                   
                   {/* Tarjeta principal */}
-                  <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-black/80 via-black/60 to-black/80 backdrop-blur-2xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.05)]">
+                  <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/80 backdrop-blur-2xl">
                     {/* Borde superior brillante */}
-                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" aria-hidden="true" />
+                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" aria-hidden="true" />
                     
                     {/* Efecto de reflejo */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.08] via-transparent to-transparent" aria-hidden="true" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-transparent" aria-hidden="true" />
                     
                     <div className="relative flex flex-col gap-6 p-6 sm:p-8">
                       {/* Header de la tarjeta */}
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/30">
                             Partido destacado
                           </p>
                           <h3 className="mt-2 text-xl sm:text-2xl font-bold text-white leading-tight">
                             {heroFeaturedMatch ? (
                               <>
                                 {heroFeaturedMatch.radiant}
-                                <span className="mx-2 text-emerald-400">vs</span>
+                                <span className="mx-2 text-white/40">vs</span>
                                 {heroFeaturedMatch.dire}
                               </>
                             ) : (
                               "Personaliza tu feed"
                             )}
                           </h3>
-                          <p className="mt-1 text-sm text-white/50">
+                          <p className="mt-1 text-sm text-white/40">
                             {heroFeaturedMatch ? heroFeaturedMatch.league || "Liga profesional" : "Sigue tus juegos favoritos"}
                           </p>
                         </div>
@@ -1043,41 +1035,41 @@ const Home = memo(function Home() {
                           heroMatchIsLive ? (
                             <LiveBadge className="scale-90" />
                           ) : heroMatchIsUpcoming ? (
-                            <span className="inline-flex items-center gap-2 rounded-full bg-blue-500/15 border border-blue-500/30 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-blue-300">
-                              <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white/70">
+                              <span className="w-1.5 h-1.5 rounded-full bg-white/60"></span>
                               Próximo
                             </span>
                           ) : heroMatchIsFinished ? (
-                            <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white/60">Finalizado</span>
+                            <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white/50">Finalizado</span>
                           ) : null
                         ) : (
-                          <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white/60">Explorar</span>
+                          <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white/50">Explorar</span>
                         )}
                       </div>
 
                       {heroFeaturedMatch ? (
                         <>
                           {/* Marcador */}
-                          <div className="rounded-2xl border border-white/10 bg-black/40 p-5">
+                          <div className="rounded-xl border border-white/10 bg-black/40 p-5">
                             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
                               {/* Equipo 1 */}
                               <div className="text-center space-y-2">
                                 <p className="text-xs font-bold uppercase tracking-wide text-white/40 truncate">{heroFeaturedMatch.radiant}</p>
-                                <p className={`text-4xl sm:text-5xl font-black tabular-nums ${heroRadiantWinner ? "text-emerald-400" : "text-white"}`}>
+                                <p className={`text-4xl sm:text-5xl font-black tabular-nums ${heroRadiantWinner ? "text-white" : "text-white/60"}`}>
                                   {typeof heroFeaturedMatch.radiant_score === "number" ? heroFeaturedMatch.radiant_score : "—"}
                                 </p>
                               </div>
                               
                               {/* VS */}
                               <div className="flex flex-col items-center gap-2">
-                                <span className="text-lg font-bold text-white/30">VS</span>
+                                <span className="text-lg font-bold text-white/20">VS</span>
                                 <div className="w-px h-8 bg-gradient-to-b from-transparent via-white/20 to-transparent" aria-hidden="true" />
                               </div>
                               
                               {/* Equipo 2 */}
                               <div className="text-center space-y-2">
                                 <p className="text-xs font-bold uppercase tracking-wide text-white/40 truncate">{heroFeaturedMatch.dire}</p>
-                                <p className={`text-4xl sm:text-5xl font-black tabular-nums ${heroDireWinner ? "text-emerald-400" : "text-white"}`}>
+                                <p className={`text-4xl sm:text-5xl font-black tabular-nums ${heroDireWinner ? "text-white" : "text-white/60"}`}>
                                   {typeof heroFeaturedMatch.dire_score === "number" ? heroFeaturedMatch.dire_score : "—"}
                                 </p>
                               </div>
@@ -1106,7 +1098,7 @@ const Home = memo(function Home() {
                           {/* Botón de acción */}
                           <Link
                             href={`/esports/${heroFeaturedMatch.id}`}
-                            className="group inline-flex items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-bold text-white transition-all duration-300 hover:border-emerald-500/40 hover:bg-emerald-500/10"
+                            className="group touch-target touch-ripple inline-flex items-center justify-center gap-3 rounded-lg border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-bold text-white transition-all duration-300 hover:border-white/20 hover:bg-white/10"
                           >
                             <span>Ver detalles del partido</span>
                             <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
@@ -1114,20 +1106,20 @@ const Home = memo(function Home() {
                         </>
                       ) : (
                         /* Estado vacío */
-                        <div className="space-y-4 text-white/60">
+                        <div className="space-y-4 text-white/50">
                           <p className="text-sm leading-relaxed">
                             Configura notificaciones y selecciona tus títulos favoritos para recibir recomendaciones personalizadas.
                           </p>
                           <div className="flex flex-col gap-3 sm:flex-row">
                             <Link
                               href="/equipos"
-                              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/30 transition-all duration-300 hover:scale-[1.02]"
+                              className="touch-target touch-ripple inline-flex items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-bold text-black transition-all duration-300 hover:bg-white/90 hover:scale-[1.02]"
                             >
                               👥 Descubrir equipos
                             </Link>
                             <Link
                               href="/esports"
-                              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white/80 transition-all duration-300 hover:border-emerald-400/50 hover:bg-white/10 hover:text-white"
+                              className="touch-target touch-ripple inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-5 py-3 text-sm font-bold text-white/70 transition-all duration-300 hover:border-white/20 hover:bg-white/10 hover:text-white"
                             >
                               📅 Ver calendario
                             </Link>
@@ -1149,31 +1141,31 @@ const Home = memo(function Home() {
           </div>
         </section>
 
-        {/* Estadísticas por Juego - Diseño Premium */}
+        {/* Estadísticas por Juego - Diseño Minimalista */}
         <section className="relative py-20 overflow-hidden">
           {/* Fondo decorativo */}
           <div className="absolute inset-0 -z-10">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-emerald-500/10 rounded-full blur-[120px]" aria-hidden="true" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-white/5 rounded-full blur-[120px]" aria-hidden="true" />
           </div>
           
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             {/* Header de sección mejorado */}
             <div className="mx-auto mb-14 max-w-3xl text-center">
-              <div className="inline-flex items-center gap-3 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-5 py-2 mb-6">
-                <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">
+              <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/5 px-5 py-2 mb-6">
+                <span className="flex h-2 w-2 rounded-full bg-white animate-pulse" />
+                <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/60">
                   Métricas en directo
                 </span>
               </div>
               
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight">
                 Estadísticas en{" "}
-                <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                <span className="text-white/80">
                   tiempo real
                 </span>
               </h2>
-              <p className="mt-4 text-base sm:text-lg text-white/60 max-w-2xl mx-auto">
+              <p className="mt-4 text-base sm:text-lg text-white/50 max-w-2xl mx-auto">
                 Descubre qué escena está más activa ahora mismo y encuentra nuevas ligas para seguir
               </p>
             </div>
@@ -1198,27 +1190,27 @@ const Home = memo(function Home() {
 
         {/* Filtros Avanzados */}
         <section className="relative py-16">
-          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-white/5 to-transparent" aria-hidden="true" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent" aria-hidden="true" />
           <div className="container mx-auto px-6">
             <div
-              className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/60 p-8 backdrop-blur-xl shadow-[0_20px_70px_-45px_rgba(16,185,129,0.6)] sm:p-10"
+              className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/60 p-8 backdrop-blur-xl sm:p-10"
               aria-busy={isFiltering}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-sky-500/10" aria-hidden="true" />
-              <div className="absolute -right-28 -top-28 h-72 w-72 rounded-full bg-emerald-400/20 blur-3xl" aria-hidden="true" />
-              <div className="absolute -left-24 bottom-0 h-64 w-64 rounded-full bg-sky-500/20 blur-3xl" aria-hidden="true" />
+              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] via-transparent to-white/[0.02]" aria-hidden="true" />
+              <div className="absolute -right-28 -top-28 h-72 w-72 rounded-full bg-white/5 blur-3xl" aria-hidden="true" />
+              <div className="absolute -left-24 bottom-0 h-64 w-64 rounded-full bg-white/5 blur-3xl" aria-hidden="true" />
               <div className={`relative transition-opacity duration-300 ${isFiltering ? "opacity-60" : "opacity-100"}`}>
                 <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-white mb-3 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                  <h3 className="text-2xl font-bold text-white mb-3">
                     🎛️ Filtros Avanzados
                   </h3>
-                  <p className="text-gray-400 text-sm">Personaliza tu experiencia seleccionando período de tiempo y juegos</p>
+                  <p className="text-white/40 text-sm">Personaliza tu experiencia seleccionando período de tiempo y juegos</p>
                 </div>
 
             {/* Filtros de Tiempo */}
             <div className="mb-8">
               <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <span className="text-blue-400">⏰</span>
+                <span className="text-white/60">⏰</span>
                 Período de Tiempo
                 <Tooltip
                   content={`Selecciona el rango temporal que mejor se adapte a tu análisis.
@@ -1228,7 +1220,7 @@ Incluye partidos en vivo y próximos para ese período.`}
                   <span
                     tabIndex={0}
                     aria-label="Ayuda sobre el período de tiempo"
-                    className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400/60 bg-blue-500/10 text-xs font-bold text-blue-200 hover:bg-blue-500/20 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
+                    className="flex h-5 w-5 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xs font-bold text-white/60 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
                   >
                     i
                   </span>
@@ -1244,10 +1236,10 @@ ${option.description}. Coincidencias actuales: ${option.count}.`}
                   >
                     <button
                       onClick={() => handleTimeframeChange(option.id)}
-                      className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
+                      className={`group relative touch-target touch-ripple overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border ${
                         selectedTimeframe === option.id
-                          ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/25"
-                          : "bg-gray-800/50 text-white border-gray-600 hover:border-blue-500/50 hover:bg-gray-700/50"
+                          ? "bg-white text-black border-white"
+                          : "bg-white/5 text-white border-white/10 hover:border-white/20 hover:bg-white/10"
                       }`}
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
@@ -1257,13 +1249,13 @@ ${option.description}. Coincidencias actuales: ${option.count}.`}
                       <div className="relative z-10 text-center">
                         <div className="text-2xl mb-2">{option.emoji}</div>
                         <div className="font-bold text-base mb-1">{option.label}</div>
-                        <div className={`text-xs mb-2 ${selectedTimeframe === option.id ? 'text-blue-100' : 'text-gray-400'}`}>
+                        <div className={`text-xs mb-2 ${selectedTimeframe === option.id ? 'text-black/60' : 'text-white/40'}`}>
                           {option.description}
                         </div>
                         <div className={`text-xs font-bold px-2 py-1 rounded-full ${
                           selectedTimeframe === option.id 
-                            ? 'bg-white/20 text-white' 
-                            : 'bg-gray-700 text-gray-300'
+                            ? 'bg-black/10 text-black' 
+                            : 'bg-white/10 text-white/60'
                         }`}>
                           {option.count} partidos
                         </div>
@@ -1271,7 +1263,7 @@ ${option.description}. Coincidencias actuales: ${option.count}.`}
 
                       {/* Indicador de selección */}
                       {selectedTimeframe === option.id && (
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-b-xl"></div>
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 rounded-b-xl"></div>
                       )}
                     </button>
                   </Tooltip>
@@ -1282,7 +1274,7 @@ ${option.description}. Coincidencias actuales: ${option.count}.`}
             {/* Filtros de Juegos */}
             <div className="mb-6">
               <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <span className="text-green-400">🎮</span>
+                <span className="text-white/60">🎮</span>
                 Seleccionar Juegos
                 <Tooltip
                   content={`Filtra la lista por juego específico para centrarte en tus ligas favoritas.
@@ -1292,7 +1284,7 @@ Los partidos mostrados y las estadísticas se ajustan automáticamente.`}
                   <span
                     tabIndex={0}
                     aria-label="Ayuda sobre el filtro de juegos"
-                    className="flex h-5 w-5 items-center justify-center rounded-full border border-green-400/60 bg-green-500/10 text-xs font-bold text-green-200 hover:bg-green-500/20 focus:outline-none focus:ring-2 focus:ring-green-400/60"
+                    className="flex h-5 w-5 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xs font-bold text-white/60 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
                   >
                     i
                   </span>
@@ -1305,14 +1297,14 @@ Los partidos mostrados y las estadísticas se ajustan automáticamente.`}
 Reúne enfrentamientos de cada título disponible. Coincidencias actuales: ${matches.length}.`}
                   className="block h-full"
                 >
-                  <button
-                    onClick={() => handleGameChange("all")}
-                    className={`group relative overflow-hidden px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
-                      selectedGame === "all"
-                        ? "bg-gradient-to-r from-green-500 to-green-600 text-white border-green-400 shadow-lg shadow-green-500/25"
-                        : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
-                    }`}
-                  >
+                      <button
+                        onClick={() => handleGameChange("all")}
+                        className={`group relative touch-target touch-ripple overflow-hidden px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border ${
+                          selectedGame === "all"
+                            ? "bg-white text-black border-white"
+                            : "bg-white/5 text-white border-white/10 hover:border-white/20 hover:bg-white/10"
+                        }`}
+                      >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                     
                     <div className="relative z-10 text-center">
@@ -1320,15 +1312,15 @@ Reúne enfrentamientos de cada título disponible. Coincidencias actuales: ${mat
                       <div className="font-bold text-sm mb-2">Todos</div>
                       <div className={`text-xs px-2 py-1 rounded-full ${
                         selectedGame === "all" 
-                          ? 'bg-white/20 text-white' 
-                          : 'bg-gray-700 text-gray-300'
+                          ? 'bg-black/10 text-black' 
+                          : 'bg-white/10 text-white/60'
                       }`}>
                         {matches.length} partidos
                       </div>
                     </div>
 
                     {selectedGame === "all" && (
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-b-xl"></div>
+                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 rounded-b-xl"></div>
                     )}
                   </button>
                 </Tooltip>
@@ -1345,10 +1337,10 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                     >
                       <button
                         onClick={() => handleGameChange(game.id)}
-                        className={`group relative overflow-hidden px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
+                        className={`group relative overflow-hidden px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border ${
                           selectedGame === game.id
-                            ? `bg-gradient-to-r ${game.gradient} text-white border-white/30 shadow-lg`
-                            : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
+                            ? "bg-white text-black border-white"
+                            : "bg-white/5 text-white border-white/10 hover:border-white/20 hover:bg-white/10"
                         }`}
                         style={{ animationDelay: `${(index + 1) * 0.1}s` }}
                       >
@@ -1369,15 +1361,15 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                           </div>
                           <div className={`text-xs px-2 py-1 rounded-full ${
                             selectedGame === game.id 
-                              ? 'bg-white/20 text-white' 
-                              : 'bg-gray-700 text-gray-300'
+                              ? 'bg-black/10 text-black' 
+                              : 'bg-white/10 text-white/60'
                           }`}>
                             {gameMatches.length} partidos
                           </div>
                         </div>
 
                         {selectedGame === game.id && (
-                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-b-xl"></div>
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 rounded-b-xl"></div>
                         )}
                       </button>
                     </Tooltip>
@@ -1387,22 +1379,22 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
             </div>
 
             {/* Información de resultados y acciones */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-700">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-white/10">
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 bg-gray-700/50 px-4 py-2 rounded-xl text-sm text-gray-300">
-                  <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl text-sm text-white/50">
+                  <svg className="w-4 h-4 text-white/40" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   Actualización automática cada 30s
                 </div>
                 
-                <div className="bg-gradient-to-r from-blue-600/20 to-green-600/20 px-4 py-2 rounded-xl text-sm text-white border border-blue-500/30">
+                <div className="bg-white/5 px-4 py-2 rounded-xl text-sm text-white border border-white/10">
                   <span className="font-bold">{filteredMatches.length}</span> partidos encontrados
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <button 
+                <button
                   onClick={() => {
                     const timeframeChanged = handleTimeframeChange("today");
                     const gameChanged = handleGameChange("all");
@@ -1410,7 +1402,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                       triggerFilterFeedback();
                     }
                   }}
-                  className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2"
+                  className="touch-target touch-ripple bg-white/5 hover:bg-white/10 text-white/50 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2"
                   aria-label="Restablecer filtros a valores por defecto"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1420,9 +1412,9 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                 </button>
                 
                 {featuredMatches.length > 0 && (
-                  <Link 
+                  <Link
                     href="/esports"
-                    className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6 py-2 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"
+                    className="touch-target touch-ripple bg-white hover:bg-white/90 text-black px-6 py-2 rounded-xl font-semibold transition-all duration-300 hover:scale-105 flex items-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -1440,13 +1432,13 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
         {/* Partidos Destacados */}
         <section className="container mx-auto px-6 py-16">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-4 text-white">
               ⚡ Partidos Destacados
             </h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            <p className="text-white/50 text-lg max-w-2xl mx-auto">
               Los enfrentamientos más emocionantes en vivo y próximos a comenzar
             </p>
-            <div className="w-24 h-1 bg-gradient-to-r from-green-500 to-blue-500 mx-auto mt-4 rounded-full"></div>
+            <div className="w-24 h-1 bg-white/20 mx-auto mt-4 rounded-full"></div>
           </div>
 
           <div className="relative" aria-busy={loading || isFiltering}>
@@ -1495,9 +1487,9 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                     <p className="text-gray-400 mb-6">
                       No hay partidos en vivo o próximos en este momento.
                     </p>
-                    <Link 
+                    <Link
                       href="/esports"
-                      className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg inline-block"
+                      className="touch-target touch-ripple bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg inline-block"
                     >
                       Ver Todos los Partidos
                     </Link>
@@ -1517,23 +1509,23 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
           {/* Acciones rápidas */}
           {featuredMatches.length > 0 && (
             <div className="mt-12 text-center">
-              <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-2xl p-6 border border-gray-700 backdrop-blur-sm">
+              <div className="bg-white/5 rounded-xl p-6 border border-white/10 backdrop-blur-sm">
                 <h3 className="text-lg font-semibold text-white mb-4">Acciones Rápidas</h3>
                 <div className="flex flex-wrap justify-center gap-4">
                   <Link 
                     href="/esports"
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"
+                    className="bg-white hover:bg-white/90 text-black px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 flex items-center gap-2"
                   >
                     🎯 Ver Todos los Partidos
                   </Link>
-                  <button 
-                    className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"
+                  <button
+                    className="touch-target touch-ripple bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 flex items-center gap-2 border border-white/10"
                     aria-label="Ver mis equipos favoritos"
                   >
                     ⭐ Mis Favoritos
                   </button>
                   <button 
-                    className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"
+                    className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 flex items-center gap-2 border border-white/10"
                     aria-label="Filtrar solo partidos en vivo"
                   >
                     🔴 Solo En Vivo
@@ -1546,31 +1538,31 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
 
         {/* Torneos Activos */}
         <section className="container mx-auto px-6 py-16 relative">
-          {/* Fondo con gradiente */}
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-900/50 via-black/30 to-gray-900/50 rounded-3xl"></div>
+          {/* Fondo */}
+          <div className="absolute inset-0 bg-white/[0.02] rounded-2xl"></div>
           
           <div className="relative z-10">
             <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
+              <h2 className="text-4xl font-bold mb-4 text-white">
                 🏆 Torneos Activos
               </h2>
-              <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+              <p className="text-white/50 text-lg max-w-2xl mx-auto">
                 Los torneos más importantes que están en curso en este momento
               </p>
-              <div className="w-24 h-1 bg-gradient-to-r from-green-500 to-blue-500 mx-auto mt-4 rounded-full"></div>
+              <div className="w-24 h-1 bg-white/20 mx-auto mt-4 rounded-full"></div>
             </div>
 
             {loadingTournaments ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-gray-800/50 rounded-2xl p-8 animate-pulse border border-gray-700">
+                  <div key={i} className="bg-white/5 rounded-xl p-8 animate-pulse border border-white/10">
                     <div className="flex items-center gap-3 mb-6">
-                      <div className="w-8 h-8 bg-gray-700 rounded"></div>
-                      <div className="h-4 bg-gray-700 rounded w-32"></div>
+                      <div className="w-8 h-8 bg-white/10 rounded"></div>
+                      <div className="h-4 bg-white/10 rounded w-32"></div>
                     </div>
-                    <div className="h-6 bg-gray-700 rounded mb-3"></div>
-                    <div className="h-4 bg-gray-700 rounded mb-6 w-2/3"></div>
-                    <div className="h-8 bg-gray-700 rounded w-24"></div>
+                    <div className="h-6 bg-white/10 rounded mb-3"></div>
+                    <div className="h-4 bg-white/10 rounded mb-6 w-2/3"></div>
+                    <div className="h-8 bg-white/10 rounded w-24"></div>
                   </div>
                 ))}
               </div>
@@ -1590,8 +1582,8 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                     >
                       <Link href={`/esports/tournament/${tournament.id}`}>
                         <div
-                          className={`group relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 hover:shadow-2xl transition-all duration-500 hover:scale-105 border border-gray-700 hover:border-green-500/50 ${
-                            isLive ? "ring-2 ring-emerald-400/50 shadow-[0_0_32px_rgba(16,185,129,0.35)]" : ""
+                          className={`group relative overflow-hidden bg-black/60 rounded-xl p-8 hover:bg-black/80 transition-all duration-500 hover:scale-[1.02] border border-white/10 hover:border-white/20 ${
+                            isLive ? "ring-1 ring-white/20" : ""
                           }`}
                         >
                           {/* Efecto de brillo */}
@@ -1609,15 +1601,14 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                                     height={40}
                                     className="w-10 h-10 group-hover:scale-110 transition-transform duration-300"
                                   />
-                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-green-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true"></div>
                                 </div>
                               )}
                               <div className="flex-1">
-                                <span className="text-sm font-medium text-gray-400 group-hover:text-green-400 transition-colors duration-300">
+                                <span className="text-sm font-medium text-white/50 group-hover:text-white/70 transition-colors duration-300">
                                   {tournament.league}
                                 </span>
                                 {game && (
-                                  <p className="text-xs text-gray-500">{game.name}</p>
+                                  <p className="text-xs text-white/40">{game.name}</p>
                                 )}
                               </div>
                               
@@ -1628,27 +1619,27 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                             </div>
                             
                             {/* Información del torneo */}
-                            <h3 className="text-xl font-bold text-white mb-3 group-hover:text-green-400 transition-colors duration-300 line-clamp-2">
+                            <h3 className="text-xl font-bold text-white mb-3 group-hover:text-white transition-colors duration-300 line-clamp-2">
                               {tournament.name}
                             </h3>
-                            <p className="text-sm text-gray-400 mb-6 line-clamp-2">
+                            <p className="text-sm text-white/40 mb-6 line-clamp-2">
                               {tournament.serie}
                             </p>
                             
                             {/* Footer */}
                             <div className="flex items-center justify-between">
                               {tournament.prizepool ? (
-                                <div className="bg-gradient-to-r from-yellow-600 to-yellow-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg flex items-center gap-2">
-                                  <span className="text-yellow-200">💰</span>
+                                <div className="bg-white/10 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 border border-white/10">
+                                  <span>💰</span>
                                   {tournament.prizepool}
                                 </div>
                               ) : (
-                                <div className="bg-gray-700/50 text-gray-300 px-4 py-2 rounded-xl text-sm font-medium">
+                                <div className="bg-white/5 text-white/50 px-4 py-2 rounded-lg text-sm font-medium">
                                   Prize Pool TBD
                                 </div>
                               )}
                               
-                              <div className="flex items-center gap-2 text-gray-400">
+                              <div className="flex items-center gap-2 text-white/40">
                                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                                 </svg>
@@ -1657,7 +1648,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                           </div>
 
                           {/* Efecto de hover en el fondo */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] via-transparent to-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         </div>
                       </Link>
                     </div>
@@ -1666,15 +1657,15 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
               </div>
             ) : (
               <div className="text-center py-16">
-                <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-12 border border-gray-700 max-w-md mx-auto">
+                <div className="bg-white/5 rounded-xl p-12 border border-white/10 max-w-md mx-auto">
                   <div className="text-6xl mb-4">🏆</div>
                   <h3 className="text-xl font-bold text-white mb-2">No hay torneos activos</h3>
-                  <p className="text-gray-400 mb-6">
+                  <p className="text-white/50 mb-6">
                     No hay torneos en curso en este momento.
                   </p>
-                  <Link 
+                  <Link
                     href="/esports"
-                    className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg inline-block"
+                    className="touch-target touch-ripple bg-white hover:bg-white/90 text-black px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 inline-block"
                   >
                     Ver Todos los Torneos
                   </Link>
@@ -1684,23 +1675,22 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
           </div>
         </section>
 
-        {/* Call to Action - Diseño Premium */}
+        {/* Call to Action - Diseño Minimalista */}
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="relative overflow-hidden rounded-3xl">
-            {/* Fondo con gradiente y efectos */}
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-blue-500/15 to-purple-500/20" aria-hidden="true" />
-            <div className="absolute inset-0 backdrop-blur-3xl" aria-hidden="true" />
-            <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/30 rounded-full blur-[100px]" aria-hidden="true" />
-            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/30 rounded-full blur-[100px]" aria-hidden="true" />
+          <div className="relative overflow-hidden rounded-2xl">
+            {/* Fondo */}
+            <div className="absolute inset-0 bg-white/5" aria-hidden="true" />
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/5 rounded-full blur-[100px]" aria-hidden="true" />
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/5 rounded-full blur-[100px]" aria-hidden="true" />
             
             {/* Borde decorativo */}
-            <div className="absolute inset-0 rounded-3xl border border-white/10" aria-hidden="true" />
-            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" aria-hidden="true" />
+            <div className="absolute inset-0 rounded-2xl border border-white/10" aria-hidden="true" />
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" aria-hidden="true" />
             
             <div className="relative text-center px-6 py-16 sm:py-20 lg:py-24">
               {/* Badge */}
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-6">
-                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-white/60 mb-6">
+                <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                 Únete ahora
               </span>
               
@@ -1712,16 +1702,16 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                 ?
               </h2>
               
-              <p className="text-lg sm:text-xl text-white/60 mb-10 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-lg sm:text-xl text-white/50 mb-10 max-w-2xl mx-auto leading-relaxed">
                 Únete a miles de usuarios que ya siguen sus equipos favoritos y nunca se pierden un partido importante.
               </p>
               
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link 
                   href="/esports" 
-                  className="group relative inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-10 py-4 text-lg font-bold text-white shadow-2xl shadow-emerald-500/30 transition-all duration-300 hover:shadow-emerald-500/50 hover:scale-[1.02] overflow-hidden"
+                  className="group relative inline-flex items-center justify-center gap-3 rounded-xl bg-white px-10 py-4 text-lg font-bold text-black transition-all duration-300 hover:bg-white/90 hover:scale-[1.02] overflow-hidden"
                 >
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" aria-hidden="true" />
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" aria-hidden="true" />
                   <span className="relative z-10 flex items-center gap-2">
                     🚀 Comenzar Ahora
                     <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1732,7 +1722,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                 
                 <Link 
                   href="/equipos"
-                  className="group inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-white/15 bg-white/5 px-8 py-4 text-lg font-bold text-white/90 backdrop-blur-sm transition-all duration-300 hover:border-emerald-400/50 hover:bg-white/10 hover:text-white"
+                  className="group inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-transparent px-8 py-4 text-lg font-bold text-white/80 backdrop-blur-sm transition-all duration-300 hover:border-white/40 hover:bg-white/5 hover:text-white"
                 >
                   👥 Explorar Equipos
                 </Link>
@@ -1747,7 +1737,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                 ].map((stat) => (
                   <div key={stat.label} className="text-center">
                     <p className="text-2xl sm:text-3xl font-black text-white tabular-nums">{stat.value}</p>
-                    <p className="text-xs sm:text-sm text-white/50 font-medium">{stat.label}</p>
+                    <p className="text-xs sm:text-sm text-white/40 font-medium">{stat.label}</p>
                   </div>
                 ))}
               </div>

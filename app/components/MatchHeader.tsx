@@ -39,38 +39,38 @@ const MatchHeader = ({ matchName, lang, langs, onLangChange, showNotification }:
   };
 
   return (
-    <header className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 gap-4 lg:gap-6 py-4 px-4 -mx-4 bg-gradient-to-b from-black/95 via-gray-900/95 to-transparent border-b border-gray-800/50">
+    <header className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6 gap-4 py-4 px-4 -mx-4 border-b border-white/5">
       {/* Navegación y título */}
       <div className="flex items-center gap-4 min-w-0">
         <Link
           href="/esports"
-          className="group inline-flex items-center gap-2 text-[var(--accent,#00FF80)] hover:text-green-400 text-sm font-semibold transition-all duration-300 hover:scale-105 flex-shrink-0"
+          className="group inline-flex items-center gap-2 text-white/60 hover:text-white text-sm font-medium transition-colors duration-200 flex-shrink-0"
           aria-label="Volver a la lista de partidos"
         >
-          <div className="p-2 rounded-full bg-gray-800/80 group-hover:bg-gray-700 transition-all duration-300 backdrop-blur-sm border border-gray-700 group-hover:border-gray-600">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors duration-200">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
           </div>
-          <span className="hidden sm:inline">Volver a partidos</span>
+          <span className="hidden sm:inline">Volver</span>
         </Link>
       </div>
 
       {/* Barra de búsqueda centrada */}
-      <div className="flex-1 w-full lg:max-w-2xl lg:mx-6">
+      <div className="flex-1 w-full lg:max-w-xl lg:mx-6">
         <SearchLazy />
       </div>
 
       {/* Controles del lado derecho */}
       <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
-        {/* Botón de compartir mejorado */}
+        {/* Botón de compartir */}
         <button
           onClick={handleShare}
           aria-label="Compartir partido"
-          className="group flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-800/80 text-gray-300 hover:bg-gray-700 hover:text-white border border-gray-600 hover:border-gray-500 transition-all duration-300 text-xs font-semibold backdrop-blur-sm hover:shadow-lg hover:shadow-gray-900/20"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-colors duration-200 text-xs font-medium"
           title="Compartir por enlace"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:scale-110 transition-transform duration-300">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
             <polyline points="16,6 12,2 8,6"/>
             <line x1="12" y1="2" x2="12" y2="15"/>
@@ -78,23 +78,21 @@ const MatchHeader = ({ matchName, lang, langs, onLangChange, showNotification }:
           <span className="hidden sm:inline">Compartir</span>
         </button>
 
-        {/* Selector de idioma mejorado */}
-        <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-800/80 border border-gray-600 hover:border-gray-500 transition-all duration-300 backdrop-blur-sm hover:shadow-lg hover:shadow-gray-900/20 group">
+        {/* Selector de idioma */}
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors duration-200">
           <select
             value={lang}
             onChange={onLangChange}
             aria-label="Seleccionar idioma"
-            className="bg-transparent text-gray-300 text-xs font-semibold focus:outline-none cursor-pointer group-hover:text-white transition-colors duration-300"
+            className="bg-transparent text-white/60 text-xs font-medium focus:outline-none cursor-pointer hover:text-white transition-colors duration-200"
           >
             {langs.map(l => (
-              <option key={l.code} value={l.code} className="bg-gray-800 text-gray-300">
+              <option key={l.code} value={l.code} className="bg-black text-white">
                 {l.label}
               </option>
             ))}
           </select>
-          <div className="group-hover:scale-110 transition-transform duration-300">
-            <LangFlag code={lang} />
-          </div>
+          <LangFlag code={lang} />
         </div>
       </div>
     </header>

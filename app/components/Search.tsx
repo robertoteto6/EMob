@@ -295,7 +295,7 @@ export default function Search({
               setShow(false);
               inputRef.current?.focus();
             }}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white transition-colors"
+            className="absolute inset-y-0 right-0 pr-3 touch-target touch-ripple flex items-center text-gray-400 hover:text-white transition-colors"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -314,7 +314,7 @@ export default function Search({
                 <h4 className="text-sm font-semibold text-gray-300">Búsquedas recientes</h4>
                 <button
                   onClick={clearRecentSearches}
-                  className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                  className="touch-target touch-ripple text-xs text-gray-500 hover:text-gray-300 transition-colors"
                 >
                   Limpiar
                 </button>
@@ -324,7 +324,7 @@ export default function Search({
                   <button
                     key={`recent-${item.type}-${item.id}`}
                     onClick={() => select(item)}
-                    className="flex items-center gap-3 w-full text-left p-2 rounded-lg hover:bg-gray-800/50 transition-colors group"
+                    className="touch-target touch-ripple flex items-center gap-3 w-full text-left p-2 rounded-lg hover:bg-gray-800/50 transition-colors group"
                   >
                     <span className="text-lg">{getTypeIcon(item.type)}</span>
                     <div className="flex-1 min-w-0">
@@ -393,10 +393,10 @@ export default function Search({
                       key={`${item.type}-${item.id}`}
                       onClick={() => select(item)}
                       className={`
-                        flex items-center gap-3 w-full text-left p-3 
+                        touch-target touch-ripple flex items-center gap-3 w-full text-left p-3
                         transition-colors border-l-2 border-transparent
-                        ${selectedIndex === index 
-                          ? 'bg-green-500/10 border-green-500 text-white' 
+                        ${selectedIndex === index
+                          ? 'bg-green-500/10 border-green-500 text-white'
                           : 'hover:bg-gray-800/50 text-gray-300 hover:text-white'
                         }
                       `}
