@@ -16,6 +16,8 @@ interface TouchPosition {
   y: number;
 }
 
+const touchListenerOptions: AddEventListenerOptions = { passive: false };
+
 export function useSwipeGesture(options: SwipeGestureOptions) {
   const {
     onSwipeLeft,
@@ -84,15 +86,15 @@ export function useSwipeGesture(options: SwipeGestureOptions) {
 
   const setRef = useCallback((element: HTMLElement | null) => {
     if (elementRef.current) {
-      elementRef.current.removeEventListener('touchstart', handleTouchStart, { passive: false });
-      elementRef.current.removeEventListener('touchend', handleTouchEnd, { passive: false });
+      elementRef.current.removeEventListener('touchstart', handleTouchStart, touchListenerOptions);
+      elementRef.current.removeEventListener('touchend', handleTouchEnd, touchListenerOptions);
     }
 
     elementRef.current = element;
 
     if (element) {
-      element.addEventListener('touchstart', handleTouchStart, { passive: false });
-      element.addEventListener('touchend', handleTouchEnd, { passive: false });
+      element.addEventListener('touchstart', handleTouchStart, touchListenerOptions);
+      element.addEventListener('touchend', handleTouchEnd, touchListenerOptions);
     }
   }, [handleTouchStart, handleTouchEnd]);
 

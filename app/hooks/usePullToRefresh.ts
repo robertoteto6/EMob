@@ -14,6 +14,8 @@ interface PullToRefreshState {
   canRefresh: boolean;
 }
 
+const touchListenerOptions: AddEventListenerOptions = { passive: false };
+
 export function usePullToRefresh(options: PullToRefreshOptions) {
   const { onRefresh, threshold = 80, disabled = false } = options;
 
@@ -81,17 +83,17 @@ export function usePullToRefresh(options: PullToRefreshOptions) {
 
   const setRef = useCallback((element: HTMLElement | null) => {
     if (elementRef.current) {
-      elementRef.current.removeEventListener('touchstart', handleTouchStart, { passive: false });
-      elementRef.current.removeEventListener('touchmove', handleTouchMove, { passive: false });
-      elementRef.current.removeEventListener('touchend', handleTouchEnd, { passive: false });
+      elementRef.current.removeEventListener('touchstart', handleTouchStart, touchListenerOptions);
+      elementRef.current.removeEventListener('touchmove', handleTouchMove, touchListenerOptions);
+      elementRef.current.removeEventListener('touchend', handleTouchEnd, touchListenerOptions);
     }
 
     elementRef.current = element;
 
     if (element) {
-      element.addEventListener('touchstart', handleTouchStart, { passive: false });
-      element.addEventListener('touchmove', handleTouchMove, { passive: false });
-      element.addEventListener('touchend', handleTouchEnd, { passive: false });
+      element.addEventListener('touchstart', handleTouchStart, touchListenerOptions);
+      element.addEventListener('touchmove', handleTouchMove, touchListenerOptions);
+      element.addEventListener('touchend', handleTouchEnd, touchListenerOptions);
     }
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
