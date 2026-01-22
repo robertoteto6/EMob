@@ -66,6 +66,8 @@ export interface MatchDetail extends Match {
   end_time: number | null;
   serie: string;
   tournament: string;
+  tournament_id?: number | null;
+  league_id?: number | null;
   match_type: string;
   number_of_games: number;
   games: GameInfo[];

@@ -19,6 +19,18 @@ const MatchCard = ({ match, isFavorite, onToggleFavorite, lang }: MatchCardProps
   const now = Date.now() / 1000;
   const isUpcoming = match.start_time > now;
   const isLive = !isUpcoming && match.radiant_win === null;
+  const hasLeague = Boolean(match.league);
+  const leagueParams = new URLSearchParams();
+  if (hasLeague) {
+    leagueParams.set("view", "tournaments");
+    if (match.game && match.game !== "unknown") leagueParams.set("game", match.game);
+    leagueParams.set("league", match.league);
+  }
+  const leagueHref = hasLeague ? `/esports?${leagueParams.toString()}` : null;
+  const tournamentLabel = match.tournament || match.serie;
+  const tournamentHref = match.tournament_id ? `/esports/tournament/${match.tournament_id}` : leagueHref;
+  const showSerieBadge = Boolean(match.serie && match.serie !== tournamentLabel);
+  const hasSecondaryBadge = showSerieBadge || Boolean(tournamentLabel);
 
   return (
     <div className="relative group mb-6" key="match-details-container">
@@ -54,18 +66,46 @@ const MatchCard = ({ match, isFavorite, onToggleFavorite, lang }: MatchCardProps
 
               <div className="flex flex-wrap gap-2 mb-5 items-center">
                 {/* League Badge */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
-                  <span className="text-sm font-medium text-white/80">{match.league}</span>
-                </div>
+                {hasLeague && (
+                  leagueHref ? (
+                    <Link
+                      href={leagueHref}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-colors"
+                      aria-label={`Ver liga ${match.league}`}
+                    >
+                      <span className="text-sm font-medium text-white/80">{match.league}</span>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
+                      <span className="text-sm font-medium text-white/80">{match.league}</span>
+                    </div>
+                  )
+                )}
 
-                <span className="text-white/20">•</span>
+                {hasLeague && hasSecondaryBadge && <span className="text-white/20">•</span>}
 
                 {/* Series Badge */}
-                <span className="px-3 py-1.5 rounded-lg bg-white/5 text-white/50 text-xs font-medium border border-white/5">{match.serie}</span>
+                {showSerieBadge && (
+                  <span className="px-3 py-1.5 rounded-lg bg-white/5 text-white/50 text-xs font-medium border border-white/5">
+                    {match.serie}
+                  </span>
+                )}
 
-                {/* Tournament Badge if different */}
-                {match.tournament !== match.serie && (
-                  <span className="px-3 py-1.5 rounded-lg bg-white/5 text-white/40 text-xs border border-white/5">{match.tournament}</span>
+                {/* Tournament / League Bracket Badge */}
+                {tournamentLabel && (
+                  tournamentHref ? (
+                    <Link
+                      href={tournamentHref}
+                      className="px-3 py-1.5 rounded-lg bg-white/5 text-white/40 text-xs border border-white/5 hover:bg-white/10 hover:border-white/10 hover:text-white/70 transition-colors"
+                      aria-label={match.tournament_id ? `Ver torneo ${tournamentLabel}` : `Ver liga ${match.league}`}
+                    >
+                      {tournamentLabel}
+                    </Link>
+                  ) : (
+                    <span className="px-3 py-1.5 rounded-lg bg-white/5 text-white/40 text-xs border border-white/5">
+                      {tournamentLabel}
+                    </span>
+                  )
                 )}
               </div>
 

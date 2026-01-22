@@ -525,6 +525,7 @@ function EsportsPageContent() {
   const [selectedView, setSelectedView] = useState<"matches" | "tournaments">("matches");
   const [isFiltering, setIsFiltering] = useState(false);
   const filterAnimationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const queryAppliedRef = useRef(false);
 
   const triggerFilterFeedback = useCallback(() => {
     if (filterAnimationTimeoutRef.current) {
@@ -559,6 +560,19 @@ function EsportsPageContent() {
   }, [timeframe, triggerFilterFeedback]);
 
   const isViewLoading = selectedView === "matches" ? loading : loadingTournaments;
+
+  useEffect(() => {
+    if (queryAppliedRef.current) return;
+    const viewParam = searchParams?.get("view");
+    if (viewParam === "matches" || viewParam === "tournaments") {
+      setSelectedView(viewParam);
+    }
+    const leagueParam = searchParams?.get("league");
+    if (leagueParam) {
+      setFilterLeague(leagueParam);
+    }
+    queryAppliedRef.current = true;
+  }, [searchParams]);
   
   useEffect(() => {
     return () => {
