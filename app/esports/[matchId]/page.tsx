@@ -346,9 +346,19 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
           <MatchCard match={match} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} lang={lang} />
         </div>
 
-        <div className="mb-10">
-          <MatchStreams streams={match.streams} />
-        </div>
+        {/* Streams Section */}
+        {match.streams && match.streams.length > 0 && (
+          <div className="mb-10">
+            <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <span className="w-1 h-6 bg-red-500 rounded-full"></span>
+              Transmisiones en Vivo
+              <span className="ml-2 px-2 py-0.5 text-xs bg-red-500/20 text-red-400 rounded-full font-semibold">
+                {match.streams.length} disponible{match.streams.length > 1 ? 's' : ''}
+              </span>
+            </h3>
+            <MatchStreams streams={match.streams} />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
           {/* Left/Main Column: Games, Lineups, Predictions */}
@@ -370,11 +380,49 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
               direId={match.dire_id}
             />
 
-            <PredictionSystem matchId={match.id} matchTitle={match.name} game="esports" radiantTeam={match.radiant} direTeam={match.dire} isFinished={match.radiant_win !== null} actualWinner={match.radiant_win === true ? 'radiant' : match.radiant_win === false ? 'dire' : null} startTime={match.start_time} />
+            {/* Predictions Section */}
+            <div className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <span className="w-1 h-6 bg-blue-500 rounded-full"></span>
+                Sistema de Predicciones
+              </h3>
+              <div className="p-6 rounded-xl bg-gray-800/40 border border-gray-700/50">
+                <PredictionSystem matchId={match.id} matchTitle={match.name} game="esports" radiantTeam={match.radiant} direTeam={match.dire} isFinished={match.radiant_win !== null} actualWinner={match.radiant_win === true ? 'radiant' : match.radiant_win === false ? 'dire' : null} startTime={match.start_time} />
+              </div>
+            </div>
           </div>
 
           {/* Right Column: Information */}
           <div className="lg:col-span-1 space-y-6">
+            {/* Match Result Summary - Show when match is finished */}
+            {match.radiant_win !== null && (
+              <div className={`p-6 rounded-2xl border ${match.radiant_win ? 'bg-green-900/10 border-green-500/30' : 'bg-red-900/10 border-red-500/30'}`}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`p-2 rounded-full ${match.radiant_win ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={match.radiant_win ? 'text-green-400' : 'text-red-400'}>
+                      <path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase font-bold">Partido Finalizado</p>
+                    <p className={`text-lg font-bold ${match.radiant_win ? 'text-green-400' : 'text-red-400'}`}>
+                      {match.radiant_win ? match.radiant : match.dire} Victoria
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-black/20">
+                  <span className="text-sm text-gray-300">{match.radiant}</span>
+                  <span className="text-xl font-bold text-white">{match.radiant_score} - {match.dire_score}</span>
+                  <span className="text-sm text-gray-300">{match.dire}</span>
+                </div>
+                {match.end_time && (
+                  <p className="text-xs text-gray-500 mt-3 text-center">
+                    Duración total: {Math.round((match.end_time - match.start_time) / 60)} minutos
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Match Info Card */}
             <div className="p-6 rounded-2xl bg-gray-800/20 border border-gray-700/50">
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -383,9 +431,10 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
                   <line x1="12" y1="16" x2="12" y2="12"/>
                   <line x1="12" y1="8" x2="12.01" y2="8"/>
                 </svg>
-                Información
+                Información del Partido
               </h3>
               <div className="space-y-4">
+                {/* Game */}
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-lg bg-gray-800">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
@@ -394,10 +443,31 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 uppercase font-bold">Juego</p>
-                    <p className="text-sm text-gray-200 capitalize">{match.game}</p>
+                    <p className="text-sm text-gray-200 capitalize">{match.game.replace(/-/g, ' ')}</p>
                   </div>
                 </div>
 
+                {/* Match Status */}
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-gray-800">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase font-bold">Estado</p>
+                    <p className={`text-sm font-semibold ${
+                      match.radiant_win !== null ? 'text-gray-400' :
+                      match.start_time * 1000 <= Date.now() ? 'text-red-400' : 'text-blue-400'
+                    }`}>
+                      {match.radiant_win !== null ? 'Finalizado' :
+                       match.start_time * 1000 <= Date.now() ? 'En Vivo' : 'Programado'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Match Type/Format */}
                 {match.match_type && (
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-gray-800">
@@ -412,6 +482,7 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
                   </div>
                 )}
 
+                {/* Number of Games */}
                 {match.number_of_games > 0 && (
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-gray-800">
@@ -423,27 +494,101 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 uppercase font-bold">Número de Mapas</p>
-                      <p className="text-sm text-gray-200">{match.number_of_games}</p>
+                      <p className="text-sm text-gray-200">Mejor de {match.number_of_games}</p>
                     </div>
                   </div>
                 )}
 
-                {match.serie && (
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-gray-800">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase font-bold">Serie</p>
-                      <p className="text-sm text-gray-200">{match.serie}</p>
-                    </div>
+                {/* Start Time */}
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-gray-800">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
                   </div>
-                )}
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase font-bold">Fecha y Hora</p>
+                    <p className="text-sm text-gray-200">
+                      {new Date(match.start_time * 1000).toLocaleDateString(lang, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {new Date(match.start_time * 1000).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* Tournament/Competition Info */}
+            {(match.league || match.tournament || match.serie) && (
+              <div className="p-6 rounded-2xl bg-gray-800/20 border border-gray-700/50">
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-yellow-500">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                    <path d="M4 22h16"/>
+                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                  </svg>
+                  Competición
+                </h3>
+                <div className="space-y-4">
+                  {match.league && (
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-yellow-900/20">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-yellow-500">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase font-bold">Liga</p>
+                        <p className="text-sm text-gray-200">{match.league}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {match.serie && (
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-gray-800">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
+                          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase font-bold">Serie</p>
+                        <p className="text-sm text-gray-200">{match.serie}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {match.tournament && (
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-gray-800">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
+                          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase font-bold">Torneo</p>
+                        {match.tournament_id ? (
+                          <a href={`/esports/tournament/${match.tournament_id}`} className="text-sm text-[var(--accent,#00FF80)] hover:underline">
+                            {match.tournament}
+                          </a>
+                        ) : (
+                          <p className="text-sm text-gray-200">{match.tournament}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Quick Actions */}
             <div className="p-6 rounded-2xl bg-gray-800/20 border border-gray-700/50">
