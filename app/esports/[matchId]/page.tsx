@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, use } from "react";
+import Link from "next/link";
 import MatchHeader from "../../components/MatchHeader";
 import MatchCard from "../../components/MatchCard";
 import MatchStreams from "../../components/MatchStreams";
@@ -138,6 +139,9 @@ async function fetchMatch(matchId: string, forceRefresh = false): Promise<MatchD
 
 const LANGS: Language[] = [{ code: "es-ES", label: "Español" }, { code: "en-US", label: "English" }];
 
+// Helper to convert Unix timestamp (seconds) to milliseconds for Date operations
+const toMillis = (timestamp: number) => timestamp * 1000;
+
 export default function MatchPage(props: { params: Promise<{ matchId: string }> }) {
   const params = use(props.params);
   const matchId = params.matchId;
@@ -206,7 +210,7 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
   useEffect(() => {
     if (!match || !isPageVisible || !isOnline) return;
     const now = Date.now();
-    const matchStartMs = match.start_time * 1000;
+    const matchStartMs = toMillis(match.start_time);
     const isLive = matchStartMs <= now && match.radiant_win === null;
     let intervalId: ReturnType<typeof setInterval> | null = null;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -417,6 +421,7 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
                 </div>
                 {match.end_time && (
                   <p className="text-xs text-gray-500 mt-3 text-center">
+                    {/* start_time and end_time are Unix timestamps in seconds */}
                     Duración total: {Math.round((match.end_time - match.start_time) / 60)} minutos
                   </p>
                 )}
@@ -459,10 +464,10 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
                     <p className="text-xs text-gray-500 uppercase font-bold">Estado</p>
                     <p className={`text-sm font-semibold ${
                       match.radiant_win !== null ? 'text-gray-400' :
-                      match.start_time * 1000 <= Date.now() ? 'text-red-400' : 'text-blue-400'
+                      toMillis(match.start_time) <= Date.now() ? 'text-red-400' : 'text-blue-400'
                     }`}>
                       {match.radiant_win !== null ? 'Finalizado' :
-                       match.start_time * 1000 <= Date.now() ? 'En Vivo' : 'Programado'}
+                       toMillis(match.start_time) <= Date.now() ? 'En Vivo' : 'Programado'}
                     </p>
                   </div>
                 </div>
@@ -512,10 +517,10 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
                   <div>
                     <p className="text-xs text-gray-500 uppercase font-bold">Fecha y Hora</p>
                     <p className="text-sm text-gray-200">
-                      {new Date(match.start_time * 1000).toLocaleDateString(lang, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      {new Date(toMillis(match.start_time)).toLocaleDateString(lang, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                     <p className="text-xs text-gray-400">
-                      {new Date(match.start_time * 1000).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(toMillis(match.start_time)).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 </div>
@@ -577,9 +582,9 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
                       <div>
                         <p className="text-xs text-gray-500 uppercase font-bold">Torneo</p>
                         {match.tournament_id ? (
-                          <a href={`/esports/tournament/${match.tournament_id}`} className="text-sm text-[var(--accent,#00FF80)] hover:underline">
+                          <Link href={`/esports/tournament/${match.tournament_id}`} className="text-sm text-[var(--accent,#00FF80)] hover:underline">
                             {match.tournament}
-                          </a>
+                          </Link>
                         ) : (
                           <p className="text-sm text-gray-200">{match.tournament}</p>
                         )}
