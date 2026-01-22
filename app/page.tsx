@@ -1237,17 +1237,17 @@ Incluye partidos en vivo y próximos para ese período.`}
                   </span>
                 </Tooltip>
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 auto-rows-fr">
                 {timeframeOptions.map((option, index) => (
                   <Tooltip
                     key={option.id}
                     content={`${option.emoji} ${option.label}
 ${option.description}. Coincidencias actuales: ${option.count}.`}
-                    className="block h-full"
+                    className="block h-full w-full"
                   >
                     <button
                       onClick={() => handleTimeframeChange(option.id)}
-                      className={`group relative touch-target touch-ripple overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border ${
+                      className={`group relative touch-target touch-ripple overflow-hidden w-full h-full min-h-[140px] sm:min-h-[160px] px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border flex flex-col items-center justify-center text-center ${
                         selectedTimeframe === option.id
                           ? "bg-white text-black border-white"
                           : "bg-white/5 text-white border-white/10 hover:border-white/20 hover:bg-white/10"
@@ -1301,16 +1301,16 @@ Los partidos mostrados y las estadísticas se ajustan automáticamente.`}
                   </span>
                 </Tooltip>
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 auto-rows-fr">
                 {/* Opción "Todos los juegos" */}
                 <Tooltip
                   content={`Todos los juegos
 Reúne enfrentamientos de cada título disponible. Coincidencias actuales: ${matches.length}.`}
-                  className="block h-full"
+                  className="block h-full w-full"
                 >
                       <button
                         onClick={() => handleGameChange("all")}
-                        className={`group relative touch-target touch-ripple overflow-hidden px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border ${
+                        className={`group relative touch-target touch-ripple overflow-hidden w-full h-full min-h-[140px] sm:min-h-[160px] px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border flex flex-col items-center justify-center text-center ${
                           selectedGame === "all"
                             ? "bg-white text-black border-white"
                             : "bg-white/5 text-white border-white/10 hover:border-white/20 hover:bg-white/10"
@@ -1344,11 +1344,11 @@ Reúne enfrentamientos de cada título disponible. Coincidencias actuales: ${mat
                       key={game.id}
                       content={`${game.name}
 ${game.description ?? "Información del título"}. Coincidencias actuales: ${gameMatches.length}.`}
-                      className="block h-full"
+                      className="block h-full w-full"
                     >
                       <button
                         onClick={() => handleGameChange(game.id)}
-                        className={`group relative overflow-hidden px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border ${
+                        className={`group relative touch-target touch-ripple overflow-hidden w-full h-full min-h-[140px] sm:min-h-[160px] px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border flex flex-col items-center justify-center text-center ${
                           selectedGame === game.id
                             ? "bg-white text-black border-white"
                             : "bg-white/5 text-white border-white/10 hover:border-white/20 hover:bg-white/10"
