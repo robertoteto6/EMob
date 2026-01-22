@@ -12,6 +12,7 @@ import LiveBadge from "./components/LiveBadge";
 import { SUPPORTED_GAMES, type GameConfig } from "./lib/gameConfig";
 import { useNotifications } from "./hooks/useNotifications";
 import { useDeferredClientRender } from "./hooks/useDeferredClientRender";
+import { usePagePullToRefresh, ScrollIndicator, PullToRefreshIndicator } from "./components/MobileGestures";
 
 interface PandaScoreMatch {
   id: number;
@@ -607,6 +608,13 @@ const Home = memo(function Home() {
   const notificationSystem = useNotifications({ enabled: clientExtrasReady });
   const addNotification = notificationSystem.addNotification;
 
+  // Pull-to-refresh para móvil
+  const pullToRefresh = usePagePullToRefresh(async () => {
+    // Refresh de datos
+    await loadData();
+    await loadTournaments();
+  });
+
   const matchesByGame = useMemo(() => {
     const grouped: Record<string, Match[]> = {};
     for (const match of matches) {
@@ -869,10 +877,13 @@ const Home = memo(function Home() {
   return (
     <>
       <LiveScoreTicker currentGame="all" />
-      
-      <main className="min-h-screen pt-20">
+
+      <main
+        ref={pullToRefresh.setRef}
+        className="min-h-screen pt-20"
+      >
         {/* Hero Section - Diseño Minimalista */}
-        <section className="relative overflow-hidden py-20 lg:py-28">
+        <section className="relative overflow-hidden py-12 sm:py-20 lg:py-28">
           {/* Fondo negro puro */}
           <div className="absolute inset-0 -z-20 bg-black" aria-hidden="true" />
           
@@ -888,7 +899,7 @@ const Home = memo(function Home() {
           <div className="absolute -left-40 top-10 -z-10 h-[500px] w-[500px] rounded-full bg-white/5 blur-[100px]" aria-hidden="true" />
           <div className="absolute -right-40 top-40 -z-10 h-[400px] w-[400px] rounded-full bg-white/5 blur-[80px]" aria-hidden="true" />
 
-          <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="container relative z-10 mx-auto px-3 sm:px-6 lg:px-8">
             <div className="relative">
               <div className="grid grid-cols-1 gap-12 lg:gap-16 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] items-center">
                 {/* Contenido principal */}
@@ -905,7 +916,7 @@ const Home = memo(function Home() {
                   </div>
                   
                   {/* Título principal */}
-                  <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black leading-[1.1] tracking-tight">
+                  <h1 className="text-3xl sm:text-4xl lg:text-6xl xl:text-7xl font-black leading-[1.1] tracking-tight">
                     <span className="text-white">Toda la escena</span>
                     <br />
                     <span className="text-white">
@@ -919,7 +930,7 @@ const Home = memo(function Home() {
                   </h1>
                   
                   {/* Descripción */}
-                  <p className="max-w-xl text-base sm:text-lg text-white/50 leading-relaxed">
+                  <p className="max-w-xl text-sm sm:text-base lg:text-lg text-white/50 leading-relaxed">
                     Monitoriza resultados en tiempo real, consulta horarios de las mejores ligas y recibe alertas instantáneas de 
                     <span className="text-white font-semibold"> Dota 2</span>, 
                     <span className="text-white font-semibold"> League of Legends</span>, 
@@ -953,11 +964,11 @@ const Home = memo(function Home() {
                   </div>
 
                   {/* Métricas destacadas */}
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mt-4">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 mt-3 sm:mt-4">
                     {heroHighlights.map((metric, index) => (
                       <div
                         key={metric.label}
-                        className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08]"
+                        className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-3 sm:p-5 backdrop-blur-sm transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08]"
                         style={{ animationDelay: `${index * 100}ms` }}
                       >
                         {/* Acento decorativo */}
@@ -1142,14 +1153,14 @@ const Home = memo(function Home() {
         </section>
 
         {/* Estadísticas por Juego - Diseño Minimalista */}
-        <section className="relative py-20 overflow-hidden">
+        <section className="relative py-12 sm:py-20 overflow-hidden">
           {/* Fondo decorativo */}
           <div className="absolute inset-0 -z-10">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-white/5 rounded-full blur-[120px]" aria-hidden="true" />
           </div>
           
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="container mx-auto px-3 sm:px-6 lg:px-8">
             {/* Header de sección mejorado */}
             <div className="mx-auto mb-14 max-w-3xl text-center">
               <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/5 px-5 py-2 mb-6">
@@ -1159,19 +1170,19 @@ const Home = memo(function Home() {
                 </span>
               </div>
               
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black text-white leading-tight">
                 Estadísticas en{" "}
                 <span className="text-white/80">
                   tiempo real
                 </span>
               </h2>
-              <p className="mt-4 text-base sm:text-lg text-white/50 max-w-2xl mx-auto">
+              <p className="mt-4 text-sm sm:text-base lg:text-lg text-white/50 max-w-2xl mx-auto">
                 Descubre qué escena está más activa ahora mismo y encuentra nuevas ligas para seguir
               </p>
             </div>
             
             {/* Grid de juegos */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 lg:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
               {GAMES.map((game, index) => (
                 <div
                   key={game.id}
@@ -1189,11 +1200,11 @@ const Home = memo(function Home() {
         </section>
 
         {/* Filtros Avanzados */}
-        <section className="relative py-16">
+        <section className="relative py-8 sm:py-16">
           <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent" aria-hidden="true" />
-          <div className="container mx-auto px-6">
+          <div className="container mx-auto px-3 sm:px-6">
             <div
-              className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/60 p-8 backdrop-blur-xl sm:p-10"
+              className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/60 p-4 sm:p-8 backdrop-blur-xl"
               aria-busy={isFiltering}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] via-transparent to-white/[0.02]" aria-hidden="true" />
@@ -1226,7 +1237,7 @@ Incluye partidos en vivo y próximos para ese período.`}
                   </span>
                 </Tooltip>
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                 {timeframeOptions.map((option, index) => (
                   <Tooltip
                     key={option.id}
@@ -1290,7 +1301,7 @@ Los partidos mostrados y las estadísticas se ajustan automáticamente.`}
                   </span>
                 </Tooltip>
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4">
                 {/* Opción "Todos los juegos" */}
                 <Tooltip
                   content={`Todos los juegos
@@ -1430,12 +1441,12 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
         </section>
 
         {/* Partidos Destacados */}
-        <section className="container mx-auto px-6 py-16">
+        <section className="container mx-auto px-3 sm:px-6 py-8 sm:py-16">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-white">
+            <h2 className="text-2xl sm:text-4xl font-bold mb-4 text-white">
               ⚡ Partidos Destacados
             </h2>
-            <p className="text-white/50 text-lg max-w-2xl mx-auto">
+            <p className="text-white/50 text-sm sm:text-lg max-w-2xl mx-auto">
               Los enfrentamientos más emocionantes en vivo y próximos a comenzar
             </p>
             <div className="w-24 h-1 bg-white/20 mx-auto mt-4 rounded-full"></div>
@@ -1444,31 +1455,37 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
           <div className="relative" aria-busy={loading || isFiltering}>
             <div className={`transition-opacity duration-300 ${isFiltering && !loading ? "opacity-60" : "opacity-100"}`}>
               {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
                   {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="bg-gray-800/50 rounded-2xl p-8 animate-pulse border border-gray-700">
-                      <div className="flex justify-between items-center mb-6">
-                        <div className="h-4 bg-gray-700 rounded w-32"></div>
-                        <div className="h-6 bg-gray-700 rounded-full w-20"></div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="text-center flex-1">
-                          <div className="h-6 bg-gray-700 rounded mb-2"></div>
-                          <div className="h-10 bg-gray-700 rounded w-16 mx-auto"></div>
+                    <div key={i} className="animate-shimmer-mobile">
+                      <div className="bg-gray-800/50 rounded-2xl p-4 sm:p-6 border border-gray-700">
+                        <div className="flex justify-between items-center mb-4 sm:mb-6">
+                          <div className="h-4 bg-gradient-to-r from-gray-700 to-gray-600 rounded w-16 sm:w-20"></div>
+                          <div className="h-5 bg-gradient-to-r from-gray-700 to-gray-600 rounded-full w-5 sm:w-6"></div>
                         </div>
-                        <div className="text-center px-6">
-                          <div className="h-6 bg-gray-700 rounded w-8 mx-auto"></div>
+                        <div className="flex items-center justify-between mb-4 sm:mb-6">
+                          <div className="text-center flex-1">
+                            <div className="h-4 bg-gradient-to-r from-gray-700 to-gray-600 rounded mb-2 w-20 sm:w-24"></div>
+                            <div className="h-8 bg-gradient-to-r from-gray-700 to-gray-600 rounded w-10 sm:w-16 mx-auto"></div>
+                          </div>
+                          <div className="text-center px-4 sm:px-6">
+                            <div className="h-4 bg-gradient-to-r from-gray-700 to-gray-600 rounded w-6"></div>
+                          </div>
+                          <div className="text-center flex-1">
+                            <div className="h-4 bg-gradient-to-r from-gray-700 to-gray-600 rounded mb-2 w-20 sm:w-24"></div>
+                            <div className="h-8 bg-gradient-to-r from-gray-700 to-gray-600 rounded w-10 sm:w-16 mx-auto"></div>
+                          </div>
                         </div>
-                        <div className="text-center flex-1">
-                          <div className="h-6 bg-gray-700 rounded mb-2"></div>
-                          <div className="h-10 bg-gray-700 rounded w-16 mx-auto"></div>
+                        <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-gray-700">
+                          <div className="h-3 bg-gradient-to-r from-gray-800 to-gray-700 rounded w-24 sm:w-32"></div>
+                          <div className="h-6 bg-gradient-to-r from-gray-700 to-gray-600 rounded w-6 sm:w-8"></div>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : featuredMatches.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
                   {featuredMatches.map((match, index) => (
                     <div 
                       key={match.id} 
@@ -1537,23 +1554,23 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
         </section>
 
         {/* Torneos Activos */}
-        <section className="container mx-auto px-6 py-16 relative">
+        <section className="container mx-auto px-3 sm:px-6 py-8 sm:py-16 relative">
           {/* Fondo */}
           <div className="absolute inset-0 bg-white/[0.02] rounded-2xl"></div>
           
           <div className="relative z-10">
             <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold mb-4 text-white">
+              <h2 className="text-2xl sm:text-4xl font-bold mb-4 text-white">
                 🏆 Torneos Activos
               </h2>
-              <p className="text-white/50 text-lg max-w-2xl mx-auto">
+              <p className="text-white/50 text-sm sm:text-lg max-w-2xl mx-auto">
                 Los torneos más importantes que están en curso en este momento
               </p>
               <div className="w-24 h-1 bg-white/20 mx-auto mt-4 rounded-full"></div>
             </div>
 
             {loadingTournaments ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="bg-white/5 rounded-xl p-8 animate-pulse border border-white/10">
                     <div className="flex items-center gap-3 mb-6">
@@ -1567,7 +1584,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                 ))}
               </div>
             ) : tournaments.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
                 {tournaments.map((tournament, index) => {
                   const game = GAMES.find(g => g.id === tournament.game);
                   const isLive =
@@ -1676,7 +1693,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
         </section>
 
         {/* Call to Action - Diseño Minimalista */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <section className="container mx-auto px-3 sm:px-6 lg:px-8 py-12 sm:py-24">
           <div className="relative overflow-hidden rounded-2xl">
             {/* Fondo */}
             <div className="absolute inset-0 bg-white/5" aria-hidden="true" />
@@ -1687,14 +1704,14 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
             <div className="absolute inset-0 rounded-2xl border border-white/10" aria-hidden="true" />
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" aria-hidden="true" />
             
-            <div className="relative text-center px-6 py-16 sm:py-20 lg:py-24">
+            <div className="relative text-center px-3 sm:px-6 py-8 sm:py-16 lg:py-24">
               {/* Badge */}
               <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-white/60 mb-6">
                 <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                 Únete ahora
               </span>
               
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-6 max-w-3xl mx-auto leading-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black text-white mb-6 max-w-3xl mx-auto leading-tight">
                 ¿Listo para sumergirte en el{" "}
                 <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
                   mundo esports
@@ -1702,7 +1719,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                 ?
               </h2>
               
-              <p className="text-lg sm:text-xl text-white/50 mb-10 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-sm sm:text-lg lg:text-xl text-white/50 mb-10 max-w-2xl mx-auto leading-relaxed">
                 Únete a miles de usuarios que ya siguen sus equipos favoritos y nunca se pierden un partido importante.
               </p>
               
@@ -1759,6 +1776,15 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
         </>
       )}
       <ScrollToTop />
+
+      {/* Gestos móviles */}
+      <ScrollIndicator />
+      <PullToRefreshIndicator
+        isRefreshing={pullToRefresh.isRefreshing}
+        pullDistance={pullToRefresh.pullDistance}
+        canRefresh={pullToRefresh.canRefresh}
+        threshold={80}
+      />
     </>
   );
 });

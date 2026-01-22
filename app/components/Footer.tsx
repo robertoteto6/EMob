@@ -27,7 +27,7 @@ export default function Footer() {
       {/* Línea decorativa superior */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" aria-hidden="true" />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 safe-bottom">
         {/* CTA Newsletter - Diseño Minimalista */}
         <div className="relative -mt-16 mb-16">
           <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-xl">

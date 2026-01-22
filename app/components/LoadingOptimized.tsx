@@ -12,35 +12,35 @@ interface SkeletonProps {
   animation?: 'pulse' | 'wave' | 'none';
 }
 
-const Skeleton = memo<SkeletonProps>(({ 
-  className, 
-  variant = 'text', 
-  width, 
-  height, 
-  animation = 'pulse' 
+const Skeleton = memo<SkeletonProps>(({
+  className,
+  variant = 'text',
+  width,
+  height,
+  animation = 'pulse'
 }) => {
   const baseClasses = 'bg-gray-300 dark:bg-gray-700';
-  
+
   const variantClasses = {
     text: 'rounded',
     circular: 'rounded-full',
     rectangular: '',
     rounded: 'rounded-lg'
   };
-  
+
   const animationClasses = {
     pulse: 'animate-pulse',
-    wave: 'animate-wave',
+    wave: 'animate-shimmer-mobile',
     none: ''
   };
-  
+
   const style = {
     width: typeof width === 'number' ? `${width}px` : width,
     height: typeof height === 'number' ? `${height}px` : height
   };
-  
+
   return (
-    <div 
+    <div
       className={cn(
         baseClasses,
         variantClasses[variant],
@@ -55,34 +55,33 @@ const Skeleton = memo<SkeletonProps>(({
 
 Skeleton.displayName = 'Skeleton';
 
-// Skeleton para tarjetas de partidos
+// Skeleton para tarjetas de partidos - Optimizado para móvil
 export const MatchCardSkeleton = memo(() => (
-  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-    <div className="flex items-center justify-between mb-3">
-      <Skeleton variant="text" width={80} height={16} />
-      <Skeleton variant="circular" width={24} height={24} />
+  <div className="bg-gray-800/50 rounded-2xl p-4 sm:p-6 border border-gray-700">
+    <div className="flex items-center justify-between mb-4 sm:mb-6">
+      <Skeleton variant="text" width={60} height={14} className="sm:w-20 sm:h-16" />
+      <Skeleton variant="circular" width={20} height={20} className="sm:w-24 sm:h-24" />
     </div>
-    
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center space-x-3">
-        <Skeleton variant="circular" width={40} height={40} />
-        <Skeleton variant="text" width={100} height={20} />
+
+    <div className="flex items-center justify-between mb-4 sm:mb-6">
+      <div className="text-center flex-1">
+        <Skeleton variant="text" width={80} height={16} className="mb-2 sm:w-24 sm:h-20" />
+        <Skeleton variant="text" width={40} height={32} className="sm:w-16 sm:h-40" />
       </div>
-      
-      <div className="text-center">
-        <Skeleton variant="text" width={60} height={24} />
-        <Skeleton variant="text" width={80} height={14} className="mt-1" />
+
+      <div className="text-center px-4 sm:px-6">
+        <Skeleton variant="text" width={24} height={16} />
       </div>
-      
-      <div className="flex items-center space-x-3">
-        <Skeleton variant="text" width={100} height={20} />
-        <Skeleton variant="circular" width={40} height={40} />
+
+      <div className="text-center flex-1">
+        <Skeleton variant="text" width={80} height={16} className="mb-2 sm:w-24 sm:h-20" />
+        <Skeleton variant="text" width={40} height={32} className="sm:w-16 sm:h-40" />
       </div>
     </div>
-    
-    <div className="flex justify-between items-center">
-      <Skeleton variant="text" width={120} height={16} />
-      <Skeleton variant="rounded" width={80} height={32} />
+
+    <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-gray-700">
+      <Skeleton variant="text" width={100} height={14} className="sm:w-32 sm:h-16" />
+      <Skeleton variant="circular" width={32} height={32} className="sm:w-8 sm:h-8" />
     </div>
   </div>
 ));
@@ -238,13 +237,87 @@ export const LoadingOptimized = memo<LoadingProps>(({
   };
 
   return (
-    <div className={cn('animate-pulse', className)} role="status" aria-label="Cargando contenido">
+    <div className={cn('animate-pulse sm:animate-pulse md:animate-shimmer-mobile', className)} role="status" aria-label="Cargando contenido">
       {renderSkeleton()}
     </div>
   );
 });
 
 LoadingOptimized.displayName = 'LoadingOptimized';
+
+// Componente de loading optimizado para móvil
+interface MobileLoadingProps {
+  variant?: 'spinner' | 'dots' | 'pulse';
+  size?: 'sm' | 'md' | 'lg';
+  message?: string;
+  className?: string;
+}
+
+export const MobileLoading = memo<MobileLoadingProps>(({
+  variant = 'spinner',
+  size = 'md',
+  message = 'Cargando...',
+  className
+}) => {
+  const sizeClasses = {
+    sm: 'w-6 h-6',
+    md: 'w-8 h-8',
+    lg: 'w-12 h-12'
+  };
+
+  const renderLoader = () => {
+    switch (variant) {
+      case 'spinner':
+        return (
+          <div className="flex flex-col items-center gap-3">
+            <div className={cn(
+              'animate-spin rounded-full border-2 border-emerald-400 border-t-transparent',
+              sizeClasses[size]
+            )} />
+            {message && (
+              <p className="text-sm text-white/70 text-center">{message}</p>
+            )}
+          </div>
+        );
+
+      case 'dots':
+        return (
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex space-x-2">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce"
+                  style={{ animationDelay: `${i * 0.2}s` }}
+                />
+              ))}
+            </div>
+            {message && (
+              <p className="text-sm text-white/70 text-center">{message}</p>
+            )}
+          </div>
+        );
+
+      case 'pulse':
+        return (
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-12 h-12 bg-emerald-400/20 rounded-full animate-pulse" />
+            {message && (
+              <p className="text-sm text-white/70 text-center">{message}</p>
+            )}
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className={cn('flex items-center justify-center p-4', className)} role="status" aria-label={message}>
+      {renderLoader()}
+    </div>
+  );
+});
+
+MobileLoading.displayName = 'MobileLoading';
 
 // Spinner optimizado
 interface SpinnerProps {
@@ -253,10 +326,10 @@ interface SpinnerProps {
   className?: string;
 }
 
-export const Spinner = memo<SpinnerProps>(({ 
-  size = 'md', 
-  color = 'primary', 
-  className 
+export const Spinner = memo<SpinnerProps>(({
+  size = 'md',
+  color = 'primary',
+  className
 }) => {
   const sizeClasses = {
     sm: 'w-4 h-4',
@@ -264,17 +337,18 @@ export const Spinner = memo<SpinnerProps>(({
     lg: 'w-8 h-8',
     xl: 'w-12 h-12'
   };
-  
+
   const colorClasses = {
-    primary: 'text-blue-600',
+    primary: 'text-emerald-400',
     secondary: 'text-gray-600',
     white: 'text-white'
   };
 
   return (
-    <div 
+    <div
       className={cn(
         'animate-spin rounded-full border-2 border-current border-t-transparent',
+        'shadow-lg shadow-current/20',
         sizeClasses[size],
         colorClasses[color],
         className

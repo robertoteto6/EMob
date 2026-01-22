@@ -138,10 +138,10 @@ export default function Search({
     return () => document.removeEventListener("click", onClickOutside);
   }, []);
 
-  // Navegación con teclado
+  // Navegación con teclado mejorada para móvil
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const totalResults = results.length;
-    
+
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setSelectedIndex(prev => (prev < totalResults - 1 ? prev + 1 : prev));
@@ -150,13 +150,20 @@ export default function Search({
       setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1));
     } else if (e.key === "Enter") {
       e.preventDefault();
+      // En móvil, si no hay selección pero hay query, buscar
       if (selectedIndex >= 0 && results[selectedIndex]) {
         select(results[selectedIndex]);
+      } else if (query.length >= 2) {
+        // En móvil, Enter puede hacer submit
+        setShow(false);
       }
     } else if (e.key === "Escape") {
       setShow(false);
       setSelectedIndex(-1);
       inputRef.current?.blur();
+    } else if (e.key === " ") {
+      // Prevenir scroll con espacio en móvil
+      e.preventDefault();
     }
   };
 
@@ -228,7 +235,7 @@ export default function Search({
   };
 
   return (
-    <div className={`relative ${compact ? 'w-full' : 'w-full max-w-md'}`} ref={containerRef}>
+    <div className={`relative w-full ${compact ? '' : 'max-w-md'}`} ref={containerRef}>
       {/* Campo de búsqueda */}
       <div className="relative group">
         {/* Icono de búsqueda */}
@@ -255,6 +262,11 @@ export default function Search({
         <input
           ref={inputRef}
           type="text"
+          inputMode="search"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -306,10 +318,10 @@ export default function Search({
 
       {/* Resultados */}
       {show && (
-        <div className="absolute z-50 left-0 right-0 mt-2 bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-xl shadow-2xl overflow-hidden">
+        <div className="absolute z-50 left-0 right-0 mt-2 bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-xl shadow-2xl overflow-hidden max-h-80 sm:max-h-96">
           {/* Búsquedas recientes (cuando no hay query) */}
           {!query && recentSearches.length > 0 && (
-            <div className="p-4">
+            <div className="p-3 sm:p-4">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-sm font-semibold text-gray-300">Búsquedas recientes</h4>
                 <button
@@ -387,7 +399,7 @@ export default function Search({
               )}
 
               {!loading && results.length > 0 && (
-                <div className="max-h-80 overflow-y-auto">
+                <div className="max-h-64 sm:max-h-80 overflow-y-auto">
                   {results.map((item, index) => (
                     <button
                       key={`${item.type}-${item.id}`}
