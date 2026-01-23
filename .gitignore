@@ -24,6 +24,21 @@
 # misc
 .DS_Store
 *.pem
+npm_output.log
+
+# local tooling
+.agent/
+.agents/
+.codex/
+.cursor/
+.gemini/
+.windsurf/
+.vscode/
+.firebase/
+.github/skills/
+
+# testing outputs
+/test-results/
 
 # debug
 npm-debug.log*
