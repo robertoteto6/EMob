@@ -10,6 +10,7 @@ import LiveScoreTicker from "../components/LiveScoreTicker";
 import { useNotifications } from "../hooks/useNotifications";
 import { useDeferredClientRender } from "../hooks/useDeferredClientRender";
 import { getPlayerFallbackUrl, getPlayerImageUrl } from "../lib/imageFallback";
+import { apiCache } from "../lib/utils";
 import "./animations.css";
 
 const NotificationSystem = nextDynamic(() => import("../components/NotificationSystem"), {
@@ -67,16 +68,23 @@ const GAMES = [
   { id: "overwatch", name: "Overwatch 2", icon: "/overwatch.svg", color: "#F99E1A", gradient: "from-orange-500 to-orange-700" },
 ];
 
-async function fetchPlayers(game: string, search?: string): Promise<Player[]> {
+async function fetchPlayers(game: string, search?: string, signal?: AbortSignal): Promise<Player[]> {
   try {
     const params = new URLSearchParams();
     params.set("game", game);
     if (search) params.set("q", search);
+
+    const cacheKey = `players-${game}-${search ?? ""}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) {
+      return cached as Player[];
+    }
     
     console.log(`Fetching players for game: ${game}, search: ${search || 'none'}`);
     
     const res = await fetch(`/api/esports/players?${params.toString()}`, {
       cache: "no-store",
+      signal,
     });
     
     console.log(`API response status: ${res.status}`);
@@ -88,9 +96,17 @@ async function fetchPlayers(game: string, search?: string): Promise<Player[]> {
     }
     
     const data = await res.json();
+    if (signal?.aborted) {
+      return [];
+    }
     console.log(`Received ${data.length} players for ${game}`);
-    return Array.isArray(data) ? data : [];
+    const normalized = Array.isArray(data) ? data : [];
+    apiCache.set(cacheKey, normalized);
+    return normalized;
   } catch (error) {
+    if ((error as DOMException).name === "AbortError") {
+      return [];
+    }
     console.error("Error in fetchPlayers:", error);
     return [];
   }
@@ -346,12 +362,15 @@ function PlayersPageContent() {
 
   // Cargar jugadores con mejor manejo de estados y caché
   useEffect(() => {
+    const controller = new AbortController();
     async function load() {
       const cacheKey = `${game}-${debouncedSearch}`;
       
       // Verificar si ya tenemos estos datos en caché
       if (playersCache.has(cacheKey)) {
-        setPlayers(playersCache.get(cacheKey) || []);
+        if (!controller.signal.aborted) {
+          setPlayers(playersCache.get(cacheKey) || []);
+        }
         return;
       }
       
@@ -359,21 +378,29 @@ function PlayersPageContent() {
       setIsTransitioning(true);
       
       try {
-        const data = await fetchPlayers(game, debouncedSearch);
+        const data = await fetchPlayers(game, debouncedSearch, controller.signal);
+        if (controller.signal.aborted) {
+          return;
+        }
         setPlayers(data);
         
         // Guardar en caché
         setPlayersCache(prev => new Map(prev).set(cacheKey, data));
       } catch (error) {
-        console.error("Error loading players:", error);
-        setPlayers([]);
+        if ((error as DOMException).name !== "AbortError") {
+          console.error("Error loading players:", error);
+          setPlayers([]);
+        }
       } finally {
-        setLoading(false);
-        // Delay adicional para suavizar la transición
-        setTimeout(() => setIsTransitioning(false), 200);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+          // Delay adicional para suavizar la transición
+          setTimeout(() => setIsTransitioning(false), 200);
+        }
       }
     }
     load();
+    return () => controller.abort();
   }, [game, debouncedSearch, playersCache]);
 
   // Guardar favoritos en localStorage

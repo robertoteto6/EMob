@@ -14,6 +14,7 @@ import Tooltip from "../components/Tooltip";
 import Spinner from "../components/Spinner";
 import { useNotifications } from "../hooks/useNotifications";
 import { useDeferredClientRender } from "../hooks/useDeferredClientRender";
+import { apiCache } from "../lib/utils";
 
 interface PandaScoreMatch {
   id: number;
@@ -123,64 +124,108 @@ const TIMEFRAMES = [
 
 type TimeframeId = (typeof TIMEFRAMES)[number]["id"];
 
-async function fetchMatches(game: string): Promise<Match[]> {
-  const res = await fetch(`/api/esports/matches?game=${game}`, {
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    console.error("Failed to fetch matches", await res.text());
+async function fetchMatches(game: string, signal?: AbortSignal): Promise<Match[]> {
+  const cacheKey = `matches-${game}`;
+  const cached = apiCache.get(cacheKey);
+  if (cached) {
+    return cached as Match[];
+  }
+
+  try {
+    const res = await fetch(`/api/esports/matches?game=${game}`, {
+      cache: "no-store",
+      signal,
+    });
+    if (!res.ok) {
+      console.error("Failed to fetch matches", await res.text());
+      return [];
+    }
+    const data = await res.json();
+    if (signal?.aborted) {
+      return [];
+    }
+
+    const normalized = data
+      .map((m: PandaScoreMatch) => {
+        const team1 = m.opponents?.[0]?.opponent;
+        const team2 = m.opponents?.[1]?.opponent;
+        // Validar fecha
+        const dateStr = m.begin_at ?? m.scheduled_at;
+        const date = dateStr ? new Date(dateStr) : null;
+        const start_time = date && !isNaN(date.getTime()) ? date.getTime() / 1000 : null;
+        // Validar resultados
+        const radiant_score = Array.isArray(m.results) && m.results[0]?.score != null ? m.results[0].score : null;
+        const dire_score = Array.isArray(m.results) && m.results[1]?.score != null ? m.results[1].score : null;
+        return {
+          id: m.id,
+          radiant: team1?.name ?? "TBD",
+          dire: team2?.name ?? "TBD",
+          radiant_score,
+          dire_score,
+          start_time,
+          league: m.league?.name ?? "",
+          radiant_win:
+            m.winner?.id !== undefined && team1?.id !== undefined
+              ? m.winner.id === team1.id
+              : null,
+        } as Match;
+      })
+      .filter((m: Match) => m.start_time !== null); // Filtrar partidos sin fecha válida
+
+    apiCache.set(cacheKey, normalized);
+    return normalized;
+  } catch (error) {
+    if ((error as DOMException).name === "AbortError") {
+      return [];
+    }
+    console.error("Failed to fetch matches", error);
     return [];
   }
-  const data = await res.json();
-  return data
-    .map((m: PandaScoreMatch) => {
-      const team1 = m.opponents?.[0]?.opponent;
-      const team2 = m.opponents?.[1]?.opponent;
-      // Validar fecha
-      const dateStr = m.begin_at ?? m.scheduled_at;
-      const date = dateStr ? new Date(dateStr) : null;
-      const start_time = date && !isNaN(date.getTime()) ? date.getTime() / 1000 : null;
-      // Validar resultados
-      const radiant_score = Array.isArray(m.results) && m.results[0]?.score != null ? m.results[0].score : null;
-      const dire_score = Array.isArray(m.results) && m.results[1]?.score != null ? m.results[1].score : null;
-      return {
-        id: m.id,
-        radiant: team1?.name ?? "TBD",
-        dire: team2?.name ?? "TBD",
-        radiant_score,
-        dire_score,
-        start_time,
-        league: m.league?.name ?? "",
-        radiant_win:
-          m.winner?.id !== undefined && team1?.id !== undefined
-            ? m.winner.id === team1.id
-            : null,
-      } as Match;
-    })
-    .filter((m: Match) => m.start_time !== null); // Filtrar partidos sin fecha válida
 }
 
-async function fetchTournaments(game: string): Promise<Tournament[]> {
-  const res = await fetch(`/api/esports/tournaments?game=${game}`, {
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    console.error("Failed to fetch tournaments", await res.text());
+async function fetchTournaments(game: string, signal?: AbortSignal): Promise<Tournament[]> {
+  const cacheKey = `tournaments-${game}`;
+  const cached = apiCache.get(cacheKey);
+  if (cached) {
+    return cached as Tournament[];
+  }
+
+  try {
+    const res = await fetch(`/api/esports/tournaments?game=${game}`, {
+      cache: "no-store",
+      signal,
+    });
+    if (!res.ok) {
+      console.error("Failed to fetch tournaments", await res.text());
+      return [];
+    }
+    const data = await res.json();
+    if (signal?.aborted) {
+      return [];
+    }
+
+    const normalized = data.map((t: PandaScoreTournament) => ({
+      id: t.id,
+      name: t.name ?? "",
+      begin_at: t.begin_at ? new Date(t.begin_at).getTime() / 1000 : null,
+      end_at: t.end_at ? new Date(t.end_at).getTime() / 1000 : null,
+      league: t.league?.name ?? "",
+      serie: t.serie?.full_name ?? "",
+      prizepool: t.prizepool ?? null,
+      tier: t.tier ?? null,
+      region: t.region ?? null,
+      live_supported: !!t.live_supported,
+    })) as Tournament[];
+
+    apiCache.set(cacheKey, normalized);
+    return normalized;
+  } catch (error) {
+    if ((error as DOMException).name === "AbortError") {
+      return [];
+    }
+    console.error("Failed to fetch tournaments", error);
     return [];
   }
-  const data = await res.json();
-  return data.map((t: PandaScoreTournament) => ({
-    id: t.id,
-    name: t.name ?? "",
-    begin_at: t.begin_at ? new Date(t.begin_at).getTime() / 1000 : null,
-    end_at: t.end_at ? new Date(t.end_at).getTime() / 1000 : null,
-    league: t.league?.name ?? "",
-    serie: t.serie?.full_name ?? "",
-    prizepool: t.prizepool ?? null,
-    tier: t.tier ?? null,
-    region: t.region ?? null,
-    live_supported: !!t.live_supported,
-  })) as Tournament[];
 }
 
 // Componente de partido destacado
@@ -592,13 +637,18 @@ function EsportsPageContent() {
   }, [filterLeague, filterTeam, timeframe, game]);
 
   useEffect(() => {
+    const controller = new AbortController();
     async function load() {
       setLoading(true);
-      const data = await fetchMatches(game);
+      const data = await fetchMatches(game, controller.signal);
+      if (controller.signal.aborted) {
+        return;
+      }
       setMatches(data);
       setLoading(false);
     }
     load();
+    return () => controller.abort();
   }, [game]);
 
   // Guardar favoritos en localStorage
@@ -609,9 +659,13 @@ function EsportsPageContent() {
   }, [favoriteMatches]);
 
   useEffect(() => {
+    const controller = new AbortController();
     async function load() {
       setLoadingTournaments(true);
-      const data = await fetchTournaments(game);
+      const data = await fetchTournaments(game, controller.signal);
+      if (controller.signal.aborted) {
+        return;
+      }
       const now = Date.now() / 1000;
       
       // Para la vista de torneos, mostrar todos los torneos relevantes
@@ -638,6 +692,7 @@ function EsportsPageContent() {
       setLoadingTournaments(false);
     }
     load();
+    return () => controller.abort();
   }, [game]);
 
   function matchOnSelectedTimeframe(match: Match) {

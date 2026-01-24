@@ -611,8 +611,7 @@ const Home = memo(function Home() {
   // Pull-to-refresh para móvil
   const pullToRefresh = usePagePullToRefresh(async () => {
     // Refresh de datos
-    await loadData();
-    await loadTournaments();
+    await Promise.all([loadData(), loadTournaments()]);
   });
 
   const matchesByGame = useMemo(() => {

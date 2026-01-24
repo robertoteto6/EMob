@@ -10,6 +10,7 @@ import LiveScoreTicker from "../components/LiveScoreTicker";
 import { useNotifications } from "../hooks/useNotifications";
 import { useDeferredClientRender } from "../hooks/useDeferredClientRender";
 import { getTeamFallbackUrl, getTeamImageUrl } from "../lib/imageFallback";
+import { apiCache } from "../lib/utils";
 
 const NotificationSystem = nextDynamic(() => import("../components/NotificationSystem"), {
   ssr: false,
@@ -136,16 +137,23 @@ const GAMES = [
   { id: "overwatch", name: "Overwatch 2", icon: "/overwatch.svg", color: "#FF9500", gradient: "from-orange-500 to-orange-700" },
 ];
 
-async function fetchTeams(game: string, search?: string): Promise<Team[]> {
+async function fetchTeams(game: string, search?: string, signal?: AbortSignal): Promise<Team[]> {
   try {
     const params = new URLSearchParams();
     params.set("game", game);
     if (search) params.set("search", search);
+
+    const cacheKey = `teams-${game}-${search ?? ""}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) {
+      return cached as Team[];
+    }
     
     console.log(`Fetching teams for game: ${game}, search: ${search || 'none'}`);
     
     const res = await fetch(`/api/esports/teams?${params.toString()}`, {
       cache: "no-store",
+      signal,
     });
     
     console.log(`API response status: ${res.status}`);
@@ -164,9 +172,17 @@ async function fetchTeams(game: string, search?: string): Promise<Team[]> {
     }
     
     const data = await res.json();
+    if (signal?.aborted) {
+      return [];
+    }
     console.log(`Received ${data.length} teams for ${game}`);
-    return Array.isArray(data) ? data : [];
+    const normalized = Array.isArray(data) ? data : [];
+    apiCache.set(cacheKey, normalized);
+    return normalized;
   } catch (error) {
+    if ((error as DOMException).name === "AbortError") {
+      return [];
+    }
     console.error("Error in fetchTeams:", error);
     return [];
   }
@@ -426,12 +442,16 @@ function TeamsPageContent() {
 
   // Cargar equipos
   useEffect(() => {
+    const controller = new AbortController();
     async function load() {
       setLoading(true);
       setRateLimited(false);
       setUsingFallback(false);
       
-      const data = await fetchTeams(game, debouncedSearch);
+      const data = await fetchTeams(game, debouncedSearch, controller.signal);
+      if (controller.signal.aborted) {
+        return;
+      }
       
       // Detectar si estamos usando datos de respaldo (IDs altos indican datos sintéticos)
       if (data.length > 0 && data[0].id > 1000) {
@@ -448,6 +468,7 @@ function TeamsPageContent() {
       setLoading(false);
     }
     load();
+    return () => controller.abort();
   }, [game, debouncedSearch]);
 
   // Guardar favoritos en localStorage
