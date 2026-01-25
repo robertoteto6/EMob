@@ -64,14 +64,14 @@ function HeaderContent() {
       </div>
 
       <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 safe-top">
-        <div className="flex justify-between items-center h-18 py-3">
+        <div className="flex justify-between items-center h-16 sm:h-18 py-3">
           {/* Logo mejorado */}
           <Link href="/" className="flex items-center gap-3 group/logo" aria-label="EMob inicio">
             <div className="relative">
               {/* Anillo de glow */}
               <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-500 rounded-2xl opacity-0 group-hover/logo:opacity-60 blur-md transition-all duration-500" aria-hidden="true" />
 
-              <div className="relative w-11 h-11 bg-gradient-to-br from-emerald-400 via-green-500 to-emerald-600 rounded-xl flex items-center justify-center font-black text-black text-lg group-hover/logo:scale-110 transition-all duration-300 shadow-lg shadow-emerald-500/40">
+              <div className="relative w-9 h-9 sm:w-11 sm:h-11 bg-gradient-to-br from-emerald-400 via-green-500 to-emerald-600 rounded-xl flex items-center justify-center font-black text-black text-base sm:text-lg group-hover/logo:scale-110 transition-all duration-300 shadow-lg shadow-emerald-500/40">
                 <span className="drop-shadow-sm">E</span>
                 {/* Brillo interno */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/30 to-transparent rounded-xl" aria-hidden="true" />
@@ -82,7 +82,7 @@ function HeaderContent() {
             </div>
 
             <div className="flex flex-col">
-              <span className="text-2xl font-black bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent tracking-tight">
+              <span className="text-xl sm:text-2xl font-black bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent tracking-tight">
                 EMob
               </span>
               <span className="text-[10px] font-medium text-white/40 tracking-widest uppercase -mt-1 hidden sm:block">
