@@ -7,6 +7,7 @@ import { apiCache } from '../lib/cache';
 import { debounce } from '../lib/utils';
 import { Spinner } from './LoadingOptimized';
 import { useAppStore } from '../store';
+import { useAutoHideOnScroll } from '../hooks/useAutoHideOnScroll';
 
 interface Message {
   id: string;
@@ -36,6 +37,8 @@ const ChatBot: React.FC = memo(() => {
   const [isOpen, setIsOpen] = useState(false);
   const setChatOpen = useAppStore(state => state.setChatOpen);
   const chatOpenInStore = useAppStore(state => state.chatOpen);
+  const autoHideFab = useAutoHideOnScroll({ idleDelay: 200, showAtTop: true });
+  const shouldShowFab = isOpen || autoHideFab;
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -227,10 +230,12 @@ const ChatBot: React.FC = memo(() => {
       {/* Botón flotante del chat */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
+        className={`fixed right-4 sm:right-6 bottom-[calc(1rem+var(--safe-area-inset-bottom))] sm:bottom-[calc(1.5rem+var(--safe-area-inset-bottom))] z-50 w-12 h-12 sm:w-14 sm:h-14 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 ${
+          shouldShowFab ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3 pointer-events-none"
+        }`}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        aria-label="Abrir chat"
+        aria-label={isOpen ? "Cerrar chat" : "Abrir chat"}
       >
         <AnimatePresence mode="wait">
           {isOpen ? (
@@ -273,7 +278,7 @@ const ChatBot: React.FC = memo(() => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="fixed bottom-24 right-6 z-40 w-80 sm:w-96 h-[500px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden"
+            className="fixed right-4 sm:right-6 bottom-[calc(4.5rem+var(--safe-area-inset-bottom))] sm:bottom-[calc(6rem+var(--safe-area-inset-bottom))] z-40 w-[calc(100vw-2rem)] max-w-sm sm:w-96 h-[70vh] sm:h-[500px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
