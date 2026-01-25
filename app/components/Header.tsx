@@ -64,9 +64,9 @@ function HeaderContent() {
       </div>
 
       <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 safe-top">
-        <div className="flex justify-between items-center h-16 sm:h-18 py-3">
+        <div className="flex justify-between items-center h-16 sm:h-18 py-2 sm:py-3">
           {/* Logo mejorado */}
-          <Link href="/" className="flex items-center gap-3 group/logo" aria-label="EMob inicio">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 group/logo" aria-label="EMob inicio">
             <div className="relative">
               {/* Anillo de glow */}
               <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-500 rounded-2xl opacity-0 group-hover/logo:opacity-60 blur-md transition-all duration-500" aria-hidden="true" />
