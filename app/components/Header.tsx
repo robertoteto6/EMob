@@ -179,34 +179,50 @@ function HeaderContent() {
           </button>
         </div>
 
-        {/* Mobile Navigation mejorada con swipe */}
+        {/* Mobile Navigation mejorada con swipe y animaciones fluidas */}
         <div
           ref={swipeToCloseRef}
-          className={`lg:hidden absolute top-full left-0 right-0 overflow-hidden transition-all duration-500 ease-out ${
-            isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+          className={`lg:hidden absolute top-full left-0 right-0 overflow-hidden mobile-transition ${
+            isMobileMenuOpen 
+              ? "max-h-[85vh] opacity-100 pointer-events-auto" 
+              : "max-h-0 opacity-0 pointer-events-none"
           }`}
+          style={{
+            transitionProperty: 'max-height, opacity',
+            transitionDuration: isMobileMenuOpen ? '0.35s' : '0.25s',
+            transitionTimingFunction: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+          }}
         >
           {/* Backdrop blur mejorado */}
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-2xl" aria-hidden="true" />
-          <div className="relative bg-black/95 backdrop-blur-xl border-b border-white/5 shadow-2xl shadow-black/50">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-2xl" aria-hidden="true" />
+          <div className="relative bg-black/95 backdrop-blur-xl border-b border-white/5 shadow-2xl shadow-black/50 mobile-scroll-y max-h-[85vh] overflow-y-auto">
+            {/* Handle indicator para swipe */}
+            <div className="flex justify-center py-2 border-b border-white/5">
+              <div className="w-10 h-1 bg-white/20 rounded-full" aria-hidden="true" />
+            </div>
+            
             {/* Barra de búsqueda móvil */}
             <div className="p-4 border-b border-white/5">
               <SearchLazy globalSearch={true} compact={true} placeholder="Buscar equipos, jugadores..." />
             </div>
 
-            {/* Links de navegación */}
-            <nav className="flex flex-col py-2">
+            {/* Links de navegación con animación escalonada */}
+            <nav className="flex flex-col py-2 touch-spacing">
               {navigation.map((item, index) => (
                 <Link
                   key={item.name}
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`group/mobile-nav touch-target touch-ripple flex items-center gap-4 px-6 py-4 text-base font-medium transition-all duration-300 hover:bg-white/5 ${
+                  className={`group/mobile-nav touch-target touch-feedback flex items-center gap-4 px-6 py-4 text-base font-medium hover:bg-white/5 ${
                     pathname === item.href
                       ? "text-emerald-400 bg-emerald-500/10 border-l-2 border-emerald-500"
                       : "text-gray-300 hover:text-white border-l-2 border-transparent"
                   }`}
-                  style={{ animationDelay: `${index * 50}ms` }}
+                  style={{ 
+                    opacity: isMobileMenuOpen ? 1 : 0,
+                    transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-10px)',
+                    transition: `opacity 0.3s ease ${index * 0.05}s, transform 0.3s ease ${index * 0.05}s`
+                  }}
                 >
                   <span className="text-xl">{item.icon}</span>
                   <span>{item.name}</span>
@@ -219,11 +235,14 @@ function HeaderContent() {
               ))}
             </nav>
 
-            {/* Acciones móviles */}
-            <div className="p-4 border-t border-white/5 space-y-3">
+            {/* Acciones móviles con padding para safe area */}
+            <div className="p-4 border-t border-white/5 space-y-3 safe-bottom">
               <button
-                className="w-full touch-target touch-ripple inline-flex items-center justify-center gap-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3.5 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-emerald-500/30"
+                className="w-full touch-target touch-feedback inline-flex items-center justify-center gap-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3.5 rounded-xl font-semibold shadow-lg shadow-emerald-500/30 gpu-accelerated"
                 aria-label="Ver notificaciones"
+                style={{
+                  transition: 'transform 0.1s ease-out, background 0.2s ease'
+                }}
               >
                 <BellIcon className="w-5 h-5" aria-hidden="true" />
                 <span>Ver Alertas</span>
@@ -232,8 +251,11 @@ function HeaderContent() {
 
               <div className="flex items-center justify-between gap-3">
                 <button
-                  className="flex-1 touch-target touch-ripple inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-300 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-300 border border-purple-500/30"
+                  className="flex-1 touch-target touch-feedback inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-300 px-4 py-3 rounded-xl font-semibold text-sm border border-purple-500/30 gpu-accelerated"
                   aria-label="Actualizar a Pro"
+                  style={{
+                    transition: 'transform 0.1s ease-out, background 0.2s ease'
+                  }}
                 >
                   <SparklesIcon className="w-4 h-4" aria-hidden="true" />
                   <span>Ir a Pro</span>
