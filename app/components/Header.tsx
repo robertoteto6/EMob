@@ -14,7 +14,10 @@ function HeaderContent() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const isScrolledRef = useRef(false);
+  const lastScrollYRef = useRef(0);
+  const idleTimeoutRef = useRef<number | null>(null);
 
   // Hook para swipe gestures en menú móvil
   const swipeToCloseRef = useSwipeToClose(setIsMobileMenuOpen);
@@ -28,13 +31,45 @@ function HeaderContent() {
         isScrolledRef.current = nextScrolled;
         setIsScrolled(nextScrolled);
       }
+
+      const currentY = window.scrollY;
+      const scrollingDown = currentY > lastScrollYRef.current;
+      const shouldShow = currentY < 80 || !scrollingDown;
+
+      setIsHeaderVisible(shouldShow);
+      lastScrollYRef.current = currentY;
+
+      if (idleTimeoutRef.current) {
+        window.clearTimeout(idleTimeoutRef.current);
+      }
+
+      idleTimeoutRef.current = window.setTimeout(() => {
+        setIsHeaderVisible(true);
+      }, 200);
     });
 
     handleScroll();
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (idleTimeoutRef.current) {
+        window.clearTimeout(idleTimeoutRef.current);
+      }
+    };
   }, []);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isClient) return;
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen, isClient]);
 
   const navigation = [
     { name: "Inicio", href: "/", icon: "🏠" },
@@ -45,7 +80,9 @@ function HeaderContent() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 transform will-change-transform ${
+        isMobileMenuOpen || isHeaderVisible ? "translate-y-0" : "-translate-y-full"
+      } ${
         isClient && isScrolled
           ? "bg-black/90 backdrop-blur-xl border-b border-white/5"
           : "bg-transparent"
