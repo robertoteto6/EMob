@@ -143,7 +143,7 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
 
   const titleInfo = getTitleLevel();
   return (
-    <Link href={`/jugadores/${player.id}`}>
+    <Link href={`/esports/player/${player.id}`}>
       <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 hover:border-green-500/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl">
         {/* Efecto de brillo animado */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>

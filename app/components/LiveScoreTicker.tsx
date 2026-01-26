@@ -49,7 +49,7 @@ const GAME_ICONS: Record<string, string> = {
 
 const GAME_COLORS: Record<string, string> = {
   dota2: "from-purple-500/80 to-purple-600/80",
-  lol: "from-blue-500/80 to-blue-600/80", 
+  lol: "from-blue-500/80 to-blue-600/80",
   csgo: "from-yellow-500/80 to-yellow-600/80",
   r6siege: "from-orange-500/80 to-orange-600/80",
   overwatch: "from-orange-400/80 to-orange-500/80",
@@ -66,7 +66,7 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
   const fetchLiveMatches = useCallback(async () => {
     const cacheKey = `live-matches-${currentGame}`;
     const cached = apiCache.get(cacheKey);
-    
+
     if (cached) {
       setLiveMatches(cached);
       return;
@@ -85,7 +85,7 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
               'Accept': 'application/json',
             },
           });
-          
+
           if (res.ok) {
             const data = await res.json();
             const now = Date.now() / 1000;
@@ -119,11 +119,11 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
 
       const results = await Promise.all(promises);
       results.forEach(matches => allMatches.push(...matches));
-      
+
       // Ordenar por tiempo de inicio y limitar resultados
       allMatches.sort((a, b) => (b.start_time || 0) - (a.start_time || 0));
       const limitedMatches = allMatches.slice(0, 8); // Máximo 8 partidos totales
-      
+
       setLiveMatches(limitedMatches);
       apiCache.set(cacheKey, limitedMatches);
     } catch (error) {
@@ -158,15 +158,20 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
   // Modo minimizado: solo un pequeño indicador
   if (isMinimized && !isExpanded) {
     return (
-      <div className="fixed top-16 right-4 z-40 animate-slide-in-right">
+      <div className="fixed top-[72px] right-6 z-40 animate-slide-in-right">
         <button
           onClick={() => setIsMinimized(false)}
-          className="bg-gradient-to-r from-green-600/90 to-green-700/90 backdrop-blur-sm text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2 border border-green-500/30"
+          className="group relative touch-target touch-feedback flex items-center gap-2.5 bg-black/60 backdrop-blur-xl text-white px-4 py-2 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] hover:shadow-green-500/10 transition-all duration-300 hover:scale-105 border border-white/10 hover:border-green-500/30 overflow-hidden"
         >
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-          <span className="text-sm font-medium">{liveMatches.length} en vivo</span>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          {/* Brillo interno */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+          <div className="relative w-2 h-2 bg-green-500 rounded-full">
+            <div className="absolute inset-0 bg-green-400 rounded-full animate-ping opacity-75" />
+          </div>
+          <span className="relative text-xs font-bold tracking-wider uppercase">{liveMatches.length} En Vivo</span>
+          <svg className="relative w-3.5 h-3.5 text-white/50 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
       </div>
@@ -174,157 +179,161 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
   }
 
   return (
-    <div className="fixed top-16 left-0 right-0 z-40 bg-gradient-to-r from-gray-900/80 to-gray-800/80 backdrop-blur-md border-b border-gray-600/20 shadow-sm animate-slide-down">
-      <div className="container mx-auto px-6">
-        <div className="flex items-center justify-between py-2">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-white font-semibold text-sm">
-                {liveMatches.length} En Vivo
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="text-gray-300 hover:text-white transition-colors text-xs bg-gray-700/50 hover:bg-gray-600/50 px-3 py-1 rounded-full flex items-center gap-1"
-              >
-                {isExpanded ? (
-                  <>
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                    Contraer
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                    Ver más
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => setIsMinimized(true)}
-                className="text-gray-400 hover:text-white transition-colors text-xs bg-gray-700/50 hover:bg-gray-600/50 px-2 py-1 rounded-full"
-                title="Minimizar"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <button
-            onClick={() => setIsVisible(false)}
-            className="text-gray-400 hover:text-white transition-colors text-sm font-bold hover:bg-gray-700/50 rounded-full w-6 h-6 flex items-center justify-center"
-            aria-label="Cerrar ticker"
-          >
-            ×
-          </button>
-        </div>
-
-        {/* Ticker en modo normal - más compacto */}
-        {!isExpanded && (
-          <div className="overflow-hidden pb-2">
-            <div className="animate-marquee flex gap-6 whitespace-nowrap">
-              {liveMatches.map((match, index) => (
-                <Link
-                  key={`${match.id}-${index}`}
-                  href={`/esports/${match.id}`}
-                  className="flex-shrink-0 text-white hover:text-green-200 transition-all duration-300 hover:scale-105 group"
+    <div className="fixed top-[72px] left-4 right-4 z-40">
+      <div className="max-w-7xl mx-auto px-2">
+        <div className="bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-slide-down">
+          <div className="flex items-center justify-between py-2 px-4 border-b border-white/5 bg-white/5">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2.5 bg-green-500/15 px-3 py-1 rounded-full border border-green-500/20">
+                <div className="relative w-1.5 h-1.5 bg-green-500 rounded-full">
+                  <div className="absolute inset-0 bg-green-400 rounded-full animate-ping opacity-75" />
+                </div>
+                <span className="text-green-400 font-bold text-[10px] tracking-widest uppercase">
+                  {liveMatches.length} Partidos en directo
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="text-gray-300 hover:text-white transition-colors text-xs bg-gray-700/50 hover:bg-gray-600/50 px-3 py-1 rounded-full flex items-center gap-1"
                 >
-                  <div className="flex items-center gap-2 bg-gray-800/30 hover:bg-gray-700/40 px-3 py-1.5 rounded-lg border border-gray-600/20 group-hover:border-green-500/30 transition-all duration-300">
-                    <Image
-                      src={GAME_ICONS[match.game]}
-                      alt={match.game}
-                      width={16}
-                      height={16}
-                      className="w-4 h-4 opacity-70 group-hover:opacity-100"
-                    />
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-medium text-gray-200">{match.team1}</span>
-                      <span className="text-green-400 font-semibold text-xs">
-                        {match.team1_score !== null && match.team2_score !== null
-                          ? `${match.team1_score}-${match.team2_score}`
-                          : "vs"}
-                      </span>
-                      <span className="font-medium text-gray-200">{match.team2}</span>
-                    </div>
-                    <span className="text-xs text-gray-400 ml-1">• {match.league}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Vista expandida - diseño mejorado */}
-        {isExpanded && (
-          <div className="pb-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {liveMatches.map((match, index) => (
-                <Link
-                  key={`expanded-${match.id}-${index}`}
-                  href={`/esports/${match.id}`}
-                  className="block group"
+                  {isExpanded ? (
+                    <>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      </svg>
+                      Contraer
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                      Ver más
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setIsMinimized(true)}
+                  className="text-gray-400 hover:text-white transition-colors text-xs bg-gray-700/50 hover:bg-gray-600/50 px-2 py-1 rounded-full"
+                  title="Minimizar"
                 >
-                  <div className={`bg-gradient-to-r ${GAME_COLORS[match.game]} p-3 rounded-lg hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border border-white/10 group-hover:border-white/20`}>
-                    <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsVisible(false)}
+              className="text-gray-400 hover:text-white transition-colors text-sm font-bold hover:bg-gray-700/50 rounded-full w-6 h-6 flex items-center justify-center"
+              aria-label="Cerrar ticker"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Ticker en modo normal - más compacto */}
+          {!isExpanded && (
+            <div className="overflow-hidden pb-2">
+              <div className="animate-marquee flex gap-6 whitespace-nowrap">
+                {liveMatches.map((match, index) => (
+                  <Link
+                    key={`${match.id}-${index}`}
+                    href={`/esports/${match.id}`}
+                    className="flex-shrink-0 text-white hover:text-green-200 transition-all duration-300 hover:scale-105 group"
+                  >
+                    <div className="flex items-center gap-2 bg-gray-800/30 hover:bg-gray-700/40 px-3 py-1.5 rounded-lg border border-gray-600/20 group-hover:border-green-500/30 transition-all duration-300">
                       <Image
                         src={GAME_ICONS[match.game]}
                         alt={match.game}
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
+                        width={16}
+                        height={16}
+                        className="w-4 h-4 opacity-70 group-hover:opacity-100"
                       />
-                      <span className="text-xs text-white/90 font-medium truncate flex-1">
-                        {match.league}
-                      </span>
-                      <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
-                        LIVE
-                      </span>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="font-medium text-gray-200">{match.team1}</span>
+                        <span className="text-green-400 font-semibold text-xs">
+                          {match.team1_score !== null && match.team2_score !== null
+                            ? `${match.team1_score}-${match.team2_score}`
+                            : "vs"}
+                        </span>
+                        <span className="font-medium text-gray-200">{match.team2}</span>
+                      </div>
+                      <span className="text-xs text-gray-400 ml-1">• {match.league}</span>
                     </div>
-                    
-                    <div className="flex items-center justify-between text-white">
-                      <div className="text-center flex-1 min-w-0">
-                        <p className="font-semibold text-sm mb-1 truncate" title={match.team1}>{match.team1}</p>
-                        {match.team1_score !== null && (
-                          <p className="text-xl font-bold text-green-200">{match.team1_score}</p>
-                        )}
-                      </div>
-                      
-                      <div className="text-center px-2">
-                        <span className="text-white/80 font-bold text-sm">VS</span>
-                      </div>
-                      
-                      <div className="text-center flex-1 min-w-0">
-                        <p className="font-semibold text-sm mb-1 truncate" title={match.team2}>{match.team2}</p>
-                        {match.team2_score !== null && (
-                          <p className="text-xl font-bold text-green-200">{match.team2_score}</p>
-                        )}
-                      </div>
-                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
-                    {/* Duración del partido */}
-                    {match.start_time && (
-                      <div className="mt-2 text-center">
-                        <span className="text-xs text-white/70 bg-black/20 px-2 py-1 rounded-full">
-                          {(() => {
-                            const duration = Math.floor((Date.now() / 1000) - match.start_time);
-                            const minutes = Math.floor(duration / 60);
-                            return `${minutes} min`;
-                          })()}
+          {/* Vista expandida - diseño mejorado */}
+          {isExpanded && (
+            <div className="pb-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {liveMatches.map((match, index) => (
+                  <Link
+                    key={`expanded-${match.id}-${index}`}
+                    href={`/esports/${match.id}`}
+                    className="block group"
+                  >
+                    <div className={`bg-gradient-to-r ${GAME_COLORS[match.game]} p-3 rounded-lg hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border border-white/10 group-hover:border-white/20`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Image
+                          src={GAME_ICONS[match.game]}
+                          alt={match.game}
+                          width={20}
+                          height={20}
+                          className="w-5 h-5"
+                        />
+                        <span className="text-xs text-white/90 font-medium truncate flex-1">
+                          {match.league}
+                        </span>
+                        <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                          LIVE
                         </span>
                       </div>
-                    )}
-                  </div>
-                </Link>
-              ))}
+
+                      <div className="flex items-center justify-between text-white">
+                        <div className="text-center flex-1 min-w-0">
+                          <p className="font-semibold text-sm mb-1 truncate" title={match.team1}>{match.team1}</p>
+                          {match.team1_score !== null && (
+                            <p className="text-xl font-bold text-green-200">{match.team1_score}</p>
+                          )}
+                        </div>
+
+                        <div className="text-center px-2">
+                          <span className="text-white/80 font-bold text-sm">VS</span>
+                        </div>
+
+                        <div className="text-center flex-1 min-w-0">
+                          <p className="font-semibold text-sm mb-1 truncate" title={match.team2}>{match.team2}</p>
+                          {match.team2_score !== null && (
+                            <p className="text-xl font-bold text-green-200">{match.team2_score}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Duración del partido */}
+                      {match.start_time && (
+                        <div className="mt-2 text-center">
+                          <span className="text-xs text-white/70 bg-black/20 px-2 py-1 rounded-full">
+                            {(() => {
+                              const duration = Math.floor((Date.now() / 1000) - match.start_time);
+                              const minutes = Math.floor(duration / 60);
+                              return `${minutes} min`;
+                            })()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
