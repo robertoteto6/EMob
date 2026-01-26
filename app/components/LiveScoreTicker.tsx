@@ -249,7 +249,7 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
                         alt={match.game}
                         width={16}
                         height={16}
-                        className="w-4 h-4 w-auto h-auto opacity-70 group-hover:opacity-100"
+                        className="w-4 h-4 opacity-70 group-hover:opacity-100"
                       />
                       <div className="flex items-center gap-2 text-sm">
                         <span className="font-medium text-gray-200">{match.team1}</span>
@@ -285,7 +285,7 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
                           alt={match.game}
                           width={20}
                           height={20}
-                          className="w-5 h-5 w-auto h-auto"
+                          className="w-5 h-5"
                         />
                         <span className="text-xs text-white/90 font-medium truncate flex-1">
                           {match.league}

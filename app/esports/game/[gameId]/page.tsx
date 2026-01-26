@@ -243,7 +243,7 @@ function CompactTeam({ team }: { team: Team }) {
             alt={team.name}
             width={40}
             height={40}
-            className="w-10 h-10 w-auto h-auto rounded-lg object-cover bg-gray-600"
+            className="w-10 h-10 rounded-lg object-cover bg-gray-600"
             onError={() => {
               if (logoSrc !== fallbackLogo) {
                 setLogoSrc(fallbackLogo);
@@ -284,7 +284,7 @@ function CompactPlayer({ player }: { player: Player }) {
             alt={player.name}
             width={40}
             height={40}
-            className="w-10 h-10 w-auto h-auto rounded-full object-cover bg-gray-600"
+            className="w-10 h-10 rounded-full object-cover bg-gray-600"
             onError={() => {
               if (avatarSrc !== fallbackAvatar) {
                 setAvatarSrc(fallbackAvatar);
@@ -516,7 +516,7 @@ function GamePageContent({ gameId }: { gameId: string }) {
                   alt={game.name}
                   width={96}
                   height={96}
-                  className="w-8 h-8 w-auto h-auto group-hover:scale-110 transition-transform duration-300"
+                  className="w-8 h-8 group-hover:scale-110 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-white/20 rounded-full blur-xl opacity-50"></div>
               </div>

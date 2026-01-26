@@ -426,7 +426,7 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
                     alt={game.name}
                     width={32}
                     height={32}
-                    className="w-8 h-8 w-auto h-auto group-hover:scale-110 transition-transform duration-300"
+                    className="w-8 h-8 group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent to-purple-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
@@ -500,8 +500,8 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
                 )}
                 {tournament.tier && (
                   <span className={`font-semibold ${tournament.tier.toLowerCase() === 's' ? 'text-yellow-400' :
-                      tournament.tier.toLowerCase() === 'a' ? 'text-orange-400' :
-                        'text-gray-400'
+                    tournament.tier.toLowerCase() === 'a' ? 'text-orange-400' :
+                      'text-gray-400'
                     }`}>
                     🏅 Tier {tournament.tier.toUpperCase()}
                   </span>
@@ -871,8 +871,8 @@ function EsportsPageContent() {
               <button
                 onClick={() => setSelectedView("matches")}
                 className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${selectedView === "matches"
-                    ? "bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-lg"
-                    : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                  ? "bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-lg"
+                  : "text-gray-400 hover:text-white hover:bg-gray-700/50"
                   }`}
               >
                 🎯 Partidos
@@ -880,8 +880,8 @@ function EsportsPageContent() {
               <button
                 onClick={() => setSelectedView("tournaments")}
                 className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${selectedView === "tournaments"
-                    ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg"
-                    : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                  ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg"
+                  : "text-gray-400 hover:text-white hover:bg-gray-700/50"
                   }`}
               >
                 🏆 Torneos
@@ -924,8 +924,8 @@ Actualiza la vista con partidos, estadísticas y torneos de este juego.`}
                       <button
                         onClick={() => handleGameChange(g.id)}
                         className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${game === g.id
-                            ? `bg-gradient-to-r ${g.gradient} text-white border-white/30 shadow-lg`
-                            : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
+                          ? `bg-gradient-to-r ${g.gradient} text-white border-white/30 shadow-lg`
+                          : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
                           }`}
                         style={{ animationDelay: `${index * 0.1}s` }}
                       >
@@ -984,8 +984,8 @@ ${t.description}. Ajusta la lista de partidos al período indicado.`}
                           <button
                             onClick={() => handleTimeframeChange(t.id)}
                             className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${timeframe === t.id
-                                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/25"
-                                : "bg-gray-800/50 text-white border-gray-600 hover:border-blue-500/50 hover:bg-gray-700/50"
+                              ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/25"
+                              : "bg-gray-800/50 text-white border-gray-600 hover:border-blue-500/50 hover:bg-gray-700/50"
                               }`}
                             style={{ animationDelay: `${index * 0.1}s` }}
                           >
@@ -1189,8 +1189,8 @@ ${t.description}. Ajusta la lista de partidos al período indicado.`}
                               key={pageNum}
                               onClick={() => setPage(pageNum)}
                               className={`px-4 py-2 rounded-xl font-semibold transition-colors ${page === pageNum
-                                  ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white'
-                                  : 'bg-gray-800 text-white hover:bg-gray-700'
+                                ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white'
+                                : 'bg-gray-800 text-white hover:bg-gray-700'
                                 }`}
                             >
                               {pageNum}

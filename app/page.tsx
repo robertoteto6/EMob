@@ -281,7 +281,7 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
 
           {/* Icono flotante decorativo */}
           <div className="absolute top-3 right-3 opacity-10 group-hover:opacity-20 transition-opacity duration-500" aria-hidden="true">
-            <Image src={game.icon} alt="" width={64} height={64} className="w-14 h-14 w-auto h-auto group-hover:scale-110 transition-transform duration-500" priority />
+            <Image src={game.icon} alt="" width={64} height={64} className="w-14 h-14 group-hover:scale-110 transition-transform duration-500" priority />
           </div>
 
           {/* Badge "Explorar" en hover */}
@@ -297,7 +297,7 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
             <div className="flex items-center gap-3 mb-5">
               <div className="relative">
                 <div className="absolute -inset-1 bg-white/10 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
-                <Image src={game.icon} alt={`Icono de ${game.name}`} width={36} height={36} className="relative w-9 h-9 w-auto h-auto group-hover:scale-110 transition-transform duration-300" priority />
+                <Image src={game.icon} alt={`Icono de ${game.name}`} width={36} height={36} className="relative w-9 h-9 group-hover:scale-110 transition-transform duration-300" priority />
               </div>
               <div>
                 <h3 className="text-base font-bold text-white group-hover:text-white transition-colors duration-300 leading-tight">
@@ -408,7 +408,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
                     alt={`Icono de ${game.name}`}
                     width={32}
                     height={32}
-                    className="w-8 h-8 w-auto h-auto group-hover:scale-110 transition-transform duration-300"
+                    className="w-8 h-8 group-hover:scale-110 transition-transform duration-300"
                     priority
                   />
                 </div>
@@ -1608,7 +1608,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                                     alt={`Icono de ${game.name}`}
                                     width={40}
                                     height={40}
-                                    className="w-10 h-10 w-auto h-auto group-hover:scale-110 transition-transform duration-300"
+                                    className="w-10 h-10 group-hover:scale-110 transition-transform duration-300"
                                   />
                                 </div>
                               )}
