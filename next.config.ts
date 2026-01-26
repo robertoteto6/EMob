@@ -29,6 +29,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'cdn-api.pandascore.co',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'static.pandascore.co',
         port: '',
         pathname: '/**',
