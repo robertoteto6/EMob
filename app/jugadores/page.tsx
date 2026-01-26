@@ -9,6 +9,8 @@ import { PlayerSkeleton } from "../components/Skeleton";
 import LiveScoreTicker from "../components/LiveScoreTicker";
 import { useNotifications } from "../hooks/useNotifications";
 import { useDeferredClientRender } from "../hooks/useDeferredClientRender";
+import { useGameContext } from "../contexts/GameContext";
+import GameSelector from "../components/GameSelector";
 import { getPlayerFallbackUrl, getPlayerImageUrl } from "../lib/imageFallback";
 import { apiCache } from "../lib/utils";
 import "./animations.css";
@@ -68,19 +70,23 @@ const GAMES = [
   { id: "overwatch", name: "Overwatch 2", icon: "/overwatch.svg", color: "#F99E1A", gradient: "from-orange-500 to-orange-700" },
 ];
 
-async function fetchPlayers(game: string, search?: string, signal?: AbortSignal): Promise<Player[]> {
+async function fetchPlayers(gameIds: string[], search?: string, signal?: AbortSignal): Promise<Player[]> {
+  if (gameIds.length === 0) {
+    return [];
+  }
+
   try {
     const params = new URLSearchParams();
-    params.set("game", game);
+    params.set("games", gameIds.join(','));
     if (search) params.set("q", search);
 
-    const cacheKey = `players-${game}-${search ?? ""}`;
+    const cacheKey = `players-${gameIds.join(',')}-${search ?? ""}`;
     const cached = apiCache.get(cacheKey);
     if (cached) {
       return cached as Player[];
     }
 
-    console.log(`Fetching players for game: ${game}, search: ${search || 'none'}`);
+    console.log(`Fetching players for games: ${gameIds.join(',')}, search: ${search || 'none'}`);
 
     const res = await fetch(`/api/esports/players?${params.toString()}`, {
       cache: "no-store",
@@ -99,7 +105,7 @@ async function fetchPlayers(game: string, search?: string, signal?: AbortSignal)
     if (signal?.aborted) {
       return [];
     }
-    console.log(`Received ${data.length} players for ${game}`);
+    console.log(`Received ${data.length} players`);
     const normalized = Array.isArray(data) ? data : [];
     apiCache.set(cacheKey, normalized);
     return normalized;
@@ -292,27 +298,7 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
 function PlayersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  // Obtener el juego de los parámetros de URL o usar dota2 por defecto
-  const [game, setGame] = useState<string>(() => {
-    return searchParams?.get('game') || GAMES[0].id;
-  });
-
-  // Función para cambiar el juego y actualizar la URL sin recargar
-  const handleGameChange = (newGame: string) => {
-    if (newGame === game) return; // Evitar cambios innecesarios
-
-    setIsTransitioning(true);
-    setGame(newGame);
-
-    const params = new URLSearchParams(searchParams?.toString());
-    params.set('game', newGame);
-    // Usar replace en lugar de push para evitar agregar al historial
-    router.replace(`/esports/players?${params.toString()}`, { scroll: false });
-
-    // Reset del estado de transición después de un breve delay
-    setTimeout(() => setIsTransitioning(false), 300);
-  };
+  const { selectedGames, hasAnyGame } = useGameContext();
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -356,13 +342,18 @@ function PlayersPageContent() {
   // Resetear página cuando cambian los filtros (pero mantener scroll)
   useEffect(() => {
     setPage(1);
-  }, [game, debouncedSearch]);
+  }, [selectedGames, debouncedSearch]);
 
   // Cargar jugadores con mejor manejo de estados y caché
   useEffect(() => {
+    if (selectedGames.length === 0) {
+      setPlayers([]);
+      setLoading(false);
+      return;
+    }
     const controller = new AbortController();
     async function load() {
-      const cacheKey = `${game}-${debouncedSearch}`;
+      const cacheKey = `${selectedGames.join(',')}-${debouncedSearch}`;
 
       // Verificar si ya tenemos estos datos en caché
       if (playersCache.has(cacheKey)) {
@@ -376,7 +367,7 @@ function PlayersPageContent() {
       setIsTransitioning(true);
 
       try {
-        const data = await fetchPlayers(game, debouncedSearch, controller.signal);
+        const data = await fetchPlayers(selectedGames, debouncedSearch, controller.signal);
         if (controller.signal.aborted) {
           return;
         }
@@ -399,7 +390,7 @@ function PlayersPageContent() {
     }
     load();
     return () => controller.abort();
-  }, [game, debouncedSearch, playersCache]);
+  }, [selectedGames, debouncedSearch, playersCache]);
 
   // Guardar favoritos en localStorage
   useEffect(() => {
@@ -467,13 +458,17 @@ function PlayersPageContent() {
       activos: jugadoresActivos,
       conEquipo: conEquipo,
       totalTitulos: totalTitulos,
-      juego: GAMES.find(g => g.id === game)?.name || game,
     };
-  }, [players, favoriteList, game]);
+  }, [players, favoriteList]);
+
+  // Si no hay juegos seleccionados, mostrar selector
+  if (!hasAnyGame) {
+    return <GameSelector />;
+  }
 
   return (
     <>
-      <LiveScoreTicker currentGame={game} />
+      <LiveScoreTicker currentGame={selectedGames.join(',')} />
 
       <main className="min-h-screen pt-20 pb-24 md:pb-0">
         {/* Hero Section */}
@@ -555,42 +550,33 @@ function PlayersPageContent() {
         </section>
 
         <div className="container mx-auto px-6 py-8">
-          {/* Filtros de juegos */}
+          {/* Juegos seleccionados */}
           <div className="mb-8">
-            <h3 className="text-xl font-semibold text-white mb-4 text-center">Seleccionar Juego</h3>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
-              {GAMES.map((g, index) => (
-                <button
-                  key={g.id}
-                  onClick={() => handleGameChange(g.id)}
-                  disabled={isTransitioning}
-                  className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 disabled:opacity-50 disabled:cursor-not-allowed ${game === g.id
-                      ? `bg-gradient-to-r ${g.gradient} text-white border-white/30 shadow-lg`
-                      : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
-                    }`}
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-
-                  <div className="relative z-10 text-center">
-                    <div className="mb-3">
-                      <Image
-                        src={g.icon}
-                        alt={g.name}
-                        width={32}
-                        height={32}
-                        className={`w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300 ${isTransitioning && game === g.id ? 'animate-pulse' : ''}`}
-                      />
-                    </div>
-                    <div className="font-bold text-sm">{g.name}</div>
+            <h3 className="text-xl font-semibold text-white mb-4 text-center">Juegos Seleccionados</h3>
+            <div className="flex flex-wrap gap-3 justify-center">
+              {selectedGames.map((gameId) => {
+                const game = GAMES.find(g => g.id === gameId);
+                if (!game) return null;
+                return (
+                  <div
+                    key={gameId}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/20"
+                  >
+                    <Image
+                      src={game.icon}
+                      alt={game.name}
+                      width={20}
+                      height={20}
+                      className="object-contain"
+                    />
+                    <span className="text-sm font-semibold text-white">{game.name}</span>
                   </div>
-
-                  {game === g.id && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-b-xl"></div>
-                  )}
-                </button>
-              ))}
+                );
+              })}
             </div>
+            <p className="text-sm text-white/50 text-center mt-2">
+              Puedes cambiar los juegos seleccionados desde el menú superior
+            </p>
           </div>
 
           {/* Barra de búsqueda */}
@@ -735,7 +721,7 @@ function PlayersPageContent() {
           <div className={`mb-8 transition-content ${isTransitioning ? 'loading' : ''}`} data-players-section>
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-white">
-                Jugadores de {GAMES.find(g => g.id === game)?.name}
+                Jugadores
               </h3>
               <div className="text-sm text-gray-400">
                 {loading ? (
@@ -846,7 +832,6 @@ function PlayersPageContent() {
               <button
                 onClick={() => {
                   setSearchTerm("");
-                  setGame(GAMES[0].id);
                   setPage(1);
                 }}
                 className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"

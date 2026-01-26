@@ -2,13 +2,16 @@
 
 import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Bars3Icon, BellIcon, XMarkIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import { usePathname, useRouter } from "next/navigation";
+import { Bars3Icon, BellIcon, XMarkIcon, SparklesIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import SearchLazy from "./SearchLazy";
 import ThemeToggle from "./ThemeToggle";
 import { useSwipeToClose } from "../hooks/useSwipeGesture";
 import { optimizeScroll } from "../lib/utils";
 import { useUX } from "./UXEnhancer";
+import { useGameContext } from "../contexts/GameContext";
+import { SUPPORTED_GAMES, getGameConfig } from "../lib/gameConfig";
+import Image from "next/image";
 
 const NAVIGATION = [
   { name: "Inicio", href: "/", icon: "🏠" },
@@ -19,11 +22,15 @@ const NAVIGATION = [
 
 function HeaderContent() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isGameSelectorOpen, setIsGameSelectorOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const isScrolledRef = useRef(false);
+  const gameSelectorRef = useRef<HTMLDivElement>(null);
   const { addNotification } = useUX();
+  const { selectedGames, toggleGame, hasGame, getSelectedGamesConfig } = useGameContext();
 
   // Hook para swipe gestures en menú móvil
   const swipeToCloseRef = useSwipeToClose(setIsMobileMenuOpen);
@@ -45,6 +52,20 @@ function HeaderContent() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Cerrar selector de juegos al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (gameSelectorRef.current && !gameSelectorRef.current.contains(event.target as Node)) {
+        setIsGameSelectorOpen(false);
+      }
+    };
+
+    if (isGameSelectorOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isGameSelectorOpen]);
+
   const handleAlertsClick = useCallback(() => {
     addNotification({
       type: "info",
@@ -62,6 +83,11 @@ function HeaderContent() {
       duration: 3500,
     });
   }, [addNotification]);
+
+  const handleGameToggle = useCallback((gameId: string) => {
+    toggleGame(gameId);
+    router.refresh();
+  }, [toggleGame, router]);
 
   return (
     <header
@@ -159,6 +185,68 @@ function HeaderContent() {
             </ul>
           </nav>
 
+          {/* Game Selector Desktop */}
+          <div className="hidden lg:block relative" ref={gameSelectorRef}>
+            <button
+              onClick={() => setIsGameSelectorOpen(!isGameSelectorOpen)}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+              aria-label="Seleccionar juegos"
+            >
+              <span className="text-sm font-semibold text-white/90">
+                {selectedGames.length === 0 ? "Juegos" : `${selectedGames.length} ${selectedGames.length === 1 ? 'juego' : 'juegos'}`}
+              </span>
+              <ChevronDownIcon className={`w-4 h-4 text-white/70 transition-transform ${isGameSelectorOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown de juegos */}
+            {isGameSelectorOpen && (
+              <div className="absolute top-full left-0 mt-2 w-64 rounded-xl bg-black/95 backdrop-blur-xl border border-white/10 shadow-2xl z-50 p-3">
+                <div className="text-xs font-semibold text-white/50 mb-2 px-2">Seleccionar Juegos</div>
+                <div className="space-y-1 max-h-64 overflow-y-auto">
+                  {SUPPORTED_GAMES.map((game) => {
+                    const isSelected = hasGame(game.id);
+                    const canRemove = selectedGames.length > 1;
+                    return (
+                      <button
+                        key={game.id}
+                        onClick={() => {
+                          if (isSelected && !canRemove) {
+                            addNotification({
+                              type: "info",
+                              title: "Juego requerido",
+                              message: "Debes tener al menos un juego seleccionado.",
+                              duration: 2000,
+                            });
+                            return;
+                          }
+                          handleGameToggle(game.id);
+                        }}
+                        disabled={isSelected && !canRemove}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-left ${
+                          isSelected
+                            ? 'bg-white/10 border border-white/20'
+                            : 'hover:bg-white/5 border border-transparent'
+                        } ${isSelected && !canRemove ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                          isSelected ? 'border-emerald-400 bg-emerald-400/20' : 'border-white/30'
+                        }`}>
+                          {isSelected && (
+                            <svg className="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <Image src={game.icon} alt={game.name} width={20} height={20} className="object-contain" />
+                        <span className="text-sm text-white/90 font-medium flex-1">{game.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Search Bar mejorado */}
           <div className="hidden lg:block w-72 xl:w-80">
             <SearchLazy globalSearch={true} placeholder="Buscar equipos, jugadores..." />
@@ -246,6 +334,52 @@ function HeaderContent() {
             {/* Barra de búsqueda móvil */}
             <div className="p-4 border-b border-white/5">
               <SearchLazy globalSearch={true} compact={true} placeholder="Buscar equipos, jugadores..." />
+            </div>
+
+            {/* Game Selector Mobile */}
+            <div className="p-4 border-b border-white/5">
+              <div className="text-xs font-semibold text-white/50 mb-3">Juegos Seleccionados</div>
+              <div className="space-y-2">
+                {SUPPORTED_GAMES.map((game) => {
+                  const isSelected = hasGame(game.id);
+                  const canRemove = selectedGames.length > 1;
+                  return (
+                    <button
+                      key={game.id}
+                      onClick={() => {
+                        if (isSelected && !canRemove) {
+                          addNotification({
+                            type: "info",
+                            title: "Juego requerido",
+                            message: "Debes tener al menos un juego seleccionado.",
+                            duration: 2000,
+                          });
+                          return;
+                        }
+                        handleGameToggle(game.id);
+                      }}
+                      disabled={isSelected && !canRemove}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                        isSelected
+                          ? 'bg-white/10 border border-white/20'
+                          : 'bg-white/5 hover:bg-white/10 border border-white/10'
+                      } ${isSelected && !canRemove ? 'opacity-60' : ''}`}
+                    >
+                      <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
+                        isSelected ? 'border-emerald-400 bg-emerald-400/20' : 'border-white/30'
+                      }`}>
+                        {isSelected && (
+                          <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <Image src={game.icon} alt={game.name} width={24} height={24} className="object-contain" />
+                      <span className="text-sm text-white/90 font-medium flex-1">{game.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Links de navegación con animación escalonada */}

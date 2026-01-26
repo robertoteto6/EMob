@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { debounce, apiCache } from "../lib/utils";
 import { getPlayerImageUrl, getTeamImageUrl } from "../lib/imageFallback";
+import { useGameContext } from "../contexts/GameContext";
+import { getGameConfig } from "../lib/gameConfig";
 
 interface SearchItem {
   id: number;
@@ -24,11 +26,12 @@ interface SearchProps {
 }
 
 export default function Search({
-  game = "dota2",
+  game: deprecatedGame,
   placeholder = "Buscar equipos, jugadores, partidos...",
   compact = false,
-  globalSearch = false // Por defecto false para mantener compatibilidad
+  globalSearch = false
 }: SearchProps) {
+  const { selectedGames, hasAnyGame } = useGameContext();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchItem[]>([]);
   const [show, setShow] = useState(false);
@@ -80,7 +83,7 @@ export default function Search({
   // Función de búsqueda con timeout y mejor manejo de errores
   const performSearch = useCallback(async (
     searchQuery: string,
-    searchGame: string,
+    searchGames: string[],
     isGlobal: boolean
   ) => {
     if (searchQuery.length < 2) {
@@ -90,7 +93,15 @@ export default function Search({
       return;
     }
 
-    const cacheKey = `${isGlobal ? 'all' : searchGame}:${searchQuery.toLowerCase().trim()}`;
+    // Si no hay juegos seleccionados y no es búsqueda global, no buscar
+    if (!isGlobal && searchGames.length === 0) {
+      setResults([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    const cacheKey = `${isGlobal ? 'all' : searchGames.join(',')}:${searchQuery.toLowerCase().trim()}`;
     const cached = apiCache.get(cacheKey);
     if (cached) {
       setResults(cached);
@@ -122,7 +133,7 @@ export default function Search({
     try {
       const searchUrl = isGlobal
         ? `/api/esports/search?q=${encodeURIComponent(searchQuery)}`
-        : `/api/esports/search?q=${encodeURIComponent(searchQuery)}&game=${searchGame}`;
+        : `/api/esports/search?q=${encodeURIComponent(searchQuery)}&games=${searchGames.join(',')}`;
 
       const res = await fetch(searchUrl, {
         signal: controller.signal,
@@ -177,14 +188,17 @@ export default function Search({
       return;
     }
 
+    // Determinar juegos a buscar
+    const gamesToSearch = globalSearch ? [] : (hasAnyGame ? selectedGames : []);
+
     // Debounce adaptativo: más rápido para queries cortas, más lento para largas
     const debounceTime = getDebounceTime(query.length);
     const timeoutId = setTimeout(() => {
-      performSearch(query, game, globalSearch);
+      performSearch(query, gamesToSearch, globalSearch);
     }, debounceTime);
 
     return () => clearTimeout(timeoutId);
-  }, [query, game, globalSearch, performSearch, getDebounceTime]);
+  }, [query, selectedGames, hasAnyGame, globalSearch, performSearch, getDebounceTime]);
 
   // Cerrar al hacer clic fuera
   useEffect(() => {
@@ -488,7 +502,8 @@ export default function Search({
                       onClick={() => {
                         setError(null);
                         if (query.length >= 2) {
-                          performSearch(query, game, globalSearch);
+                          const gamesToSearch = globalSearch ? [] : (hasAnyGame ? selectedGames : []);
+                          performSearch(query, gamesToSearch, globalSearch);
                         }
                       }}
                       className="mt-3 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50"
@@ -508,14 +523,13 @@ export default function Search({
                     <div className="mt-2 text-xs text-gray-500">
                       Intenta buscar con otros términos o verifica la ortografía
                     </div>
-                    {!globalSearch && (
+                    {!globalSearch && hasAnyGame && (
                       <div className="mt-1 text-xs text-gray-500">
                         Búsqueda en: <span className="text-gray-300">
-                          {game === 'dota2' ? 'Dota 2' :
-                            game === 'lol' ? 'League of Legends' :
-                              game === 'csgo' ? 'Counter-Strike 2' :
-                                game === 'r6siege' ? 'Rainbow Six Siege' :
-                                  game}
+                          {selectedGames.map(gameId => {
+                            const config = getGameConfig(gameId);
+                            return config?.name || gameId;
+                          }).join(', ')}
                         </span>
                       </div>
                     )}

@@ -136,87 +136,103 @@ function generateInstagramData(player: any) {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const gameParam = searchParams.get("game") || "dota2";
+  const gamesParam = searchParams.get("games"); // Nuevo: soporte para múltiples juegos
   const q = searchParams.get("q") || "";
 
+  // Si hay games param, usar múltiples juegos; si no, usar game param (compatibilidad)
+  const gameIds = gamesParam 
+    ? gamesParam.split(',').map(g => g.trim()).filter(Boolean)
+    : [gameParam];
+
+  // Si no hay juegos, retornar array vacío
+  if (gameIds.length === 0) {
+    return NextResponse.json([]);
+  }
+
   try {
-    // Mapear el juego al nombre correcto de la API
-    const game = GAME_MAPPING[gameParam] || gameParam;
+    // Procesar múltiples juegos en paralelo
+    const promises = gameIds.map(async (gameId) => {
+      // Mapear el juego al nombre correcto de la API
+      const game = GAME_MAPPING[gameId] || gameId;
 
-    console.log(`Fetching players for game: ${gameParam} -> ${game}`);
+      console.log(`Fetching players for game: ${gameId} -> ${game}`);
 
-    const url = new URL(`https://api.pandascore.co/${game}/players`);
-    url.searchParams.set("per_page", q ? "20" : "50");
+      const url = new URL(`https://api.pandascore.co/${game}/players`);
+      url.searchParams.set("per_page", q ? "20" : "50");
 
-    if (q) {
-      url.searchParams.set("search[name]", q);
-    }
-
-    console.log(`API URL: ${url.toString()}`);
-
-    const searchParamsApi = new URLSearchParams();
-    searchParamsApi.set("per_page", q ? "20" : "50");
-    if (q) {
-      searchParamsApi.set("search[name]", q);
-    }
-    const res = await pandaScoreFetch(
-      url.toString(),
-      searchParamsApi,
-      {
-        cache: "no-store",
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'EMob-Esports/1.0'
-        }
+      if (q) {
+        url.searchParams.set("search[name]", q);
       }
-    );
 
-    console.log(`API Response status: ${res.status}`);
+      const searchParamsApi = new URLSearchParams();
+      searchParamsApi.set("per_page", q ? "20" : "50");
+      if (q) {
+        searchParamsApi.set("search[name]", q);
+      }
+      
+      try {
+        const res = await pandaScoreFetch(
+          url.toString(),
+          searchParamsApi,
+          {
+            cache: "no-store",
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'EMob-Esports/1.0'
+            }
+          }
+        );
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error(`API Error: ${res.status} - ${errorText}`);
-      return new NextResponse(`Failed to fetch players: ${res.status} - ${errorText}`, { status: res.status });
-    }
+        if (!res.ok) {
+          console.error(`API Error for game ${gameId}: ${res.status}`);
+          return [];
+        }
 
-    const data = await res.json();
-    console.log(`Received ${data.length} players for ${game}`);
+        const data = await res.json();
 
+        if (!Array.isArray(data)) {
+          console.error(`Invalid API response format for game ${gameId}:`, data);
+          return [];
+        }
 
+        // Mapear y enriquecer datos de jugadores
+        const enhancedPlayers = data.map((p: any) => {
+          const instagramData = generateInstagramData(p);
 
-    if (!Array.isArray(data)) {
-      console.error("API did not return an array:", data);
-      return new NextResponse("Invalid API response format", { status: 500 });
-    }
+          return {
+            id: p.id,
+            name: p.name,
+            image_url: p.image_url ?? null,
+            first_name: p.first_name ?? null,
+            last_name: p.last_name ?? null,
+            nationality: p.nationality ?? null,
+            role: p.role ?? null,
+            current_team: p.current_team?.name ?? null,
+            current_team_id: p.current_team?.id ?? null,
+            current_team_image: p.current_team?.image_url ?? null,
+            title_score: calculateTitleScore(p),
+            professional_status: p.current_team ? "Activo" : "Libre",
+            tournaments_played: p.tournaments_played ?? 0,
+            instagram_followers: instagramData.followers,
+            instagram_handle: instagramData.handle,
+            _gameId: gameId, // Agregar metadata del juego
+          };
+        });
 
-    // Mapear y enriquecer datos de jugadores
-    const enhancedPlayers = data.map((p) => {
-      const instagramData = generateInstagramData(p);
-
-      return {
-        id: p.id,
-        name: p.name,
-        image_url: p.image_url ?? null,
-        first_name: p.first_name ?? null,
-        last_name: p.last_name ?? null,
-        nationality: p.nationality ?? null,
-        role: p.role ?? null,
-        current_team: p.current_team?.name ?? null,
-        current_team_id: p.current_team?.id ?? null,
-        current_team_image: p.current_team?.image_url ?? null,
-        title_score: calculateTitleScore(p),
-        // Datos adicionales para mostrar logros
-        professional_status: p.current_team ? "Activo" : "Libre",
-        tournaments_played: p.tournaments_played ?? 0,
-        // Datos de Instagram
-        instagram_followers: instagramData.followers,
-        instagram_handle: instagramData.handle,
-      };
+        return enhancedPlayers;
+      } catch (error) {
+        console.error(`Error fetching players for game ${gameId}:`, error);
+        return [];
+      }
     });
 
-    // Ordenar por puntuación de títulos (más importantes primero)
-    enhancedPlayers.sort((a, b) => b.title_score - a.title_score);
+    const results = await Promise.all(promises);
+    const allPlayers = results.flat();
 
-    return NextResponse.json(enhancedPlayers);
+    // Ordenar por puntuación de títulos (más importantes primero)
+    allPlayers.sort((a, b) => b.title_score - a.title_score);
+
+    return NextResponse.json(allPlayers);
   } catch (error) {
     console.error("Error fetching players:", error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

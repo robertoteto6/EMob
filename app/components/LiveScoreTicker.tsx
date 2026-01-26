@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { apiCache } from "../lib/utils";
+import { useGameContext } from "../contexts/GameContext";
 
 interface PandaScoreMatch {
   id: number;
@@ -56,6 +57,7 @@ const GAME_COLORS: Record<string, string> = {
 };
 
 const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScoreTickerProps) {
+  const { selectedGames, hasAnyGame } = useGameContext();
   const [liveMatches, setLiveMatches] = useState<LiveMatch[]>([]);
   const [isVisible, setIsVisible] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -64,7 +66,24 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
 
   // Función optimizada para obtener partidos en vivo
   const fetchLiveMatches = useCallback(async () => {
-    const cacheKey = `live-matches-${currentGame}`;
+    // Determinar juegos a buscar: priorizar currentGame si es "all" o múltiples, sino usar selectedGames
+    let gamesToFetch: string[];
+    if (currentGame && currentGame !== "all") {
+      // Si currentGame es una lista separada por comas, usarla
+      gamesToFetch = currentGame.includes(',') ? currentGame.split(',') : [currentGame];
+    } else if (hasAnyGame) {
+      gamesToFetch = selectedGames;
+    } else {
+      // Fallback a todos los juegos si no hay selección
+      gamesToFetch = ["dota2", "lol", "csgo", "r6siege", "overwatch"];
+    }
+
+    if (gamesToFetch.length === 0) {
+      setLiveMatches([]);
+      return;
+    }
+
+    const cacheKey = `live-matches-${gamesToFetch.join(',')}`;
     const cached = apiCache.get(cacheKey);
 
     if (cached) {
@@ -74,7 +93,7 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
 
     setIsLoading(true);
     try {
-      const games = currentGame === "all" ? ["dota2", "lol", "csgo", "r6siege", "overwatch"] : [currentGame];
+      const games = gamesToFetch;
       const allMatches: LiveMatch[] = [];
 
       // Procesar juegos en paralelo para mejor rendimiento
@@ -131,7 +150,7 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
     } finally {
       setIsLoading(false);
     }
-  }, [currentGame]);
+  }, [currentGame, selectedGames, hasAnyGame]);
 
   useEffect(() => {
     fetchLiveMatches();

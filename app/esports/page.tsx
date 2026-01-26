@@ -15,6 +15,8 @@ import Spinner from "../components/Spinner";
 import { useNotifications } from "../hooks/useNotifications";
 import { useDeferredClientRender } from "../hooks/useDeferredClientRender";
 import { apiCache } from "../lib/utils";
+import { useGameContext } from "../contexts/GameContext";
+import GameSelector from "../components/GameSelector";
 
 interface PandaScoreMatch {
   id: number;
@@ -124,15 +126,20 @@ const TIMEFRAMES = [
 
 type TimeframeId = (typeof TIMEFRAMES)[number]["id"];
 
-async function fetchMatches(game: string, signal?: AbortSignal): Promise<Match[]> {
-  const cacheKey = `matches-${game}`;
+async function fetchMatches(gameIds: string[], signal?: AbortSignal): Promise<Match[]> {
+  if (gameIds.length === 0) {
+    return [];
+  }
+
+  const cacheKey = `matches-${gameIds.join(',')}`;
   const cached = apiCache.get(cacheKey);
   if (cached) {
     return cached as Match[];
   }
 
   try {
-    const res = await fetch(`/api/esports/matches?game=${game}`, {
+    const gamesParam = gameIds.join(',');
+    const res = await fetch(`/api/esports/matches?games=${gamesParam}`, {
       cache: "no-store",
       signal,
     });
@@ -146,7 +153,7 @@ async function fetchMatches(game: string, signal?: AbortSignal): Promise<Match[]
     }
 
     const normalized = data
-      .map((m: PandaScoreMatch) => {
+      .map((m: PandaScoreMatch & { _gameId?: string }) => {
         const team1 = m.opponents?.[0]?.opponent;
         const team2 = m.opponents?.[1]?.opponent;
         // Validar fecha
@@ -183,15 +190,20 @@ async function fetchMatches(game: string, signal?: AbortSignal): Promise<Match[]
   }
 }
 
-async function fetchTournaments(game: string, signal?: AbortSignal): Promise<Tournament[]> {
-  const cacheKey = `tournaments-${game}`;
+async function fetchTournaments(gameIds: string[], signal?: AbortSignal): Promise<Tournament[]> {
+  if (gameIds.length === 0) {
+    return [];
+  }
+
+  const cacheKey = `tournaments-${gameIds.join(',')}`;
   const cached = apiCache.get(cacheKey);
   if (cached) {
     return cached as Tournament[];
   }
 
   try {
-    const res = await fetch(`/api/esports/tournaments?game=${game}`, {
+    const gamesParam = gameIds.join(',');
+    const res = await fetch(`/api/esports/tournaments?games=${gamesParam}`, {
       cache: "no-store",
       signal,
     });
@@ -204,7 +216,7 @@ async function fetchTournaments(game: string, signal?: AbortSignal): Promise<Tou
       return [];
     }
 
-    const normalized = data.map((t: PandaScoreTournament) => ({
+    const normalized = data.map((t: PandaScoreTournament & { _gameId?: string }) => ({
       id: t.id,
       name: t.name ?? "",
       begin_at: t.begin_at ? new Date(t.begin_at).getTime() / 1000 : null,
@@ -215,6 +227,7 @@ async function fetchTournaments(game: string, signal?: AbortSignal): Promise<Tou
       tier: t.tier ?? null,
       region: t.region ?? null,
       live_supported: !!t.live_supported,
+      game: t._gameId || gameIds[0], // Agregar metadata del juego
     })) as Tournament[];
 
     apiCache.set(cacheKey, normalized);
@@ -533,11 +546,8 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
 function EsportsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { selectedGames, hasAnyGame } = useGameContext();
 
-  // Obtener el juego de los parámetros de URL o usar dota2 por defecto
-  const [game, setGame] = useState<string>(() => {
-    return searchParams?.get('game') || GAMES[0].id;
-  });
   const [timeframe, setTimeframe] = useState<TimeframeId>("today");
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -580,17 +590,7 @@ function EsportsPageContent() {
     }, 360);
   }, []);
 
-  const handleGameChange = useCallback((newGame: string) => {
-    if (game === newGame) {
-      return false;
-    }
-    triggerFilterFeedback();
-    setGame(newGame);
-    const params = new URLSearchParams(searchParams?.toString());
-    params.set('game', newGame);
-    router.push(`/esports?${params.toString()}`);
-    return true;
-  }, [game, router, searchParams, triggerFilterFeedback]);
+  // Eliminado handleGameChange - ahora se usa GameContext
 
   const handleTimeframeChange = useCallback((newTimeframe: TimeframeId) => {
     if (timeframe === newTimeframe) {
@@ -631,13 +631,18 @@ function EsportsPageContent() {
   // Resetear página a 1 cuando cambian los filtros
   useEffect(() => {
     setPage(1);
-  }, [filterLeague, filterTeam, timeframe, game]);
+  }, [filterLeague, filterTeam, timeframe, selectedGames]);
 
   useEffect(() => {
+    if (selectedGames.length === 0) {
+      setMatches([]);
+      setLoading(false);
+      return;
+    }
     const controller = new AbortController();
     async function load() {
       setLoading(true);
-      const data = await fetchMatches(game, controller.signal);
+      const data = await fetchMatches(selectedGames, controller.signal);
       if (controller.signal.aborted) {
         return;
       }
@@ -646,7 +651,7 @@ function EsportsPageContent() {
     }
     load();
     return () => controller.abort();
-  }, [game]);
+  }, [selectedGames]);
 
   // Guardar favoritos en localStorage
   useEffect(() => {
@@ -656,10 +661,15 @@ function EsportsPageContent() {
   }, [favoriteMatches]);
 
   useEffect(() => {
+    if (selectedGames.length === 0) {
+      setTournaments([]);
+      setLoadingTournaments(false);
+      return;
+    }
     const controller = new AbortController();
     async function load() {
       setLoadingTournaments(true);
-      const data = await fetchTournaments(game, controller.signal);
+      const data = await fetchTournaments(selectedGames, controller.signal);
       if (controller.signal.aborted) {
         return;
       }
@@ -690,7 +700,7 @@ function EsportsPageContent() {
     }
     load();
     return () => controller.abort();
-  }, [game]);
+  }, [selectedGames]);
 
   function matchOnSelectedTimeframe(match: Match) {
     const _now = Date.now();
@@ -795,9 +805,14 @@ function EsportsPageContent() {
     return () => clearInterval(interval);
   }, [favoriteList, notificationSystem]);
 
+  // Si no hay juegos seleccionados, mostrar selector
+  if (!hasAnyGame) {
+    return <GameSelector />;
+  }
+
   return (
     <>
-      <LiveScoreTicker currentGame={game} />
+      <LiveScoreTicker currentGame={selectedGames.join(',')} />
 
       <main className="min-h-screen pt-20 pb-24 md:pb-0">
         {/* Hero Section */}
@@ -894,63 +909,35 @@ function EsportsPageContent() {
             aria-busy={isFiltering}
           >
             <div className={`transition-opacity duration-300 ${isFiltering && !isViewLoading ? "opacity-60" : "opacity-100"}`}>
-              {/* Filtros de juegos */}
+              {/* Juegos seleccionados */}
               <div className="mb-8">
-                <h3 className="text-xl font-semibold text-white mb-4 text-center flex items-center justify-center gap-2">
-                  Seleccionar Juego
-                  <Tooltip
-                    content={`Elige el título para actualizar partidos, estadísticas y torneos relacionados.`}
-                    className="inline-flex"
-                    side="right"
-                  >
-                    <span
-                      tabIndex={0}
-                      aria-label="Ayuda sobre la selección de juego"
-                      className="flex h-5 w-5 items-center justify-center rounded-full border border-green-400/60 bg-green-500/10 text-xs font-bold text-green-200 hover:bg-green-500/20 focus:outline-none focus:ring-2 focus:ring-green-400/60"
-                    >
-                      i
-                    </span>
-                  </Tooltip>
+                <h3 className="text-xl font-semibold text-white mb-4 text-center">
+                  Juegos Seleccionados
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
-                  {GAMES.map((g, index) => (
-                    <Tooltip
-                      key={g.id}
-                      content={`${g.name}
-Actualiza la vista con partidos, estadísticas y torneos de este juego.`}
-                      className="block h-full"
-                      side="top"
-                    >
-                      <button
-                        onClick={() => handleGameChange(g.id)}
-                        className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${game === g.id
-                          ? `bg-gradient-to-r ${g.gradient} text-white border-white/30 shadow-lg`
-                          : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
-                          }`}
-                        style={{ animationDelay: `${index * 0.1}s` }}
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {selectedGames.map((gameId) => {
+                    const game = GAMES.find(g => g.id === gameId);
+                    if (!game) return null;
+                    return (
+                      <div
+                        key={gameId}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/20"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-
-                        <div className="relative z-10 text-center">
-                          <div className="mb-3">
-                            <Image
-                              src={g.icon}
-                              alt={g.name}
-                              width={32}
-                              height={32}
-                              className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300"
-                            />
-                          </div>
-                          <div className="font-bold text-sm">{g.name}</div>
-                        </div>
-
-                        {game === g.id && (
-                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-b-xl"></div>
-                        )}
-                      </button>
-                    </Tooltip>
-                  ))}
+                        <Image
+                          src={game.icon}
+                          alt={game.name}
+                          width={20}
+                          height={20}
+                          className="object-contain"
+                        />
+                        <span className="text-sm font-semibold text-white">{game.name}</span>
+                      </div>
+                    );
+                  })}
                 </div>
+                <p className="text-sm text-white/50 text-center mt-2">
+                  Puedes cambiar los juegos seleccionados desde el menú superior
+                </p>
               </div>
 
               {selectedView === "matches" && (
@@ -1296,7 +1283,7 @@ ${t.description}. Ajusta la lista de partidos al período indicado.`}
                   {/* Lista de torneos */}
                   <div className="mb-8">
                     <h3 className="text-2xl font-bold text-white mb-6 text-center">
-                      🏆 Torneos de {GAMES.find(g => g.id === game)?.name}
+                      🏆 Torneos
                     </h3>
 
                     {loadingTournaments ? (
@@ -1329,9 +1316,10 @@ ${t.description}. Ajusta la lista de partidos al período indicado.`}
                               }
                               return true;
                             })
-                            .map((tournament, _index) => (
-                              <TournamentCard key={tournament.id} tournament={tournament} game={GAMES.find(g => g.id === game)} />
-                            ))}
+                            .map((tournament, _index) => {
+                              const game = GAMES.find(g => selectedGames.includes(g.id));
+                              return <TournamentCard key={tournament.id} tournament={tournament} game={game} />;
+                            })}
                         </div>
 
                         {/* Información adicional de torneos */}
@@ -1439,7 +1427,7 @@ ${t.description}. Ajusta la lista de partidos al período indicado.`}
                           <div className="text-6xl mb-4">🏆</div>
                           <h3 className="text-xl font-bold text-white mb-2">No hay torneos disponibles</h3>
                           <p className="text-gray-400 mb-6">
-                            No hay torneos que coincidan con los filtros seleccionados para {GAMES.find(g => g.id === game)?.name}.
+                            No hay torneos que coincidan con los filtros seleccionados.
                           </p>
                           <button
                             onClick={() => {

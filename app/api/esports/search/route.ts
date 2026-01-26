@@ -135,20 +135,29 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim();
   const gameParam = searchParams.get("game") || undefined;
+  const gamesParam = searchParams.get("games"); // Nuevo: soporte para múltiples juegos
 
   if (!q || q.length < 2) {
     return NextResponse.json([]);
   }
 
+  // Determinar lista de juegos: priorizar games param, luego game param, luego todos
+  let gameList: string[];
+  if (gamesParam) {
+    gameList = gamesParam.split(',').map(g => g.trim()).filter(Boolean);
+  } else if (gameParam) {
+    gameList = [gameParam];
+  } else {
+    gameList = Object.keys(GAME_MAPPING);
+  }
+
   // Normalizar query para cache
   const normalizedQuery = normalizeText(q);
-  const cacheKey = `search:${gameParam || 'all'}:${normalizedQuery}`;
+  const cacheKey = `search:${gameList.join(',')}:${normalizedQuery}`;
   const cached = apiCache.get(cacheKey);
   if (cached) {
     return NextResponse.json(cached);
   }
-
-  const gameList = gameParam ? [gameParam] : Object.keys(GAME_MAPPING);
 
   // Ejecutar búsquedas en paralelo para todos los juegos
   const searchPromises = gameList.map(async (gameParam) => {

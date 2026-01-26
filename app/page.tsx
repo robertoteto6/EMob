@@ -9,10 +9,12 @@ import ScrollToTop from "./components/ScrollToTop";
 import Tooltip from "./components/Tooltip";
 import Spinner from "./components/Spinner";
 import LiveBadge from "./components/LiveBadge";
+import GameSelector from "./components/GameSelector";
 import { SUPPORTED_GAMES, type GameConfig } from "./lib/gameConfig";
 import { useNotifications } from "./hooks/useNotifications";
 import { useDeferredClientRender } from "./hooks/useDeferredClientRender";
 import { usePagePullToRefresh, ScrollIndicator, PullToRefreshIndicator } from "./components/MobileGestures";
+import { useGameContext } from "./contexts/GameContext";
 
 interface PandaScoreMatch {
   id: number;
@@ -115,11 +117,19 @@ interface GameStats {
 const GAMES = SUPPORTED_GAMES;
 
 // Función para obtener partidos de múltiples juegos
-async function fetchAllMatches(): Promise<Match[]> {
+async function fetchAllMatches(selectedGameIds: string[] = []): Promise<Match[]> {
   const allMatches: Match[] = [];
 
+  // Si no hay juegos seleccionados, retornar array vacío
+  if (selectedGameIds.length === 0) {
+    return [];
+  }
+
+  // Filtrar solo los juegos seleccionados
+  const gamesToFetch = GAMES.filter(game => selectedGameIds.includes(game.id));
+
   // Usar consultas en lote para mejor rendimiento
-  const batchConfigs = GAMES.map(game => ({
+  const batchConfigs = gamesToFetch.map(game => ({
     endpoint: `/api/esports/matches`,
     params: { game: game.id, per_page: 30 },
     cacheTTL: 2 * 60 * 1000, // 2 minutos
@@ -194,11 +204,19 @@ async function fetchAllMatches(): Promise<Match[]> {
 }
 
 // Función para obtener torneos de múltiples juegos
-async function fetchAllTournaments(): Promise<Tournament[]> {
+async function fetchAllTournaments(selectedGameIds: string[] = []): Promise<Tournament[]> {
   const allTournaments: Tournament[] = [];
 
+  // Si no hay juegos seleccionados, retornar array vacío
+  if (selectedGameIds.length === 0) {
+    return [];
+  }
+
+  // Filtrar solo los juegos seleccionados
+  const gamesToFetch = GAMES.filter(game => selectedGameIds.includes(game.id));
+
   // Usar consultas en lote optimizadas
-  const batchConfigs = GAMES.map(game => ({
+  const batchConfigs = gamesToFetch.map(game => ({
     endpoint: `/api/esports/tournaments`,
     params: { game: game.id, per_page: 20 },
     cacheTTL: 5 * 60 * 1000, // 5 minutos (los torneos cambian menos frecuentemente)
@@ -557,12 +575,12 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
 });
 
 const Home = memo(function Home() {
+  const { selectedGames, hasAnyGame, toggleGame, hasGame } = useGameContext();
   const [matches, setMatches] = useState<Match[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingTournaments, setLoadingTournaments] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState<"today" | "week" | "all">("today");
-  const [selectedGame, setSelectedGame] = useState<string>("all");
   const [isFiltering, setIsFiltering] = useState(false);
   const filterAnimationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -585,15 +603,6 @@ const Home = memo(function Home() {
     setSelectedTimeframe(timeframe);
     return true;
   }, [selectedTimeframe, triggerFilterFeedback]);
-
-  const handleGameChange = useCallback((gameId: string) => {
-    if (selectedGame === gameId) {
-      return false;
-    }
-    triggerFilterFeedback();
-    setSelectedGame(gameId);
-    return true;
-  }, [selectedGame, triggerFilterFeedback]);
 
   useEffect(() => {
     return () => {
@@ -632,9 +641,14 @@ const Home = memo(function Home() {
 
   // Función de carga de datos memoizada
   const loadData = useCallback(async () => {
+    if (!hasAnyGame) {
+      setMatches([]);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
-      const matchesData = await fetchAllMatches();
+      const matchesData = await fetchAllMatches(selectedGames);
       setMatches(matchesData);
     } catch (error) {
       console.error('Error loading matches:', error);
@@ -648,12 +662,17 @@ const Home = memo(function Home() {
     } finally {
       setLoading(false);
     }
-  }, [addNotification]);
+  }, [addNotification, selectedGames, hasAnyGame]);
 
   const loadTournaments = useCallback(async () => {
+    if (!hasAnyGame) {
+      setTournaments([]);
+      setLoadingTournaments(false);
+      return;
+    }
     try {
       setLoadingTournaments(true);
-      const tournamentsData = await fetchAllTournaments();
+      const tournamentsData = await fetchAllTournaments(selectedGames);
       const now = Math.floor(Date.now() / 1000);
       const activeTournaments = tournamentsData.filter(t => {
         if (!t.begin_at) return false;
@@ -674,7 +693,7 @@ const Home = memo(function Home() {
     } finally {
       setLoadingTournaments(false);
     }
-  }, [addNotification]);
+  }, [addNotification, selectedGames, hasAnyGame]);
 
   // Cargar datos
   useEffect(() => {
@@ -758,9 +777,10 @@ const Home = memo(function Home() {
     },
   ];
 
-  // Partidos filtrados por timeframe y juego + métricas para los filtros
+  // Partidos filtrados por timeframe y juegos seleccionados + métricas para los filtros
   const { filteredMatches, timeframeCounts } = useMemo(() => {
-    const baseMatches = selectedGame === "all" ? matches : matchesByGame[selectedGame] ?? [];
+    // Filtrar solo partidos de los juegos seleccionados
+    const baseMatches = matches.filter(match => selectedGames.includes(match.game));
 
     if (!baseMatches.length) {
       return {
@@ -828,7 +848,7 @@ const Home = memo(function Home() {
         all: baseMatches.length,
       },
     };
-  }, [matches, matchesByGame, selectedGame, selectedTimeframe, currentTime]);
+  }, [matches, selectedGames, selectedTimeframe, currentTime]);
 
   const timeframeOptions = useMemo(
     () => ([
@@ -873,9 +893,14 @@ const Home = memo(function Home() {
   const heroRadiantWinner = heroMatchIsFinished && heroFeaturedMatch ? heroFeaturedMatch.radiant_win === true : false;
   const heroDireWinner = heroMatchIsFinished && heroFeaturedMatch ? heroFeaturedMatch.radiant_win === false : false;
 
+  // Si no hay juegos seleccionados, mostrar el selector
+  if (!hasAnyGame) {
+    return <GameSelector />;
+  }
+
   return (
     <>
-      <LiveScoreTicker currentGame="all" />
+      <LiveScoreTicker currentGame={selectedGames.join(',')} />
 
       <main
         ref={pullToRefresh.setRef}
@@ -1306,8 +1331,23 @@ Reúne enfrentamientos de cada título disponible. Coincidencias actuales: ${mat
                       className="block h-full w-full"
                     >
                       <button
-                        onClick={() => handleGameChange("all")}
-                        className={`group relative touch-target touch-ripple overflow-hidden w-full h-full min-h-[140px] sm:min-h-[160px] px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border flex flex-col items-center justify-center text-center ${selectedGame === "all"
+                        onClick={() => {
+                          // Si todos los juegos están seleccionados, deseleccionar todos excepto uno
+                          // Si no todos están seleccionados, seleccionar todos
+                          if (selectedGames.length === GAMES.length) {
+                            // Mantener solo el primero
+                            const firstGame = GAMES[0].id;
+                            // No hacer nada, ya que toggleGame no permite quitar el último
+                          } else {
+                            // Seleccionar todos los juegos
+                            GAMES.forEach(game => {
+                              if (!hasGame(game.id)) {
+                                toggleGame(game.id);
+                              }
+                            });
+                          }
+                        }}
+                        className={`group relative touch-target touch-ripple overflow-hidden w-full h-full min-h-[140px] sm:min-h-[160px] px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border flex flex-col items-center justify-center text-center ${selectedGames.length === GAMES.length
                           ? "bg-white text-black border-white"
                           : "bg-white/5 text-white border-white/10 hover:border-white/20 hover:bg-white/10"
                           }`}
@@ -1317,7 +1357,7 @@ Reúne enfrentamientos de cada título disponible. Coincidencias actuales: ${mat
                         <div className="relative z-10 text-center">
                           <div className="text-3xl mb-3">🌟</div>
                           <div className="font-bold text-sm mb-2">Todos</div>
-                          <div className={`text-xs px-2 py-1 rounded-full ${selectedGame === "all"
+                          <div className={`text-xs px-2 py-1 rounded-full ${selectedGames.length === GAMES.length
                             ? 'bg-black/10 text-black'
                             : 'bg-white/10 text-white/60'
                             }`}>
@@ -1325,7 +1365,7 @@ Reúne enfrentamientos de cada título disponible. Coincidencias actuales: ${mat
                           </div>
                         </div>
 
-                        {selectedGame === "all" && (
+                        {selectedGames.length === GAMES.length && (
                           <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 rounded-b-xl"></div>
                         )}
                       </button>
@@ -1342,8 +1382,8 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                           className="block h-full w-full"
                         >
                           <button
-                            onClick={() => handleGameChange(game.id)}
-                            className={`group relative touch-target touch-ripple overflow-hidden w-full h-full min-h-[140px] sm:min-h-[160px] px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border flex flex-col items-center justify-center text-center ${selectedGame === game.id
+                            onClick={() => toggleGame(game.id)}
+                            className={`group relative touch-target touch-ripple overflow-hidden w-full h-full min-h-[140px] sm:min-h-[160px] px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border flex flex-col items-center justify-center text-center ${hasGame(game.id)
                               ? "bg-white text-black border-white"
                               : "bg-white/5 text-white border-white/10 hover:border-white/20 hover:bg-white/10"
                               }`}
@@ -1364,7 +1404,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                               <div className="font-bold text-sm mb-2 line-clamp-1" title={game.name}>
                                 {game.name}
                               </div>
-                              <div className={`text-xs px-2 py-1 rounded-full ${selectedGame === game.id
+                              <div className={`text-xs px-2 py-1 rounded-full ${hasGame(game.id)
                                 ? 'bg-black/10 text-black'
                                 : 'bg-white/10 text-white/60'
                                 }`}>
@@ -1372,7 +1412,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                               </div>
                             </div>
 
-                            {selectedGame === game.id && (
+                            {hasGame(game.id) && (
                               <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 rounded-b-xl"></div>
                             )}
                           </button>
@@ -1401,8 +1441,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                     <button
                       onClick={() => {
                         const timeframeChanged = handleTimeframeChange("today");
-                        const gameChanged = handleGameChange("all");
-                        if (!timeframeChanged && !gameChanged) {
+                        if (!timeframeChanged) {
                           triggerFilterFeedback();
                         }
                       }}
