@@ -41,6 +41,8 @@ const useOnlineStatus = () => {
 const matchCache = new Map<string, { data: MatchDetail | null; timestamp: number }>();
 const CACHE_DURATION = 30000;
 const AUTO_REFRESH_INTERVAL_MS = 30000;
+const FAVORITE_MATCHES_KEY = "favoriteMatches";
+const LEGACY_FAVORITE_MATCHES_KEY = "favorites_matches";
 
 async function fetchMatchAPI(matchId: string): Promise<any> {
   const controller = new AbortController();
@@ -228,22 +230,45 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
     };
   }, [match, isPageVisible, isOnline, loadMatchData]);
 
+  const readFavoriteMatches = useCallback(() => {
+    const parseFavorites = (value: string | null) => {
+      if (!value) return [] as number[];
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [] as number[];
+      }
+    };
+
+    const stored = parseFavorites(localStorage.getItem(FAVORITE_MATCHES_KEY));
+    const legacy = parseFavorites(localStorage.getItem(LEGACY_FAVORITE_MATCHES_KEY));
+
+    if (stored.length === 0 && legacy.length > 0) {
+      localStorage.setItem(FAVORITE_MATCHES_KEY, JSON.stringify(legacy));
+      localStorage.removeItem(LEGACY_FAVORITE_MATCHES_KEY);
+      return legacy;
+    }
+
+    return stored;
+  }, []);
+
   useEffect(() => {
     const savedLang = localStorage.getItem("match_lang");
     if (savedLang && LANGS.some(l => l.code === savedLang)) setLang(savedLang);
     if (!match) return;
-    const favs = JSON.parse(localStorage.getItem("favorites_matches") || "[]");
+    const favs = readFavoriteMatches();
     setIsFavorite(favs.includes(match.id));
-  }, [match]);
+  }, [match, readFavoriteMatches]);
 
   const toggleFavorite = useCallback(() => {
     if (!match) return;
-    const favs = JSON.parse(localStorage.getItem("favorites_matches") || "[]");
+    const favs = readFavoriteMatches();
     const newFavs = favs.includes(match.id) ? favs.filter((id: number) => id !== match.id) : [...favs, match.id];
-    localStorage.setItem("favorites_matches", JSON.stringify(newFavs));
+    localStorage.setItem(FAVORITE_MATCHES_KEY, JSON.stringify(newFavs));
     setIsFavorite(newFavs.includes(match.id));
     showNotification(newFavs.includes(match.id) ? 'Partido añadido a favoritos' : 'Partido eliminado de favoritos', newFavs.includes(match.id) ? 'success' : 'info');
-  }, [match, showNotification]);
+  }, [match, readFavoriteMatches, showNotification]);
 
   const handleLangChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLang = e.target.value;
