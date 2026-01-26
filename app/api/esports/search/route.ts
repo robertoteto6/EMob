@@ -60,15 +60,75 @@ const GAME_MAPPING: Record<string, string> = {
   "overwatch": "ow" // Fallback para compatibilidad
 };
 
-async function fetchJSON(base: string, params: string) {
+// Timeout para peticiones individuales (8 segundos)
+const REQUEST_TIMEOUT = 8000;
+
+async function fetchJSON(base: string, params: string): Promise<any[]> {
   try {
     const searchParams = new URLSearchParams(params);
     searchParams.delete('token'); // Remove token since handled in pandaScoreFetch
-    const res = await pandaScoreFetch(base, searchParams, { cache: "no-store" });
-    return await res.json();
-  } catch {
+    
+    // Crear un timeout para la petición usando Promise.race
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout')), REQUEST_TIMEOUT);
+    });
+    
+    const fetchPromise = pandaScoreFetch(base, searchParams, { 
+      cache: "no-store"
+    }).then(res => res.json());
+    
+    return await Promise.race([fetchPromise, timeoutPromise]);
+  } catch (error) {
+    if ((error as Error).message === 'Request timeout') {
+      console.warn(`Request timeout for ${base}`);
+    } else {
+      console.error(`Error fetching ${base}:`, error);
+    }
     return [];
   }
+}
+
+// Función para normalizar texto (case-insensitive, trim, etc.)
+function normalizeText(text: string): string {
+  return text.toLowerCase().trim().replace(/\s+/g, ' ');
+}
+
+// Función para calcular relevancia de un resultado
+function calculateRelevance(itemName: string, query: string): number {
+  const normalizedName = normalizeText(itemName);
+  const normalizedQuery = normalizeText(query);
+  
+  // Coincidencia exacta = máxima relevancia
+  if (normalizedName === normalizedQuery) {
+    return 100;
+  }
+  
+  // Empieza con la query = alta relevancia
+  if (normalizedName.startsWith(normalizedQuery)) {
+    return 90;
+  }
+  
+  // Contiene la query = relevancia media
+  if (normalizedName.includes(normalizedQuery)) {
+    return 70;
+  }
+  
+  // Coincidencias parciales de palabras
+  const queryWords = normalizedQuery.split(' ');
+  const nameWords = normalizedName.split(' ');
+  let wordMatches = 0;
+  
+  for (const queryWord of queryWords) {
+    if (nameWords.some(nameWord => nameWord.includes(queryWord) || queryWord.includes(nameWord))) {
+      wordMatches++;
+    }
+  }
+  
+  if (wordMatches > 0) {
+    return 50 + (wordMatches / queryWords.length) * 20;
+  }
+  
+  return 0;
 }
 
 export async function GET(req: Request) {
@@ -76,11 +136,13 @@ export async function GET(req: Request) {
   const q = searchParams.get("q")?.trim();
   const gameParam = searchParams.get("game") || undefined;
 
-  if (!q) {
+  if (!q || q.length < 2) {
     return NextResponse.json([]);
   }
 
-  const cacheKey = `search:${gameParam || 'all'}:${q}`;
+  // Normalizar query para cache
+  const normalizedQuery = normalizeText(q);
+  const cacheKey = `search:${gameParam || 'all'}:${normalizedQuery}`;
   const cached = apiCache.get(cacheKey);
   if (cached) {
     return NextResponse.json(cached);
@@ -88,14 +150,14 @@ export async function GET(req: Request) {
 
   const gameList = gameParam ? [gameParam] : Object.keys(GAME_MAPPING);
 
-
   // Ejecutar búsquedas en paralelo para todos los juegos
   const searchPromises = gameList.map(async (gameParam) => {
     // Mapear el juego al nombre correcto de la API
     const g = GAME_MAPPING[gameParam] || gameParam;
     const encoded = encodeURIComponent(q);
     const base = `https://api.pandascore.co/${g}`;
-    const params = `per_page=5&search%5Bname%5D=${encoded}`;
+    // Aumentar límite de resultados por tipo de 5 a 12
+    const params = `per_page=12&search%5Bname%5D=${encoded}`;
 
     try {
       const [teams, players, tournaments, matches] = await Promise.all([
@@ -105,9 +167,10 @@ export async function GET(req: Request) {
         fetchJSON(`${base}/matches`, params),
       ]);
 
-      const gameResults: SearchResult[] = [];
+      const gameResults: (SearchResult & { relevance: number })[] = [];
 
       teams.forEach((t: TeamData) => {
+        const relevance = calculateRelevance(t.name, q);
         gameResults.push({
           id: t.id,
           name: t.name,
@@ -115,20 +178,24 @@ export async function GET(req: Request) {
           image_url: t.image_url ?? null,
           league: t.league?.name ?? undefined,
           game: gameParam,
+          relevance,
         });
       });
 
       players.forEach((p: PlayerData) => {
+        const relevance = calculateRelevance(p.name, q);
         gameResults.push({
           id: p.id,
           name: p.name,
           type: "player",
           image_url: p.image_url ?? null,
           game: gameParam,
+          relevance,
         });
       });
 
       tournaments.forEach((t: TournamentData) => {
+        const relevance = calculateRelevance(t.name, q);
         gameResults.push({
           id: t.id,
           name: t.name,
@@ -136,20 +203,28 @@ export async function GET(req: Request) {
           image_url: t.league?.image_url ?? null,
           league: t.league?.name ?? undefined,
           game: gameParam,
+          relevance,
         });
       });
 
       matches.forEach((m: MatchData) => {
         const radiant = m.opponents?.[0]?.opponent?.name ?? "TBD";
         const dire = m.opponents?.[1]?.opponent?.name ?? "TBD";
+        const matchName = `${radiant} vs ${dire}`;
+        const relevance = Math.max(
+          calculateRelevance(radiant, q),
+          calculateRelevance(dire, q),
+          calculateRelevance(matchName, q)
+        );
         gameResults.push({
           id: m.id,
-          name: `${radiant} vs ${dire}`,
+          name: matchName,
           type: "match",
           image_url: null,
           league: m.league?.name ?? undefined,
           game: gameParam,
           status: m.status ?? undefined,
+          relevance,
         });
       });
 
@@ -160,10 +235,38 @@ export async function GET(req: Request) {
     }
   });
 
-  const resultsArrays = await Promise.all(searchPromises);
-  const results = resultsArrays.flat();
+  try {
+    const resultsArrays = await Promise.all(searchPromises);
+    let results = resultsArrays.flat();
 
-  const sliced = results.slice(0, 50);
-  apiCache.set(cacheKey, sliced);
-  return NextResponse.json(sliced);
+    // Ordenar por relevancia (mayor a menor) y luego por tipo
+    results.sort((a, b) => {
+      if (b.relevance !== a.relevance) {
+        return b.relevance - a.relevance;
+      }
+      // Si tienen la misma relevancia, priorizar equipos y jugadores
+      const typePriority: Record<string, number> = {
+        team: 3,
+        player: 2,
+        tournament: 1,
+        match: 0,
+      };
+      return (typePriority[b.type] || 0) - (typePriority[a.type] || 0);
+    });
+
+    // Remover la propiedad relevance antes de devolver
+    const finalResults: SearchResult[] = results
+      .filter(r => r.relevance > 0) // Solo resultados con alguna relevancia
+      .slice(0, 50)
+      .map(({ relevance, ...rest }) => rest);
+
+    apiCache.set(cacheKey, finalResults);
+    return NextResponse.json(finalResults);
+  } catch (error) {
+    console.error("Search API error:", error);
+    return NextResponse.json(
+      { error: "Error al realizar la búsqueda" },
+      { status: 500 }
+    );
+  }
 }

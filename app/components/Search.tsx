@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { debounce, apiCache } from "../lib/utils";
@@ -33,12 +33,14 @@ export default function Search({
   const [results, setResults] = useState<SearchItem[]>([]);
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [recentSearches, setRecentSearches] = useState<SearchItem[]>([]);
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const controllerRef = useRef<AbortController | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Texto del placeholder (usar placeholder nativo para que desaparezca al escribir)
   const placeholderText = globalSearch
@@ -59,72 +61,130 @@ export default function Search({
 
   // Cancelar peticiones pendientes al desmontar
   useEffect(() => {
-    return () => controllerRef.current?.abort();
+    return () => {
+      controllerRef.current?.abort();
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, []);
 
-  // Función de búsqueda optimizada con debounce
-  const debouncedSearch = useCallback(
-    debounce(async (searchQuery: string, searchGame: string, isGlobal: boolean) => {
-      if (searchQuery.length < 2) {
-        setResults([]);
-        setLoading(false);
-        return;
-      }
+  // Función de búsqueda optimizada con debounce adaptativo
+  // Debounce más rápido para queries cortas, más lento para largas
+  const getDebounceTime = useCallback((queryLength: number) => {
+    if (queryLength <= 2) return 100;
+    if (queryLength <= 5) return 250;
+    return 400;
+  }, []);
 
-      const cacheKey = `${isGlobal ? 'all' : searchGame}:${searchQuery}`;
-      const cached = apiCache.get(cacheKey);
-      if (cached) {
-        setResults(cached);
-        setLoading(false);
-        return;
-      }
+  // Función de búsqueda con timeout y mejor manejo de errores
+  const performSearch = useCallback(async (
+    searchQuery: string,
+    searchGame: string,
+    isGlobal: boolean
+  ) => {
+    if (searchQuery.length < 2) {
+      setResults([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
 
-      setLoading(true);
-      controllerRef.current?.abort();
-      const controller = new AbortController();
-      controllerRef.current = controller;
+    const cacheKey = `${isGlobal ? 'all' : searchGame}:${searchQuery.toLowerCase().trim()}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) {
+      setResults(cached);
+      setLoading(false);
+      setError(null);
+      return;
+    }
 
-      try {
-        const searchUrl = isGlobal
-          ? `/api/esports/search?q=${encodeURIComponent(searchQuery)}`
-          : `/api/esports/search?q=${encodeURIComponent(searchQuery)}&game=${searchGame}`;
+    setLoading(true);
+    setError(null);
+    
+    // Cancelar petición anterior
+    controllerRef.current?.abort();
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
-        const res = await fetch(searchUrl, {
-          signal: controller.signal,
-          headers: {
-            'Accept': 'application/json',
-          }
-        });
+    const controller = new AbortController();
+    controllerRef.current = controller;
 
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
+    // Timeout de 10 segundos para evitar peticiones colgadas
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      setError("La búsqueda está tardando demasiado. Por favor, intenta de nuevo.");
+      setLoading(false);
+    }, 10000);
+    timeoutRef.current = timeoutId;
+
+    try {
+      const searchUrl = isGlobal
+        ? `/api/esports/search?q=${encodeURIComponent(searchQuery)}`
+        : `/api/esports/search?q=${encodeURIComponent(searchQuery)}&game=${searchGame}`;
+
+      const res = await fetch(searchUrl, {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
         }
+      });
 
-        const data = await res.json();
+      clearTimeout(timeoutId);
+      timeoutRef.current = null;
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          throw new Error("Demasiadas búsquedas. Por favor, espera un momento.");
+        } else if (res.status >= 500) {
+          throw new Error("Error del servidor. Por favor, intenta más tarde.");
+        } else {
+          throw new Error(`Error al buscar: ${res.status}`);
+        }
+      }
+
+      const data = await res.json();
+      
+      if (!controller.signal.aborted) {
         apiCache.set(cacheKey, data || []);
         setResults(data || []);
-      } catch (error) {
-        if ((error as Error).name !== "AbortError") {
-          console.error("Search error:", error);
-          setResults([]);
-        }
-      } finally {
+        setError(null);
+      }
+    } catch (error) {
+      clearTimeout(timeoutId);
+      timeoutRef.current = null;
+
+      if ((error as Error).name !== "AbortError" && !controller.signal.aborted) {
+        const errorMessage = (error as Error).message || "Error al realizar la búsqueda. Por favor, intenta de nuevo.";
+        setError(errorMessage);
+        setResults([]);
+        console.error("Search error:", error);
+      }
+    } finally {
+      if (!controller.signal.aborted) {
         setLoading(false);
       }
-    }, 300),
-    []
-  );
+    }
+  }, []);
 
-  // Efecto para ejecutar la búsqueda
+  // Efecto para ejecutar la búsqueda con debounce adaptativo
   useEffect(() => {
     if (query.length < 2) {
       setResults([]);
       setLoading(false);
+      setError(null);
       return;
     }
 
-    debouncedSearch(query, game, globalSearch);
-  }, [query, game, globalSearch, debouncedSearch]);
+    // Debounce adaptativo: más rápido para queries cortas, más lento para largas
+    const debounceTime = getDebounceTime(query.length);
+    const timeoutId = setTimeout(() => {
+      performSearch(query, game, globalSearch);
+    }, debounceTime);
+
+    return () => clearTimeout(timeoutId);
+  }, [query, game, globalSearch, performSearch, getDebounceTime]);
 
   // Cerrar al hacer clic fuera
   useEffect(() => {
@@ -234,7 +294,8 @@ export default function Search({
     }
   };
 
-  const highlightMatch = (text: string, query: string) => {
+  // Memoizar la función de highlight para evitar recrearla en cada render
+  const highlightMatch = useCallback((text: string, query: string) => {
     if (!query) return text;
     // Escapar caracteres especiales en la query para evitar errores en RegExp
     const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -243,10 +304,22 @@ export default function Search({
     return parts.map((part, i) =>
       regex.test(part) ? <span key={i} className="text-green-400 font-bold">{part}</span> : part
     );
-  };
+  }, []);
+
+  // Memoizar resultados para evitar re-renders innecesarios
+  const memoizedResults = useMemo(() => results, [results]);
+
+  // Memoizar funciones de utilidad
+  const memoizedGetTypeIcon = useCallback(getTypeIcon, []);
+  const memoizedGetTypeColor = useCallback(getTypeColor, []);
 
   return (
-    <div className={`relative w-full ${compact ? '' : 'max-w-md'}`} ref={containerRef}>
+    <div 
+      className={`relative w-full ${compact ? '' : 'max-w-md'}`} 
+      ref={containerRef}
+      role="search"
+      aria-label="Buscador de equipos, jugadores y partidos"
+    >
       {/* Campo de búsqueda */}
       <div className="relative group">
         {/* Icono de búsqueda */}
@@ -281,6 +354,7 @@ export default function Search({
           onChange={(e) => {
             setQuery(e.target.value);
             setShow(true);
+            setError(null);
           }}
           onFocus={() => {
             setShow(true);
@@ -288,17 +362,21 @@ export default function Search({
           onKeyDown={handleKeyDown}
           className={`
             w-full pl-10 pr-10 py-3
-            bg-gray-800/60 border border-gray-600/50
-            rounded-xl text-white text-sm
-            focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50
-            focus:bg-gray-800/80
+            bg-gray-800/60 border rounded-xl text-white text-sm
+            focus:ring-2 focus:bg-gray-800/80
             transition-all duration-300 ease-in-out
             hover:border-gray-500/70
             placeholder-gray-400
+            ${error 
+              ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50' 
+              : 'border-gray-600/50 focus:ring-green-500/50 focus:border-green-500/50'
+            }
             ${compact ? 'py-2' : 'py-3'}
           `}
           placeholder={placeholderText}
           aria-label={placeholderText}
+          aria-invalid={error ? "true" : "false"}
+          aria-describedby={error ? "search-error" : undefined}
         />
 
         {/* Indicador de carga */}
@@ -314,10 +392,13 @@ export default function Search({
             onClick={() => {
               setQuery("");
               setResults([]);
+              setError(null);
               setShow(false);
               inputRef.current?.focus();
             }}
-            className="absolute inset-y-0 right-0 pr-3 touch-target touch-ripple flex items-center text-gray-400 hover:text-white transition-colors"
+            className="absolute inset-y-0 right-0 pr-3 touch-target touch-ripple flex items-center text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-green-500/50 rounded"
+            aria-label="Limpiar búsqueda"
+            type="button"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -328,7 +409,12 @@ export default function Search({
 
       {/* Resultados */}
       {show && (
-        <div className="absolute z-50 left-0 right-0 mt-2 bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-xl shadow-2xl overflow-hidden max-h-80 sm:max-h-96">
+        <div 
+          className="absolute z-50 left-0 right-0 mt-2 bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-xl shadow-2xl overflow-hidden max-h-80 sm:max-h-96"
+          role="listbox"
+          aria-label="Resultados de búsqueda"
+          aria-expanded={show}
+        >
           {/* Búsquedas recientes (cuando no hay query) */}
           {!query && recentSearches.length > 0 && (
             <div className="p-3 sm:p-4">
@@ -336,7 +422,9 @@ export default function Search({
                 <h4 className="text-sm font-semibold text-gray-300">Búsquedas recientes</h4>
                 <button
                   onClick={clearRecentSearches}
-                  className="touch-target touch-ripple text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                  className="touch-target touch-ripple text-xs text-gray-500 hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500/50 rounded px-2 py-1"
+                  aria-label="Limpiar búsquedas recientes"
+                  type="button"
                 >
                   Limpiar
                 </button>
@@ -348,7 +436,7 @@ export default function Search({
                     onClick={() => select(item)}
                     className="touch-target touch-ripple flex items-center gap-3 w-full text-left p-2 rounded-lg hover:bg-gray-800/50 transition-colors group"
                   >
-                    <span className="text-lg">{getTypeIcon(item.type)}</span>
+                    <span className="text-lg">{memoizedGetTypeIcon(item.type)}</span>
                     <div className="flex-1 min-w-0">
                       <div className="text-white text-sm font-medium truncate group-hover:text-green-400 transition-colors">
                         {item.name}
@@ -372,18 +460,50 @@ export default function Search({
           {query && (
             <>
               {loading && (
-                <div className="p-4 text-center">
+                <div className="p-4 text-center" role="status" aria-live="polite" aria-label="Buscando resultados">
                   <div className="flex items-center justify-center gap-2 text-gray-400">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-400"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-400" aria-hidden="true"></div>
                     <span className="text-sm">Buscando...</span>
+                  </div>
+                  {query.length >= 2 && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      Buscando &quot;{query}&quot;...
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {error && !loading && (
+                <div 
+                  className="p-4 text-center" 
+                  role="alert" 
+                  aria-live="assertive"
+                  id="search-error"
+                >
+                  <div className="text-red-400 text-sm">
+                    <div className="text-2xl mb-2" aria-hidden="true">⚠️</div>
+                    <div className="font-semibold mb-1">Error en la búsqueda</div>
+                    <div className="text-xs text-red-300">{error}</div>
+                    <button
+                      onClick={() => {
+                        setError(null);
+                        if (query.length >= 2) {
+                          performSearch(query, game, globalSearch);
+                        }
+                      }}
+                      className="mt-3 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                      aria-label="Reintentar búsqueda"
+                    >
+                      Reintentar
+                    </button>
                   </div>
                 </div>
               )}
 
-              {!loading && results.length === 0 && query.length >= 2 && (
-                <div className="p-4 text-center">
+              {!loading && !error && memoizedResults.length === 0 && query.length >= 2 && (
+                <div className="p-4 text-center" role="status" aria-live="polite">
                   <div className="text-gray-400 text-sm">
-                    <div className="text-2xl mb-2">🔍</div>
+                    <div className="text-2xl mb-2" aria-hidden="true">🔍</div>
                     No se encontraron resultados para &quot;<span className="font-semibold text-white">{query}</span>&quot;
                     <div className="mt-2 text-xs text-gray-500">
                       Intenta buscar con otros términos o verifica la ortografía
@@ -408,12 +528,15 @@ export default function Search({
                 </div>
               )}
 
-              {!loading && results.length > 0 && (
+              {!loading && !error && memoizedResults.length > 0 && (
                 <div className="max-h-64 sm:max-h-80 overflow-y-auto">
-                  {results.map((item, index) => (
+                  {memoizedResults.map((item, index) => (
                     <button
                       key={`${item.type}-${item.id}`}
                       onClick={() => select(item)}
+                      role="option"
+                      aria-selected={selectedIndex === index}
+                      aria-label={`${item.name}, ${item.type === "team" ? "Equipo" : item.type === "player" ? "Jugador" : item.type === "tournament" ? "Torneo" : "Partido"}`}
                       className={`
                         touch-target touch-ripple flex items-center gap-3 w-full text-left p-3
                         transition-colors border-l-2 border-transparent
@@ -451,7 +574,7 @@ export default function Search({
                           {highlightMatch(item.name, query)}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-gray-400">
-                          <span className={getTypeColor(item.type)}>
+                          <span className={memoizedGetTypeColor(item.type)}>
                             {item.type === "team" ? "Equipo" :
                               item.type === "player" ? "Jugador" :
                                 item.type === "tournament" ? "Torneo" : "Partido"}
@@ -518,9 +641,9 @@ export default function Search({
                     <span>cerrar</span>
                   </div>
                 </div>
-                {results.length > 0 && (
+                {memoizedResults.length > 0 && (
                   <div>
-                    {results.length} resultado{results.length !== 1 ? 's' : ''}
+                    {memoizedResults.length} resultado{memoizedResults.length !== 1 ? 's' : ''}
                   </div>
                 )}
               </div>
