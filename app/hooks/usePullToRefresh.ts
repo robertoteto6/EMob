@@ -6,6 +6,7 @@ interface PullToRefreshOptions {
   onRefresh: () => Promise<void> | void;
   threshold?: number;
   disabled?: boolean;
+  dampingFactor?: number;
 }
 
 interface PullToRefreshState {
@@ -14,10 +15,13 @@ interface PullToRefreshState {
   canRefresh: boolean;
 }
 
-const touchListenerOptions: AddEventListenerOptions = { passive: false };
-
 export function usePullToRefresh(options: PullToRefreshOptions) {
-  const { onRefresh, threshold = 80, disabled = false } = options;
+  const { 
+    onRefresh, 
+    threshold = 70, 
+    disabled = false,
+    dampingFactor = 0.4 // Factor de amortiguación para efecto elástico
+  } = options;
 
   const [state, setState] = useState<PullToRefreshState>({
     isRefreshing: false,
@@ -28,12 +32,18 @@ export function usePullToRefresh(options: PullToRefreshOptions) {
   const startYRef = useRef<number | null>(null);
   const elementRef = useRef<HTMLElement | null>(null);
   const isPullingRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
+  const lastTouchYRef = useRef<number>(0);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (disabled || state.isRefreshing) return;
+    
+    // Solo activar si estamos en la parte superior de la página
+    if (window.scrollY > 5) return;
 
     const touch = e.touches[0];
     startYRef.current = touch.clientY;
+    lastTouchYRef.current = touch.clientY;
     isPullingRef.current = false;
   }, [disabled, state.isRefreshing]);
 
@@ -49,56 +59,87 @@ export function usePullToRefresh(options: PullToRefreshOptions) {
       e.preventDefault();
       isPullingRef.current = true;
 
-      const pullDistance = Math.min(deltaY * 0.5, threshold * 2); // Dampening effect
-      const canRefresh = pullDistance >= threshold;
+      // Cancelar RAF anterior si existe
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
 
-      setState(prev => ({
-        ...prev,
-        pullDistance,
-        canRefresh,
-      }));
+      // Usar requestAnimationFrame para mejor rendimiento
+      rafRef.current = requestAnimationFrame(() => {
+        // Efecto de dampening mejorado con curva suave
+        const rawDistance = deltaY * dampingFactor;
+        const pullDistance = Math.min(rawDistance, threshold * 2.5);
+        const canRefresh = pullDistance >= threshold;
+
+        setState(prev => {
+          // Solo actualizar si hay cambio significativo
+          if (Math.abs(prev.pullDistance - pullDistance) < 1) {
+            return prev;
+          }
+          return {
+            ...prev,
+            pullDistance,
+            canRefresh,
+          };
+        });
+      });
     }
-  }, [disabled, state.isRefreshing, threshold]);
+    
+    lastTouchYRef.current = currentY;
+  }, [disabled, state.isRefreshing, threshold, dampingFactor]);
 
   const handleTouchEnd = useCallback(async () => {
+    // Limpiar RAF pendiente
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+
     if (!isPullingRef.current) return;
 
-    const { canRefresh } = state;
+    const { canRefresh, pullDistance } = state;
 
-    if (canRefresh) {
+    if (canRefresh && pullDistance >= threshold) {
       setState(prev => ({ ...prev, isRefreshing: true, pullDistance: 0 }));
 
       try {
         await onRefresh();
       } finally {
+        // Pequeño delay para animación de salida
+        await new Promise(resolve => setTimeout(resolve, 100));
         setState(prev => ({ ...prev, isRefreshing: false, canRefresh: false }));
       }
     } else {
+      // Animación de retorno suave
       setState(prev => ({ ...prev, pullDistance: 0, canRefresh: false }));
     }
 
     startYRef.current = null;
     isPullingRef.current = false;
-  }, [state.canRefresh, onRefresh]);
+  }, [state.canRefresh, state.pullDistance, onRefresh, threshold]);
 
   const setRef = useCallback((element: HTMLElement | null) => {
+    // Limpiar listeners anteriores
     if (elementRef.current) {
-      elementRef.current.removeEventListener('touchstart', handleTouchStart, touchListenerOptions);
-      elementRef.current.removeEventListener('touchmove', handleTouchMove, touchListenerOptions);
-      elementRef.current.removeEventListener('touchend', handleTouchEnd, touchListenerOptions);
+      elementRef.current.removeEventListener('touchstart', handleTouchStart);
+      elementRef.current.removeEventListener('touchmove', handleTouchMove);
+      elementRef.current.removeEventListener('touchend', handleTouchEnd);
     }
 
     elementRef.current = element;
 
     if (element) {
-      element.addEventListener('touchstart', handleTouchStart, touchListenerOptions);
-      element.addEventListener('touchmove', handleTouchMove, touchListenerOptions);
-      element.addEventListener('touchend', handleTouchEnd, touchListenerOptions);
+      element.addEventListener('touchstart', handleTouchStart, { passive: true });
+      element.addEventListener('touchmove', handleTouchMove, { passive: false });
+      element.addEventListener('touchend', handleTouchEnd, { passive: true });
     }
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   useEffect(() => {
     return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
       if (elementRef.current) {
         elementRef.current.removeEventListener('touchstart', handleTouchStart);
         elementRef.current.removeEventListener('touchmove', handleTouchMove);
@@ -110,31 +151,54 @@ export function usePullToRefresh(options: PullToRefreshOptions) {
   return {
     ...state,
     setRef,
+    threshold,
   };
 }
 
-// Hook para scroll indicators
+// Hook para scroll indicators optimizado
 export function useScrollIndicator() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const rafRef = useRef<number | null>(null);
+  const lastScrollRef = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrolled = window.scrollY;
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = maxScroll > 0 ? (scrolled / maxScroll) * 100 : 0;
+      // Cancelar RAF anterior
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
 
-      setScrollProgress(progress);
-      setIsVisible(scrolled > 100); // Show indicator after scrolling 100px
+      rafRef.current = requestAnimationFrame(() => {
+        const scrolled = window.scrollY;
+        
+        // Solo actualizar si hay cambio significativo (>5px)
+        if (Math.abs(scrolled - lastScrollRef.current) < 5) {
+          return;
+        }
+        
+        lastScrollRef.current = scrolled;
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = maxScroll > 0 ? Math.min((scrolled / maxScroll) * 100, 100) : 0;
+
+        setScrollProgress(progress);
+        setIsVisible(scrolled > 150); // Show indicator after scrolling 150px
+      });
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Initial call
 
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
   }, []);
 
   const scrollToTop = useCallback(() => {
+    // Usar scrollTo nativo con behavior smooth
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 

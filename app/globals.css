@@ -596,6 +596,352 @@ h1, h2, h3 { letter-spacing: -0.03em; font-weight: 600; }
   }
 }
 
+/* ===============================================
+   MEJORAS MÓVILES - SCROLL Y NAVEGACIÓN OPTIMIZADOS
+   =============================================== */
+
+/* Scroll suave con momentum para iOS/Safari */
+.mobile-scroll,
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+/* Scroll horizontal optimizado para móvil */
+.mobile-scroll-x {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mobile-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+/* Scroll vertical optimizado */
+.mobile-scroll-y {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
+}
+
+/* Snap scrolling para carousels móviles */
+.snap-scroll-x {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.snap-scroll-y {
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.snap-item {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.snap-item-center {
+  scroll-snap-align: center;
+  scroll-snap-stop: normal;
+}
+
+/* Mejora de overscroll para pull-to-refresh nativo */
+@media (max-width: 768px) {
+  html {
+    overscroll-behavior-y: contain;
+  }
+  
+  body {
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Prevenir zoom en inputs en iOS */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Mejora de tap highlight en móvil */
+@media (hover: none) and (pointer: coarse) {
+  * {
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
+    tap-highlight-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  a, button, [role="button"], .clickable {
+    -webkit-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
+  }
+}
+
+/* Transiciones optimizadas para móvil (60fps) */
+.mobile-transition {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform, opacity;
+}
+
+.mobile-transition-fast {
+  transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform, opacity;
+}
+
+/* Hardware acceleration para elementos móviles */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Feedback visual táctil mejorado */
+@media (hover: none) and (pointer: coarse) {
+  .touch-feedback {
+    position: relative;
+    transition: transform 0.1s ease-out, background-color 0.1s ease-out;
+  }
+  
+  .touch-feedback:active {
+    transform: scale(0.97);
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  /* Botones con feedback mejorado */
+  .btn:active,
+  button:active {
+    transform: scale(0.97);
+    transition: transform 0.08s ease-out;
+  }
+  
+  /* Cards con feedback táctil */
+  .card:active,
+  .touch-card:active {
+    transform: scale(0.99);
+    transition: transform 0.1s ease-out;
+  }
+  
+  /* Links con feedback */
+  a:active {
+    opacity: 0.8;
+    transition: opacity 0.08s ease-out;
+  }
+}
+
+/* Mejoras de menú móvil */
+.mobile-menu {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.mobile-menu-overlay {
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+/* Mejora de navegación fija en móvil */
+.mobile-nav-fixed {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  z-index: 50;
+}
+
+/* Animación de slide mejorada para menús móviles */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToBottom {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.animate-slide-in-right-mobile {
+  animation: slideInFromRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.animate-slide-out-right-mobile {
+  animation: slideOutToRight 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.animate-slide-in-bottom-mobile {
+  animation: slideInFromBottom 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.animate-slide-out-bottom-mobile {
+  animation: slideOutToBottom 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Pull to refresh visual indicator */
+.pull-indicator {
+  transform: translateY(var(--pull-distance, 0px));
+  transition: transform 0.1s ease-out;
+}
+
+.pull-indicator.releasing {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Mejoras específicas para touch en cards y listas */
+@media (hover: none) and (pointer: coarse) {
+  .list-item-touch,
+  .card-touch {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .list-item-touch::before,
+  .card-touch::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0);
+    transition: background 0.15s ease-out;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  .list-item-touch:active::before,
+  .card-touch:active::before {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Optimización de fuentes móviles */
+@media (max-width: 640px) {
+  body {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+}
+
+/* Mejora de contenedores de scroll en listas */
+.scroll-list-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Skeleton loading optimizado para móvil */
+@media (max-width: 768px) {
+  .skeleton-mobile {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer-mobile 1.5s ease-in-out infinite;
+    border-radius: var(--radius-md);
+  }
+}
+
+/* Bottom sheet estilo móvil */
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border-top-left-radius: var(--radius-xl);
+  border-top-right-radius: var(--radius-xl);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  touch-action: pan-y;
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bottom-sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  margin: 0.75rem auto;
+}
+
+/* Mejoras de accesibilidad móvil */
+@media (max-width: 768px) {
+  /* Aumentar áreas de toque en elementos interactivos */
+  .interactive-element {
+    position: relative;
+  }
+  
+  .interactive-element::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    z-index: -1;
+  }
+  
+  /* Mejorar espaciado entre elementos táctiles */
+  .touch-spacing > * + * {
+    margin-top: 0.75rem;
+  }
+  
+  /* Texto más legible en móvil */
+  .readable-mobile {
+    font-size: 1rem;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+  }
+}
+
 /* Efectos de carga */
 .loading-skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
 .loading-dots::after { content: ''; animation: loading-dots 1.5s infinite; }
