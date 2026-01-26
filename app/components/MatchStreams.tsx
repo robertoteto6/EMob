@@ -60,13 +60,52 @@ const buildTwitchEmbedUrl = (stream: StreamInfo, parent: string | null): string 
   return embedUrl || null;
 };
 
+const isKickUrl = (url?: string | null) => typeof url === "string" && url.includes("kick.com");
+
+const extractKickChannel = (rawUrl: string): string | null => {
+  try {
+    const parsed = new URL(rawUrl);
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    return parts[0] ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const buildKickEmbedUrl = (stream: StreamInfo): string | null => {
+  const embedUrl = stream.embed_url ?? "";
+  if (embedUrl && isKickUrl(embedUrl)) {
+    return embedUrl;
+  }
+
+  const rawUrl = stream.raw_url ?? "";
+  if (rawUrl && isKickUrl(rawUrl)) {
+    const channel = extractKickChannel(rawUrl);
+    if (channel) {
+      return `https://player.kick.com/${encodeURIComponent(channel)}`;
+    }
+  }
+
+  return null;
+};
+
+const getStreamEmbedUrl = (stream: StreamInfo, parent: string | null): string | null => {
+  if (isTwitchUrl(stream.embed_url) || isTwitchUrl(stream.raw_url)) {
+    return buildTwitchEmbedUrl(stream, parent);
+  }
+  if (isKickUrl(stream.embed_url) || isKickUrl(stream.raw_url)) {
+    return buildKickEmbedUrl(stream);
+  }
+  return stream.embed_url || null;
+};
+
 const MatchStreams = ({ streams }: MatchStreamsProps) => {
   const [activeStream, setActiveStream] = useState<StreamInfo | null>(null);
   const [embedSrc, setEmbedSrc] = useState<string | null>(null);
   const [pipWindow, setPipWindow] = useState<Window | null>(null);
   const [isOpeningPip, setIsOpeningPip] = useState(false);
   const pipIframeRef = useRef<HTMLIFrameElement | null>(null);
-  
+
   // Mover el useMemo antes de cualquier early return para cumplir con las reglas de hooks
   const pipSupported = useMemo(() => typeof window !== "undefined" && "documentPictureInPicture" in window, []);
 
@@ -76,8 +115,11 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
   // Initialize active stream
   useEffect(() => {
     if (hasStreams && !activeStream) {
-      const twitchStream = streams.find(s => isTwitchUrl(s.embed_url) || isTwitchUrl(s.raw_url));
-      setActiveStream(twitchStream || streams[0]);
+      const priorityStream = streams.find(s =>
+        isTwitchUrl(s.embed_url) || isTwitchUrl(s.raw_url) ||
+        isKickUrl(s.embed_url) || isKickUrl(s.raw_url)
+      );
+      setActiveStream(priorityStream || streams[0]);
     }
   }, [streams, activeStream, hasStreams]);
 
@@ -85,7 +127,7 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
   useEffect(() => {
     if (activeStream) {
       const parent = typeof window !== "undefined" ? window.location.hostname : null;
-      setEmbedSrc(buildTwitchEmbedUrl(activeStream, parent));
+      setEmbedSrc(getStreamEmbedUrl(activeStream, parent));
     }
   }, [activeStream]);
 
@@ -219,11 +261,10 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
                   onClick={handlePictureInPicture}
                   disabled={pipDisabled}
                   aria-label={pipWindow ? 'Cerrar Picture-in-Picture' : 'Abrir Picture-in-Picture'}
-                  className={`group/btn flex items-center gap-3 px-6 py-3 rounded-2xl text-xs font-black transition-all border backdrop-blur-md shadow-lg active:scale-95 ${
-                    pipDisabled
-                      ? 'bg-gray-900/40 text-gray-500 border-gray-800/60 cursor-not-allowed'
-                      : 'bg-gray-800/50 hover:bg-gray-700 text-gray-300 hover:text-white border-gray-700/50 hover:border-gray-500'
-                  }`}
+                  className={`group/btn flex items-center gap-3 px-6 py-3 rounded-2xl text-xs font-black transition-all border backdrop-blur-md shadow-lg active:scale-95 ${pipDisabled
+                    ? 'bg-gray-900/40 text-gray-500 border-gray-800/60 cursor-not-allowed'
+                    : 'bg-gray-800/50 hover:bg-gray-700 text-gray-300 hover:text-white border-gray-700/50 hover:border-gray-500'
+                    }`}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="transition-transform group-hover/btn:scale-110">
                     <rect x="3" y="6" width="18" height="14" rx="2" />
@@ -259,14 +300,15 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
           <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar lg:pb-10">
             {streams.map((stream, idx) => {
               const isActive = activeStream === stream;
-              const isTwitch = isTwitchUrl(stream.raw_url);
+              const isTwitch = isTwitchUrl(stream.raw_url) || isTwitchUrl(stream.embed_url);
+              const isKick = isKickUrl(stream.raw_url) || isKickUrl(stream.embed_url);
               return (
                 <button
-                  key={idx}
+                  key={stream.raw_url || stream.embed_url || idx}
                   onClick={() => setActiveStream(stream)}
                   className={`w-full text-left group flex items-center gap-4 p-5 rounded-[1.5rem] border transition-all duration-700 relative overflow-hidden ${isActive
-                      ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-[var(--accent,#00FF80)]/40 shadow-2xl'
-                      : 'bg-gray-900/30 border-gray-800/50 hover:bg-gray-800/40 hover:border-gray-700'
+                    ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-[var(--accent,#00FF80)]/40 shadow-2xl'
+                    : 'bg-gray-900/30 border-gray-800/50 hover:bg-gray-800/40 hover:border-gray-700'
                     }`}
                 >
                   {isActive && (
@@ -283,7 +325,7 @@ const MatchStreams = ({ streams }: MatchStreamsProps) => {
                     </span>
                     <div className="flex items-center gap-2 mt-1.5">
                       <div className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md border ${isActive ? 'text-[var(--accent,#00FF80)] border-[var(--accent,#00FF80)]/30 bg-[var(--accent,#00FF80)]/5' : 'text-gray-700 border-gray-800'}`}>
-                        {isTwitch ? 'TWITCH' : 'EXTERNAL'}
+                        {isTwitch ? 'TWITCH' : isKick ? 'KICK' : 'EXTERNAL'}
                       </div>
                       {isActive && (
                         <div className="flex gap-1">
