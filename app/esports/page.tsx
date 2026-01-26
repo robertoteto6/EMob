@@ -122,6 +122,19 @@ const TIMEFRAMES = [
   { id: "week", label: "Esta Semana", offset: 7, emoji: "🗓️", description: "Próximos 7 días" },
 ] as const;
 
+const FAVORITE_MATCHES_KEY = "favoriteMatches";
+const LEGACY_FAVORITE_MATCHES_KEY = "favorites_matches";
+
+const parseFavoriteMatches = (value: string | null) => {
+  if (!value) return [] as number[];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [] as number[];
+  }
+};
+
 type TimeframeId = (typeof TIMEFRAMES)[number]["id"];
 
 async function fetchMatches(game: string, signal?: AbortSignal): Promise<Match[]> {
@@ -553,14 +566,18 @@ function EsportsPageContent() {
   
   // Favoritos: ids de partidos favoritos
   const [favoriteMatches, setFavoriteMatches] = useState<number[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return JSON.parse(localStorage.getItem("favoriteMatches") || "[]");
-      } catch {
-        return [];
-      }
+    if (typeof window === "undefined") return [];
+
+    const stored = parseFavoriteMatches(localStorage.getItem(FAVORITE_MATCHES_KEY));
+    const legacy = parseFavoriteMatches(localStorage.getItem(LEGACY_FAVORITE_MATCHES_KEY));
+
+    if (stored.length === 0 && legacy.length > 0) {
+      localStorage.setItem(FAVORITE_MATCHES_KEY, JSON.stringify(legacy));
+      localStorage.removeItem(LEGACY_FAVORITE_MATCHES_KEY);
+      return legacy;
     }
-    return [];
+
+    return stored;
   });
   
   // Filtros adicionales
@@ -654,7 +671,7 @@ function EsportsPageContent() {
   // Guardar favoritos en localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("favoriteMatches", JSON.stringify(favoriteMatches));
+      localStorage.setItem(FAVORITE_MATCHES_KEY, JSON.stringify(favoriteMatches));
     }
   }, [favoriteMatches]);
 
