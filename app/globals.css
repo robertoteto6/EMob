@@ -1452,3 +1452,12 @@ h1, h2, h3 { letter-spacing: -0.03em; font-weight: 600; }
     color: rgba(255, 255, 255, 0.5); /* Mejor contraste */
   }
 }
+
+/* Utility to hide scrollbar but allow scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

@@ -142,6 +142,7 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
   const params = use(props.params);
   const matchId = params.matchId;
 
+  const [activeTab, setActiveTab] = useState<string>("overview");
   const [match, setMatch] = useState<MatchDetail | null>(null);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -234,6 +235,16 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
     if (!match) return;
     const favs = JSON.parse(localStorage.getItem("favorites_matches") || "[]");
     setIsFavorite(favs.includes(match.id));
+
+    // Set default tab based on match status
+    const now = Date.now();
+    const matchStartMs = match.start_time * 1000;
+    const isLive = matchStartMs <= now && match.radiant_win === null;
+    const hasStreams = match.streams && match.streams.length > 0;
+
+    if (isLive && hasStreams) {
+      setActiveTab("stream");
+    }
   }, [match]);
 
   const toggleFavorite = useCallback(() => {
@@ -326,184 +337,262 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
     );
   }
 
+  const tabs = [
+    { id: 'overview', label: 'Resumen' },
+    { id: 'stream', label: 'Stream', hidden: !match.streams || match.streams.length === 0 },
+    { id: 'games', label: 'Partidas', count: match.games?.length },
+    { id: 'lineups', label: 'Alineaciones', hidden: !match.players?.radiant?.length && !match.players?.dire?.length },
+    { id: 'predictions', label: 'Predicciones' },
+  ].filter(t => !t.hidden);
+
   return (
-    <main className="pt-16 pb-24 md:pb-0 font-sans min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white" role="main" aria-labelledby="match-title">
-      <div className="w-full max-w-6xl mx-auto px-4 sm:px-8">
+    <main className="pt-16 pb-24 md:pb-10 font-sans min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white" role="main" aria-labelledby="match-title">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <MatchHeader matchName={match.name} lang={lang} langs={LANGS} onLangChange={handleLangChange} showNotification={showNotification} />
 
         {/* Notificaciones */}
         {notifications.length > 0 && (
-          <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+          <div className="fixed top-20 right-4 z-50 space-y-2 max-w-sm w-full pointer-events-none">
             {notifications.map(n => (
-              <div key={n.id} className={`px-4 py-3 rounded-lg shadow-xl border backdrop-blur-sm animate-slide-in-right ${n.type === 'success' ? 'bg-green-900/95 border-green-400 text-green-50' : n.type === 'error' ? 'bg-red-900/95 border-red-400 text-red-50' : 'bg-blue-900/95 border-blue-400 text-blue-50'}`}>
-                {n.message}
+              <div key={n.id} className={`pointer-events-auto px-4 py-3 rounded-lg shadow-xl border backdrop-blur-sm animate-slide-in-right transform transition-all ${n.type === 'success' ? 'bg-green-900/90 border-green-400/50 text-green-50' : n.type === 'error' ? 'bg-red-900/90 border-red-400/50 text-red-50' : 'bg-blue-900/90 border-blue-400/50 text-blue-50'}`}>
+                <div className="flex items-center gap-3">
+                  {n.type === 'success' && <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>}
+                  {n.type === 'error' && <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>}
+                  {n.type === 'info' && <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                  <p className="font-medium text-sm">{n.message}</p>
+                </div>
               </div>
             ))}
           </div>
         )}
 
-        <div className="mt-4">
+        <div className="mt-4 animate-fade-in">
           <MatchCard match={match} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} lang={lang} />
         </div>
 
-        <div className="mb-10">
-          <MatchStreams streams={match.streams} />
+        {/* Tabs Navigation */}
+        <div className="sticky top-16 z-30 bg-black/80 backdrop-blur-md -mx-4 px-4 sm:mx-0 sm:px-0 sm:rounded-xl border-b border-white/10 sm:border-none mb-8">
+          <div className="flex overflow-x-auto no-scrollbar sm:gap-2">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-4 sm:py-3 text-sm font-bold uppercase tracking-wider transition-all relative whitespace-nowrap ${activeTab === tab.id
+                  ? 'text-[var(--accent,#00FF80)]'
+                  : 'text-gray-500 hover:text-gray-300'
+                  }`}
+              >
+                {tab.label}
+                {tab.count !== undefined && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === tab.id ? 'bg-[var(--accent,#00FF80)]/20 text-[var(--accent,#00FF80)]' : 'bg-gray-800 text-gray-500'}`}>
+                    {tab.count}
+                  </span>
+                )}
+                {activeTab === tab.id && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent,#00FF80)] shadow-[0_-2px_8px_rgba(0,255,128,0.5)]" />
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-          {/* Left/Main Column: Games, Lineups, Predictions */}
-          <div className="lg:col-span-2 space-y-8">
-            <MatchGames
-              games={match.games}
-              radiantName={match.radiant}
-              direName={match.dire}
-              radiantId={match.radiant_id}
-              direId={match.dire_id}
-            />
+        {/* Tab Content */}
+        <div className="min-h-[400px]">
+          {activeTab === 'stream' && (
+            <div className="animate-fade-in-up">
+              <MatchStreams streams={match.streams} />
+            </div>
+          )}
 
-            <MatchLineups
-              radiantName={match.radiant}
-              direName={match.dire}
-              radiantPlayers={match.players?.radiant}
-              direPlayers={match.players?.dire}
-              radiantId={match.radiant_id}
-              direId={match.dire_id}
-            />
+          {activeTab === 'overview' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in-up">
+              <div className="lg:col-span-2 space-y-8">
+                {/* Si hay stream y está en vivo, mostrarlo pequeño o un enlace rápido */}
 
-            <PredictionSystem matchId={match.id} matchTitle={match.name} game="esports" radiantTeam={match.radiant} direTeam={match.dire} isFinished={match.radiant_win !== null} actualWinner={match.radiant_win === true ? 'radiant' : match.radiant_win === false ? 'dire' : null} startTime={match.start_time} />
-          </div>
-
-          {/* Right Column: Information */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Match Info Card */}
-            <div className="p-6 rounded-2xl bg-gray-800/20 border border-gray-700/50">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--accent,#00FF80)]">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="16" x2="12" y2="12" />
-                  <line x1="12" y1="8" x2="12.01" y2="8" />
-                </svg>
-                Información
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-gray-800">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                    </svg>
+                {/* Information Cards Detail */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-6 rounded-2xl bg-gray-900/50 border border-gray-800/50 hover:border-gray-700/50 transition-colors">
+                    <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Detalles del Torneo</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-gray-800 text-[var(--accent,#00FF80)]">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></svg>
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">{match.tournament}</p>
+                          <p className="text-sm text-gray-500">{match.league}</p>
+                        </div>
+                      </div>
+                      {match.serie && (
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-gray-800 text-purple-400">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>
+                          </div>
+                          <div>
+                            <p className="text-white font-medium">{match.serie}</p>
+                            <p className="text-sm text-gray-500">Serie</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase font-bold">Juego</p>
-                    <p className="text-sm text-gray-200 capitalize">{match.game}</p>
+
+                  <div className="p-6 rounded-2xl bg-gray-900/50 border border-gray-800/50 hover:border-gray-700/50 transition-colors">
+                    <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Configuración</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-gray-800 text-blue-400">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">{match.game}</p>
+                          <p className="text-sm text-gray-500">Videojuego</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-gray-800 text-orange-400">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">{match.match_type?.replace('_', ' ').toUpperCase() || 'BO3'}</p>
+                          <p className="text-sm text-gray-500">Formato</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {match.match_type && (
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-gray-800">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
+                {/* Recent Games Preview */}
+                {match.games && match.games.length > 0 && (
+                  <div className="mt-8">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-white">Partidas Recientes</h3>
+                      <button onClick={() => setActiveTab('games')} className="text-sm text-[var(--accent,#00FF80)] hover:underline">Ver todas</button>
+                    </div>
+                    <MatchGames
+                      games={match.games.slice(0, 2)}
+                      radiantName={match.radiant}
+                      direName={match.dire}
+                      radiantId={match.radiant_id}
+                      direId={match.dire_id}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Sidebar Content */}
+              <div className="lg:col-span-1 space-y-6">
+                {/* Connection Status & Refresh */}
+                <div className={`p-4 rounded-xl border flex items-center justify-between ${isOnline ? 'bg-green-900/10 border-green-500/20' : 'bg-red-900/10 border-red-500/20'}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`relative w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}>
+                      {isOnline && <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75"></div>}
+                    </div>
+                    <span className={`text-sm font-semibold ${isOnline ? 'text-green-400' : 'text-red-400'}`}>
+                      {isOnline ? 'Conexión Estable' : 'Sin Conexión'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => loadMatchData(true)}
+                    disabled={loading || !isOnline}
+                    className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+                    aria-label="Refrescar datos"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={loading ? 'animate-spin' : ''}><path d="M23 4v6h-6" /><path d="M1 20v-6h6" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>
+                  </button>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="p-1 rounded-2xl bg-gray-800/20 border border-gray-700/50">
+                  <div className="p-4 border-b border-gray-700/50">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                      Acciones
+                    </h3>
+                  </div>
+                  <div className="p-2 space-y-1">
+                    <button
+                      onClick={toggleFavorite}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left ${isFavorite
+                        ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20'
+                        : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                        }`}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                       </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase font-bold">Formato</p>
-                      <p className="text-sm text-gray-200">{match.match_type.replace('_', ' ').toUpperCase()}</p>
-                    </div>
-                  </div>
-                )}
+                      <span className="text-sm font-medium">
+                        {isFavorite ? 'En Favoritos' : 'Añadir a Favoritos'}
+                      </span>
+                    </button>
 
-                {match.number_of_games > 0 && (
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-gray-800">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                        <line x1="3" y1="9" x2="21" y2="9" />
-                        <line x1="9" y1="21" x2="9" y2="9" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase font-bold">Número de Mapas</p>
-                      <p className="text-sm text-gray-200">{match.number_of_games}</p>
-                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        showNotification('Enlace copiado', 'success');
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all text-left"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                      <span className="text-sm font-medium">Copiar Enlace</span>
+                    </button>
                   </div>
-                )}
+                </div>
 
-                {match.serie && (
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-gray-800">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase font-bold">Serie</p>
-                      <p className="text-sm text-gray-200">{match.serie}</p>
-                    </div>
-                  </div>
-                )}
+                {/* Prediction Teaser */}
+                <div className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 rounded-2xl p-6 border border-white/10">
+                  <h3 className="text-lg font-bold text-white mb-2">¿Quién ganará?</h3>
+                  <p className="text-sm text-gray-400 mb-4">¡Haz tu predicción y compite con la comunidad!</p>
+                  <button
+                    onClick={() => setActiveTab('predictions')}
+                    className="w-full py-2.5 rounded-xl bg-white text-black font-bold text-sm hover:bg-gray-200 transition-colors shadow-lg shadow-purple-900/20"
+                  >
+                    Ir a Predicciones
+                  </button>
+                </div>
               </div>
             </div>
+          )}
 
-            {/* Quick Actions */}
-            <div className="p-6 rounded-2xl bg-gray-800/20 border border-gray-700/50">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-purple-400">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                </svg>
-                Acciones Rápidas
-              </h3>
-              <div className="space-y-2">
-                <button
-                  onClick={toggleFavorite}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${isFavorite
-                      ? 'bg-yellow-900/20 border-yellow-500/30 text-yellow-400'
-                      : 'bg-gray-800/50 border-gray-700 text-gray-300 hover:bg-gray-700/50 hover:border-gray-600'
-                    }`}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                  </svg>
-                  <span className="text-sm font-semibold">
-                    {isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => loadMatchData(true)}
-                  disabled={loading}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700/50 hover:border-gray-600 transition-all text-left disabled:opacity-50"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={loading ? 'animate-spin' : ''}>
-                    <path d="M23 4v6h-6" />
-                    <path d="M1 20v-6h6" />
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                  </svg>
-                  <span className="text-sm font-semibold">
-                    {loading ? 'Actualizando...' : 'Actualizar datos'}
-                  </span>
-                </button>
-              </div>
+          {activeTab === 'games' && (
+            <div className="animate-fade-in-up">
+              <MatchGames
+                games={match.games}
+                radiantName={match.radiant}
+                direName={match.dire}
+                radiantId={match.radiant_id}
+                direId={match.dire_id}
+              />
             </div>
+          )}
 
-            {/* Connection Status */}
-            <div className={`p-4 rounded-xl border ${isOnline
-                ? 'bg-green-900/10 border-green-500/20'
-                : 'bg-red-900/10 border-red-500/20'
-              }`}>
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                <span className={`text-xs font-semibold ${isOnline ? 'text-green-400' : 'text-red-400'}`}>
-                  {isOnline ? 'Conectado' : 'Sin conexión'}
-                </span>
-              </div>
-              {!isOnline && (
-                <p className="text-xs text-gray-500 mt-2">
-                  Los datos se actualizarán cuando vuelva la conexión
-                </p>
-              )}
+          {activeTab === 'lineups' && (
+            <div className="animate-fade-in-up">
+              <MatchLineups
+                radiantName={match.radiant}
+                direName={match.dire}
+                radiantPlayers={match.players?.radiant}
+                direPlayers={match.players?.dire}
+                radiantId={match.radiant_id}
+                direId={match.dire_id}
+              />
             </div>
-          </div>
+          )}
+
+          {activeTab === 'predictions' && (
+            <div className="animate-fade-in-up">
+              <PredictionSystem
+                matchId={match.id}
+                matchTitle={match.name}
+                game="esports"
+                radiantTeam={match.radiant}
+                direTeam={match.dire}
+                isFinished={match.radiant_win !== null}
+                actualWinner={match.radiant_win === true ? 'radiant' : match.radiant_win === false ? 'dire' : null}
+                startTime={match.start_time}
+              />
+            </div>
+          )}
         </div>
       </div>
     </main>
