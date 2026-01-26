@@ -23,8 +23,8 @@ interface SearchProps {
   globalSearch?: boolean; // Nueva prop para búsqueda global
 }
 
-export default function Search({ 
-  game = "dota2", 
+export default function Search({
+  game = "dota2",
   placeholder = "Buscar equipos, jugadores, partidos...",
   compact = false,
   globalSearch = false // Por defecto false para mantener compatibilidad
@@ -234,31 +234,41 @@ export default function Search({
     }
   };
 
+  const highlightMatch = (text: string, query: string) => {
+    if (!query) return text;
+    // Escapar caracteres especiales en la query para evitar errores en RegExp
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedQuery})`, "gi");
+    const parts = text.split(regex);
+    return parts.map((part, i) =>
+      regex.test(part) ? <span key={i} className="text-green-400 font-bold">{part}</span> : part
+    );
+  };
+
   return (
     <div className={`relative w-full ${compact ? '' : 'max-w-md'}`} ref={containerRef}>
       {/* Campo de búsqueda */}
       <div className="relative group">
         {/* Icono de búsqueda */}
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-          <svg 
-            className={`h-5 w-5 transition-colors duration-200 ${
-              query ? 'text-green-400' : 'text-gray-400 group-focus-within:text-green-400'
-            }`}
-            fill="none" 
-            stroke="currentColor" 
+          <svg
+            className={`h-5 w-5 transition-colors duration-200 ${query ? 'text-green-400' : 'text-gray-400 group-focus-within:text-green-400'
+              }`}
+            fill="none"
+            stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
             />
           </svg>
         </div>
 
         {/* Se elimina el placeholder personalizado para evitar que se mantenga al escribir */}
-        
+
         <input
           ref={inputRef}
           type="text"
@@ -344,9 +354,9 @@ export default function Search({
                         {item.name}
                       </div>
                       <div className={`text-xs ${getTypeColor(item.type)}`}>
-                        {item.type === "team" ? "Equipo" : 
-                         item.type === "player" ? "Jugador" :
-                         item.type === "tournament" ? "Torneo" : "Partido"}
+                        {item.type === "team" ? "Equipo" :
+                          item.type === "player" ? "Jugador" :
+                            item.type === "tournament" ? "Torneo" : "Partido"}
                       </div>
                     </div>
                     <svg className="w-4 h-4 text-gray-500 group-hover:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -382,10 +392,10 @@ export default function Search({
                       <div className="mt-1 text-xs text-gray-500">
                         Búsqueda en: <span className="text-gray-300">
                           {game === 'dota2' ? 'Dota 2' :
-                           game === 'lol' ? 'League of Legends' :
-                           game === 'csgo' ? 'Counter-Strike 2' :
-                           game === 'r6siege' ? 'Rainbow Six Siege' :
-                           game}
+                            game === 'lol' ? 'League of Legends' :
+                              game === 'csgo' ? 'Counter-Strike 2' :
+                                game === 'r6siege' ? 'Rainbow Six Siege' :
+                                  game}
                         </span>
                       </div>
                     )}
@@ -435,26 +445,26 @@ export default function Search({
                           </div>
                         );
                       })()}
-                      
+
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">
-                          {item.name}
+                          {highlightMatch(item.name, query)}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-gray-400">
                           <span className={getTypeColor(item.type)}>
-                            {item.type === "team" ? "Equipo" : 
-                             item.type === "player" ? "Jugador" :
-                             item.type === "tournament" ? "Torneo" : "Partido"}
+                            {item.type === "team" ? "Equipo" :
+                              item.type === "player" ? "Jugador" :
+                                item.type === "tournament" ? "Torneo" : "Partido"}
                           </span>
                           {globalSearch && item.game && (
                             <>
                               <span>•</span>
                               <span className="text-blue-400 font-medium">
                                 {item.game === 'dota2' ? 'Dota 2' :
-                                 item.game === 'lol' ? 'League of Legends' :
-                                 item.game === 'csgo' ? 'Counter-Strike 2' :
-                                 item.game === 'r6siege' ? 'Rainbow Six Siege' :
-                                 item.game}
+                                  item.game === 'lol' ? 'League of Legends' :
+                                    item.game === 'csgo' ? 'Counter-Strike 2' :
+                                      item.game === 'r6siege' ? 'Rainbow Six Siege' :
+                                        item.game}
                               </span>
                             </>
                           )}
@@ -517,7 +527,8 @@ export default function Search({
             </div>
           )}
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }

@@ -87,12 +87,12 @@ export async function GET(req: Request) {
   }
 
   const gameList = gameParam ? [gameParam] : Object.keys(GAME_MAPPING);
-  const results: SearchResult[] = [];
 
-  for (const gameParam of gameList) {
+
+  // Ejecutar búsquedas en paralelo para todos los juegos
+  const searchPromises = gameList.map(async (gameParam) => {
     // Mapear el juego al nombre correcto de la API
     const g = GAME_MAPPING[gameParam] || gameParam;
-
     const encoded = encodeURIComponent(q);
     const base = `https://api.pandascore.co/${g}`;
     const params = `per_page=5&search%5Bname%5D=${encoded}`;
@@ -105,8 +105,10 @@ export async function GET(req: Request) {
         fetchJSON(`${base}/matches`, params),
       ]);
 
+      const gameResults: SearchResult[] = [];
+
       teams.forEach((t: TeamData) => {
-        results.push({
+        gameResults.push({
           id: t.id,
           name: t.name,
           type: "team",
@@ -117,7 +119,7 @@ export async function GET(req: Request) {
       });
 
       players.forEach((p: PlayerData) => {
-        results.push({
+        gameResults.push({
           id: p.id,
           name: p.name,
           type: "player",
@@ -127,7 +129,7 @@ export async function GET(req: Request) {
       });
 
       tournaments.forEach((t: TournamentData) => {
-        results.push({
+        gameResults.push({
           id: t.id,
           name: t.name,
           type: "tournament",
@@ -140,7 +142,7 @@ export async function GET(req: Request) {
       matches.forEach((m: MatchData) => {
         const radiant = m.opponents?.[0]?.opponent?.name ?? "TBD";
         const dire = m.opponents?.[1]?.opponent?.name ?? "TBD";
-        results.push({
+        gameResults.push({
           id: m.id,
           name: `${radiant} vs ${dire}`,
           type: "match",
@@ -150,10 +152,16 @@ export async function GET(req: Request) {
           status: m.status ?? undefined,
         });
       });
+
+      return gameResults;
     } catch (err) {
-      console.error("Search API error:", err);
+      console.error(`Search API error for game ${gameParam}:`, err);
+      return [];
     }
-  }
+  });
+
+  const resultsArrays = await Promise.all(searchPromises);
+  const results = resultsArrays.flat();
 
   const sliced = results.slice(0, 50);
   apiCache.set(cacheKey, sliced);
