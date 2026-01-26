@@ -65,7 +65,7 @@ const ChatBot = nextDynamic(() => import("../components/ChatBot"), {
 });
 
 // Icono de favorito (estrella)
-function Star({ filled, ...props }: { filled: boolean; [key: string]: unknown }) {
+function Star({ filled, ...props }: { filled: boolean;[key: string]: unknown }) {
   return (
     <svg
       width="22"
@@ -229,9 +229,9 @@ async function fetchTournaments(game: string, signal?: AbortSignal): Promise<Tou
 }
 
 // Componente de partido destacado
-function FeaturedMatch({ match, onToggleFavorite, favoriteMatches }: { 
-  match: Match; 
-  onToggleFavorite: React.Dispatch<React.SetStateAction<number[]>>; 
+function FeaturedMatch({ match, onToggleFavorite, favoriteMatches }: {
+  match: Match;
+  onToggleFavorite: React.Dispatch<React.SetStateAction<number[]>>;
   favoriteMatches: number[];
 }) {
   const now = Date.now() / 1000;
@@ -239,24 +239,23 @@ function FeaturedMatch({ match, onToggleFavorite, favoriteMatches }: {
   const isUpcoming = match.start_time > now;
   const isFinished = match.radiant_win !== null;
   const isFavorite = favoriteMatches.includes(match.id);
-  
+
   return (
     <Link href={`/esports/${match.id}`}>
       <div
-        className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 hover:border-green-500/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl ${
-          isLive ? "ring-2 ring-red-500/40 shadow-[0_0_35px_rgba(239,68,68,0.45)]" : ""
-        }`}
+        className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 hover:border-green-500/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl ${isLive ? "ring-2 ring-red-500/40 shadow-[0_0_35px_rgba(239,68,68,0.45)]" : ""
+          }`}
       >
         {/* Efecto de brillo animado */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-        
+
         {/* Indicador de estado */}
         {isLive && (
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-red-600 animate-pulse">
             <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-red-500 animate-pulse"></div>
           </div>
         )}
-        
+
         {/* Header del partido */}
         <div className="relative z-10 p-6">
           <div className="flex items-center justify-between mb-6">
@@ -265,15 +264,15 @@ function FeaturedMatch({ match, onToggleFavorite, favoriteMatches }: {
                 <span className="text-sm font-medium text-gray-300">{match.league}</span>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               {/* Botón de favorito */}
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  onToggleFavorite(prev => 
-                    prev.includes(match.id) 
+                  onToggleFavorite(prev =>
+                    prev.includes(match.id)
                       ? prev.filter(id => id !== match.id)
                       : [...prev, match.id]
                   );
@@ -282,10 +281,10 @@ function FeaturedMatch({ match, onToggleFavorite, favoriteMatches }: {
               >
                 <Star filled={isFavorite} />
               </button>
-              
+
               {/* Estado del partido */}
               {isLive && <LiveBadge className="pointer-events-none" />}
-              
+
               {isUpcoming && (
                 <span className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold px-3 py-2 rounded-full shadow-lg flex items-center gap-2">
                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -302,7 +301,7 @@ function FeaturedMatch({ match, onToggleFavorite, favoriteMatches }: {
               )}
             </div>
           </div>
-          
+
           {/* Equipos y marcador */}
           <div className="flex items-center justify-between mb-6">
             {/* Equipo 1 */}
@@ -324,7 +323,7 @@ function FeaturedMatch({ match, onToggleFavorite, favoriteMatches }: {
                 )}
               </div>
             </div>
-            
+
             {/* VS y tiempo */}
             <div className="text-center px-6">
               <div className="relative">
@@ -342,7 +341,7 @@ function FeaturedMatch({ match, onToggleFavorite, favoriteMatches }: {
                 </p>
               )}
             </div>
-            
+
             {/* Equipo 2 */}
             <div className="text-center flex-1 group/team">
               <div className="bg-gray-800/50 rounded-xl p-4 group-hover/team:bg-gray-700/50 transition-colors duration-300">
@@ -363,7 +362,7 @@ function FeaturedMatch({ match, onToggleFavorite, favoriteMatches }: {
               </div>
             </div>
           </div>
-          
+
           {/* Footer con fecha */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-700">
             <div className="text-left">
@@ -384,7 +383,7 @@ function FeaturedMatch({ match, onToggleFavorite, favoriteMatches }: {
                 </p>
               )}
             </div>
-            
+
             <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 p-2 rounded-lg">
               <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm8 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1v-2z" clipRule="evenodd" />
@@ -406,18 +405,17 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
   const isLive = tournament.begin_at && tournament.begin_at <= now && (!tournament.end_at || tournament.end_at > now);
   const isUpcoming = tournament.begin_at && tournament.begin_at > now;
   const isFinished = tournament.end_at && tournament.end_at < now;
-  
+
   return (
     <div className="animate-fadein">
       <Link href={`/esports/tournament/${tournament.id}`}>
         <div
-          className={`group relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 hover:shadow-2xl transition-all duration-500 hover:scale-105 border border-gray-700 hover:border-purple-500/50 ${
-            isLive ? "ring-2 ring-emerald-400/50 shadow-[0_0_32px_rgba(16,185,129,0.35)]" : ""
-          }`}
+          className={`group relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 hover:shadow-2xl transition-all duration-500 hover:scale-105 border border-gray-700 hover:border-purple-500/50 ${isLive ? "ring-2 ring-emerald-400/50 shadow-[0_0_32px_rgba(16,185,129,0.35)]" : ""
+            }`}
         >
           {/* Efecto de brillo */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-          
+
           {/* Header del torneo */}
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-4">
@@ -428,7 +426,7 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
                     alt={game.name}
                     width={32}
                     height={32}
-                    className="w-8 h-8 group-hover:scale-110 transition-transform duration-300"
+                    className="w-8 h-8 w-auto h-auto group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent to-purple-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
@@ -441,7 +439,7 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
                   <p className="text-xs text-gray-500">{game.name}</p>
                 )}
               </div>
-              
+
               {/* Estado del torneo */}
               {isLive && <LiveBadge label="EN CURSO" tone="emerald" className="pointer-events-none" />}
               {isUpcoming && (
@@ -458,7 +456,7 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
                 </div>
               )}
             </div>
-            
+
             {/* Información del torneo */}
             <h3 className="text-lg font-bold text-white mb-2 group-hover:text-purple-400 transition-colors duration-300 line-clamp-2">
               {tournament.name}
@@ -468,7 +466,7 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
                 {tournament.serie}
               </p>
             )}
-            
+
             {/* Información de fechas */}
             {tournament.begin_at && (
               <div className="mb-4 text-sm">
@@ -493,7 +491,7 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
                 )}
               </div>
             )}
-            
+
             {/* Información adicional */}
             <div className="flex items-center justify-between text-xs">
               <div className="flex flex-col gap-1">
@@ -501,16 +499,15 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
                   <span className="text-gray-500">📍 {tournament.region}</span>
                 )}
                 {tournament.tier && (
-                  <span className={`font-semibold ${
-                    tournament.tier.toLowerCase() === 's' ? 'text-yellow-400' :
-                    tournament.tier.toLowerCase() === 'a' ? 'text-orange-400' :
-                    'text-gray-400'
-                  }`}>
+                  <span className={`font-semibold ${tournament.tier.toLowerCase() === 's' ? 'text-yellow-400' :
+                      tournament.tier.toLowerCase() === 'a' ? 'text-orange-400' :
+                        'text-gray-400'
+                    }`}>
                     🏅 Tier {tournament.tier.toUpperCase()}
                   </span>
                 )}
               </div>
-              
+
               {/* Prize pool */}
               {tournament.prizepool ? (
                 <div className="bg-gradient-to-r from-yellow-600 to-yellow-700 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-lg flex items-center gap-1">
@@ -536,7 +533,7 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
 function EsportsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Obtener el juego de los parámetros de URL o usar dota2 por defecto
   const [game, setGame] = useState<string>(() => {
     return searchParams?.get('game') || GAMES[0].id;
@@ -546,11 +543,11 @@ function EsportsPageContent() {
   const [loading, setLoading] = useState<boolean>(true);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loadingTournaments, setLoadingTournaments] = useState<boolean>(true);
-  
+
   // Sistemas nuevos
   const clientExtrasReady = useDeferredClientRender(400);
   const notificationSystem = useNotifications({ enabled: clientExtrasReady });
-  
+
   // Favoritos: ids de partidos favoritos
   const [favoriteMatches, setFavoriteMatches] = useState<number[]>(() => {
     if (typeof window !== "undefined") {
@@ -562,7 +559,7 @@ function EsportsPageContent() {
     }
     return [];
   });
-  
+
   // Filtros adicionales
   const [filterLeague, setFilterLeague] = useState<string>("");
   const [filterTeam, setFilterTeam] = useState<string>("");
@@ -618,7 +615,7 @@ function EsportsPageContent() {
     }
     queryAppliedRef.current = true;
   }, [searchParams]);
-  
+
   useEffect(() => {
     return () => {
       if (filterAnimationTimeoutRef.current) {
@@ -667,7 +664,7 @@ function EsportsPageContent() {
         return;
       }
       const now = Date.now() / 1000;
-      
+
       // Para la vista de torneos, mostrar todos los torneos relevantes
       const relevantTournaments = data.filter((t) => {
         if (t.begin_at === null) return false;
@@ -676,18 +673,18 @@ function EsportsPageContent() {
         const maxTimeDiff = 90 * 24 * 60 * 60; // 90 días en segundos
         return timeDiff <= maxTimeDiff;
       });
-      
+
       relevantTournaments.sort((a, b) => {
         // Primero torneos en vivo, luego próximos, luego recientes
         const aLive = a.begin_at! <= now && (!a.end_at || a.end_at > now);
         const bLive = b.begin_at! <= now && (!b.end_at || b.end_at > now);
-        
+
         if (aLive && !bLive) return -1;
         if (!aLive && bLive) return 1;
-        
+
         return (b.begin_at ?? 0) - (a.begin_at ?? 0);
       });
-      
+
       setTournaments(relevantTournaments.slice(0, 20)); // Mostrar hasta 20 torneos
       setLoadingTournaments(false);
     }
@@ -700,7 +697,7 @@ function EsportsPageContent() {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const matchTime = match.start_time * 1000;
-    
+
     switch (timeframe) {
       case "today":
         const todayEnd = new Date(startOfToday);
@@ -801,7 +798,7 @@ function EsportsPageContent() {
   return (
     <>
       <LiveScoreTicker currentGame={game} />
-      
+
       <main className="min-h-screen pt-20">
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 py-12">
@@ -814,7 +811,7 @@ function EsportsPageContent() {
               <p className="text-xl text-gray-300 mb-6 max-w-2xl mx-auto">
                 Explora partidos, sigue tus equipos favoritos y mantente al día con los mejores torneos
               </p>
-              
+
               {/* Estadísticas rápidas */}
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
                 <Tooltip
@@ -873,21 +870,19 @@ function EsportsPageContent() {
             <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-2xl p-2 border border-gray-700">
               <button
                 onClick={() => setSelectedView("matches")}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                  selectedView === "matches"
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${selectedView === "matches"
                     ? "bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-lg"
                     : "text-gray-400 hover:text-white hover:bg-gray-700/50"
-                }`}
+                  }`}
               >
                 🎯 Partidos
               </button>
               <button
                 onClick={() => setSelectedView("tournaments")}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                  selectedView === "tournaments"
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${selectedView === "tournaments"
                     ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg"
                     : "text-gray-400 hover:text-white hover:bg-gray-700/50"
-                }`}
+                  }`}
               >
                 🏆 Torneos
               </button>
@@ -899,115 +894,58 @@ function EsportsPageContent() {
             aria-busy={isFiltering}
           >
             <div className={`transition-opacity duration-300 ${isFiltering && !isViewLoading ? "opacity-60" : "opacity-100"}`}>
-          {/* Filtros de juegos */}
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold text-white mb-4 text-center flex items-center justify-center gap-2">
-              Seleccionar Juego
-              <Tooltip
-                content={`Elige el título para actualizar partidos, estadísticas y torneos relacionados.`}
-                className="inline-flex"
-                side="right"
-              >
-                <span
-                  tabIndex={0}
-                  aria-label="Ayuda sobre la selección de juego"
-                  className="flex h-5 w-5 items-center justify-center rounded-full border border-green-400/60 bg-green-500/10 text-xs font-bold text-green-200 hover:bg-green-500/20 focus:outline-none focus:ring-2 focus:ring-green-400/60"
-                >
-                  i
-                </span>
-              </Tooltip>
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
-              {GAMES.map((g, index) => (
-                <Tooltip
-                  key={g.id}
-                  content={`${g.name}
-Actualiza la vista con partidos, estadísticas y torneos de este juego.`}
-                  className="block h-full"
-                  side="top"
-                >
-                  <button
-                    onClick={() => handleGameChange(g.id)}
-                    className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
-                      game === g.id
-                        ? `bg-gradient-to-r ${g.gradient} text-white border-white/30 shadow-lg`
-                        : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
-                    }`}
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                    
-                    <div className="relative z-10 text-center">
-                      <div className="mb-3">
-                        <Image
-                          src={g.icon}
-                          alt={g.name}
-                          width={32}
-                          height={32}
-                          className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300"
-                        />
-                      </div>
-                      <div className="font-bold text-sm">{g.name}</div>
-                    </div>
-
-                    {game === g.id && (
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-b-xl"></div>
-                    )}
-                  </button>
-                </Tooltip>
-              ))}
-            </div>
-          </div>
-
-          {selectedView === "matches" && (
-            <>
-              {/* Filtros de tiempo */}
+              {/* Filtros de juegos */}
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-white mb-4 text-center flex items-center justify-center gap-2">
-                  Período de Tiempo
+                  Seleccionar Juego
                   <Tooltip
-                    content={`Elige la ventana temporal para acotar los partidos listados.`}
+                    content={`Elige el título para actualizar partidos, estadísticas y torneos relacionados.`}
                     className="inline-flex"
                     side="right"
                   >
                     <span
                       tabIndex={0}
-                      aria-label="Ayuda sobre el filtro de tiempo"
-                      className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400/60 bg-blue-500/10 text-xs font-bold text-blue-200 hover:bg-blue-500/20 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
+                      aria-label="Ayuda sobre la selección de juego"
+                      className="flex h-5 w-5 items-center justify-center rounded-full border border-green-400/60 bg-green-500/10 text-xs font-bold text-green-200 hover:bg-green-500/20 focus:outline-none focus:ring-2 focus:ring-green-400/60"
                     >
                       i
                     </span>
                   </Tooltip>
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-                  {TIMEFRAMES.map((t, index) => (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
+                  {GAMES.map((g, index) => (
                     <Tooltip
-                      key={t.id}
-                      content={`${t.emoji} ${t.label}
-${t.description}. Ajusta la lista de partidos al período indicado.`}
+                      key={g.id}
+                      content={`${g.name}
+Actualiza la vista con partidos, estadísticas y torneos de este juego.`}
                       className="block h-full"
+                      side="top"
                     >
                       <button
-                        onClick={() => handleTimeframeChange(t.id)}
-                        className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${
-                          timeframe === t.id
-                            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/25"
-                            : "bg-gray-800/50 text-white border-gray-600 hover:border-blue-500/50 hover:bg-gray-700/50"
-                        }`}
+                        onClick={() => handleGameChange(g.id)}
+                        className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${game === g.id
+                            ? `bg-gradient-to-r ${g.gradient} text-white border-white/30 shadow-lg`
+                            : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
+                          }`}
                         style={{ animationDelay: `${index * 0.1}s` }}
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                        
+
                         <div className="relative z-10 text-center">
-                          <div className="text-2xl mb-2">{t.emoji}</div>
-                          <div className="font-bold text-base mb-1">{t.label}</div>
-                          <div className={`text-xs ${timeframe === t.id ? 'text-blue-100' : 'text-gray-400'}`}>
-                            {t.description}
+                          <div className="mb-3">
+                            <Image
+                              src={g.icon}
+                              alt={g.name}
+                              width={32}
+                              height={32}
+                              className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300"
+                            />
                           </div>
+                          <div className="font-bold text-sm">{g.name}</div>
                         </div>
-                        
-                        {timeframe === t.id && (
-                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-b-xl"></div>
+
+                        {game === g.id && (
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-b-xl"></div>
                         )}
                       </button>
                     </Tooltip>
@@ -1015,455 +953,509 @@ ${t.description}. Ajusta la lista de partidos al período indicado.`}
                 </div>
               </div>
 
-              {/* Filtros adicionales */}
-              <div className="mb-8">
-                <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-2xl p-6 border border-gray-700 max-w-4xl mx-auto">
-                  <h3 className="text-lg font-semibold text-white mb-4 text-center flex items-center justify-center gap-2">
-                    Filtros Avanzados
-                    <Tooltip
-                      content={`Complementa la búsqueda restringiendo por liga, equipo o estado del partido.`}
-                      className="inline-flex"
-                      side="right"
-                    >
-                      <span
-                        tabIndex={0}
-                        aria-label="Ayuda sobre filtros avanzados"
-                        className="flex h-5 w-5 items-center justify-center rounded-full border border-green-400/60 bg-green-500/10 text-xs font-bold text-green-200 hover:bg-green-500/20 focus:outline-none focus:ring-2 focus:ring-green-400/60"
+              {selectedView === "matches" && (
+                <>
+                  {/* Filtros de tiempo */}
+                  <div className="mb-8">
+                    <h3 className="text-xl font-semibold text-white mb-4 text-center flex items-center justify-center gap-2">
+                      Período de Tiempo
+                      <Tooltip
+                        content={`Elige la ventana temporal para acotar los partidos listados.`}
+                        className="inline-flex"
+                        side="right"
                       >
-                        i
-                      </span>
-                    </Tooltip>
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        <span className="flex items-center gap-2">
-                          Liga
-                          <Tooltip
-                            content={`Filtra por nombre de liga o torneo. Puedes escribir coincidencias parciales.`}
-                            className="inline-flex"
-                            side="top"
-                          >
-                            <span
-                              tabIndex={0}
-                              aria-label="Ayuda sobre el filtro de liga"
-                              className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-green-400/60"
-                            >
-                              i
-                            </span>
-                          </Tooltip>
-                        </span>
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Buscar liga..."
-                        value={filterLeague}
-                        onChange={e => setFilterLeague(e.target.value)}
-                        className="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2 text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        <span className="flex items-center gap-2">
-                          Equipo
-                          <Tooltip
-                            content={`Encuentra partidos donde participe un equipo concreto. Acepta búsquedas parciales.`}
-                            className="inline-flex"
-                            side="top"
-                          >
-                            <span
-                              tabIndex={0}
-                              aria-label="Ayuda sobre el filtro de equipo"
-                              className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-green-400/60"
-                            >
-                              i
-                            </span>
-                          </Tooltip>
-                        </span>
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Buscar equipo..."
-                        value={filterTeam}
-                        onChange={e => setFilterTeam(e.target.value)}
-                        className="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2 text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        <span className="flex items-center gap-2">
-                          Estado
-                          <Tooltip
-                            content={`Limita los resultados a encuentros en vivo, próximos o ya finalizados.`}
-                            className="inline-flex"
-                            side="top"
-                          >
-                            <span
-                              tabIndex={0}
-                              aria-label="Ayuda sobre el estado del partido"
-                              className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-green-400/60"
-                            >
-                              i
-                            </span>
-                          </Tooltip>
-                        </span>
-                      </label>
-                      <select
-                        value={filterStatus}
-                        onChange={e => setFilterStatus(e.target.value)}
-                        className="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2 text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      >
-                        <option value="">Todos</option>
-                        <option value="live">En Vivo</option>
-                        <option value="upcoming">Próximos</option>
-                        <option value="finished">Finalizados</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Partidos favoritos */}
-              {favoriteList.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="text-2xl font-bold text-white mb-6 text-center flex items-center justify-center gap-2">
-                    <Star filled={true} /> Partidos Favoritos
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-                    {favoriteList.slice(0, 4).map((match, _index) => (
-                      <FeaturedMatch key={match.id} match={match} onToggleFavorite={setFavoriteMatches} favoriteMatches={favoriteMatches} />
-                    ))}
-                  </div>
-                  {favoriteList.length > 4 && (
-                    <div className="text-center mt-6">
-                      <p className="text-gray-400">
-                        Y {favoriteList.length - 4} partidos favoritos más...
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Lista de partidos */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-bold text-white">
-                    Partidos {timeframe === "today" ? "de Hoy" : timeframe === "tomorrow" ? "de Mañana" : "de Esta Semana"}
-                  </h3>
-                  <div className="text-sm text-gray-400">
-                    {filtered.length} partidos encontrados
-                  </div>
-                </div>
-                
-                {loading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <MatchSkeleton key={i} />
-                    ))}
-                  </div>
-                ) : paginated.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-                    {paginated.map((match, _index) => (
-                      <FeaturedMatch key={match.id} match={match} onToggleFavorite={setFavoriteMatches} favoriteMatches={favoriteMatches} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-16">
-                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-12 border border-gray-700 max-w-md mx-auto">
-                      <div className="text-6xl mb-4">🎮</div>
-                      <h3 className="text-xl font-bold text-white mb-2">No hay partidos</h3>
-                      <p className="text-gray-400 mb-6">
-                        No hay partidos que coincidan con los filtros seleccionados.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Paginación */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center gap-2 mt-8">
-                    <button
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      className="px-4 py-2 rounded-xl bg-gray-800 text-white disabled:opacity-40 hover:bg-gray-700 transition-colors"
-                    >
-                      Anterior
-                    </button>
-                    {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
-                      const pageNum = i + 1;
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => setPage(pageNum)}
-                          className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                            page === pageNum 
-                              ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white' 
-                              : 'bg-gray-800 text-white hover:bg-gray-700'
-                          }`}
+                        <span
+                          tabIndex={0}
+                          aria-label="Ayuda sobre el filtro de tiempo"
+                          className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400/60 bg-blue-500/10 text-xs font-bold text-blue-200 hover:bg-blue-500/20 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
                         >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-                    <button
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={page === totalPages}
-                      className="px-4 py-2 rounded-xl bg-gray-800 text-white disabled:opacity-40 hover:bg-gray-700 transition-colors"
-                    >
-                      Siguiente
-                    </button>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          {selectedView === "tournaments" && (
-            <>
-              {/* Filtros específicos para torneos */}
-              <div className="mb-8">
-                <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-2xl p-6 border border-gray-700 max-w-4xl mx-auto">
-                  <h3 className="text-lg font-semibold text-white mb-4 text-center flex items-center justify-center gap-2">
-                    Filtros de Torneos
-                    <Tooltip
-                      content={`Refina la búsqueda de torneos según nombre o estado de competencia.`}
-                      className="inline-flex"
-                      side="right"
-                    >
-                      <span
-                        tabIndex={0}
-                        aria-label="Ayuda sobre filtros de torneos"
-                        className="flex h-5 w-5 items-center justify-center rounded-full border border-purple-400/60 bg-purple-500/10 text-xs font-bold text-purple-200 hover:bg-purple-500/20 focus:outline-none focus:ring-2 focus:ring-purple-400/60"
-                      >
-                        i
-                      </span>
-                    </Tooltip>
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        <span className="flex items-center gap-2">
-                          Liga/Torneo
-                          <Tooltip
-                            content={`Escribe parte del nombre del torneo o liga para filtrar coincidencias.`}
-                            className="inline-flex"
-                            side="top"
-                          >
-                            <span
-                              tabIndex={0}
-                              aria-label="Ayuda sobre la búsqueda de torneos"
-                              className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-purple-400/60"
-                            >
-                              i
-                            </span>
-                          </Tooltip>
+                          i
                         </span>
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Buscar torneo o liga..."
-                        value={filterLeague}
-                        onChange={e => setFilterLeague(e.target.value)}
-                        className="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        <span className="flex items-center gap-2">
-                          Estado
-                          <Tooltip
-                            content={`Muestra torneos en curso, próximos o ya finalizados según corresponda.`}
-                            className="inline-flex"
-                            side="top"
-                          >
-                            <span
-                              tabIndex={0}
-                              aria-label="Ayuda sobre el estado del torneo"
-                              className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-purple-400/60"
-                            >
-                              i
-                            </span>
-                          </Tooltip>
-                        </span>
-                      </label>
-                      <select
-                        value={filterStatus}
-                        onChange={e => setFilterStatus(e.target.value)}
-                        className="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      >
-                        <option value="">Todos los estados</option>
-                        <option value="live">En curso</option>
-                        <option value="upcoming">Próximos</option>
-                        <option value="finished">Finalizados</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Lista de torneos */}
-              <div className="mb-8">
-                <h3 className="text-2xl font-bold text-white mb-6 text-center">
-                  🏆 Torneos de {GAMES.find(g => g.id === game)?.name}
-                </h3>
-                
-                {loadingTournaments ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <TournamentSkeleton key={i} />
-                    ))}
-                  </div>
-                ) : tournaments.length > 0 ? (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                      {tournaments
-                        .filter(tournament => {
-                          if (filterLeague) {
-                            return tournament.league.toLowerCase().includes(filterLeague.toLowerCase()) ||
-                                   tournament.name.toLowerCase().includes(filterLeague.toLowerCase());
-                          }
-                          return true;
-                        })
-                        .filter(tournament => {
-                          if (filterStatus) {
-                            const now = Date.now() / 1000;
-                            const isLive = tournament.begin_at && tournament.begin_at <= now && (!tournament.end_at || tournament.end_at > now);
-                            const isUpcoming = tournament.begin_at && tournament.begin_at > now;
-                            const isFinished = tournament.end_at && tournament.end_at < now;
-                            
-                            if (filterStatus === "live") return isLive;
-                            if (filterStatus === "upcoming") return isUpcoming;
-                            if (filterStatus === "finished") return isFinished;
-                          }
-                          return true;
-                        })
-                        .map((tournament, _index) => (
-                          <TournamentCard key={tournament.id} tournament={tournament} game={GAMES.find(g => g.id === game)} />
-                        ))}
-                    </div>
-                    
-                    {/* Información adicional de torneos */}
-                    <div className="mt-12 bg-gradient-to-r from-purple-900/20 to-pink-900/20 rounded-2xl p-8 border border-purple-500/30 max-w-4xl mx-auto">
-                      <h4 className="text-xl font-bold text-white mb-6 text-center flex items-center justify-center gap-2">
-                        📊 Estadísticas de Torneos
+                      </Tooltip>
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                      {TIMEFRAMES.map((t, index) => (
                         <Tooltip
-                          content={`Resumen rápido de cómo se distribuyen los torneos filtrados.`}
+                          key={t.id}
+                          content={`${t.emoji} ${t.label}
+${t.description}. Ajusta la lista de partidos al período indicado.`}
+                          className="block h-full"
+                        >
+                          <button
+                            onClick={() => handleTimeframeChange(t.id)}
+                            className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${timeframe === t.id
+                                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/25"
+                                : "bg-gray-800/50 text-white border-gray-600 hover:border-blue-500/50 hover:bg-gray-700/50"
+                              }`}
+                            style={{ animationDelay: `${index * 0.1}s` }}
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                            <div className="relative z-10 text-center">
+                              <div className="text-2xl mb-2">{t.emoji}</div>
+                              <div className="font-bold text-base mb-1">{t.label}</div>
+                              <div className={`text-xs ${timeframe === t.id ? 'text-blue-100' : 'text-gray-400'}`}>
+                                {t.description}
+                              </div>
+                            </div>
+
+                            {timeframe === t.id && (
+                              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-b-xl"></div>
+                            )}
+                          </button>
+                        </Tooltip>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Filtros adicionales */}
+                  <div className="mb-8">
+                    <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-2xl p-6 border border-gray-700 max-w-4xl mx-auto">
+                      <h3 className="text-lg font-semibold text-white mb-4 text-center flex items-center justify-center gap-2">
+                        Filtros Avanzados
+                        <Tooltip
+                          content={`Complementa la búsqueda restringiendo por liga, equipo o estado del partido.`}
                           className="inline-flex"
                           side="right"
                         >
                           <span
                             tabIndex={0}
-                            aria-label="Ayuda sobre las estadísticas de torneos"
+                            aria-label="Ayuda sobre filtros avanzados"
+                            className="flex h-5 w-5 items-center justify-center rounded-full border border-green-400/60 bg-green-500/10 text-xs font-bold text-green-200 hover:bg-green-500/20 focus:outline-none focus:ring-2 focus:ring-green-400/60"
+                          >
+                            i
+                          </span>
+                        </Tooltip>
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            <span className="flex items-center gap-2">
+                              Liga
+                              <Tooltip
+                                content={`Filtra por nombre de liga o torneo. Puedes escribir coincidencias parciales.`}
+                                className="inline-flex"
+                                side="top"
+                              >
+                                <span
+                                  tabIndex={0}
+                                  aria-label="Ayuda sobre el filtro de liga"
+                                  className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-green-400/60"
+                                >
+                                  i
+                                </span>
+                              </Tooltip>
+                            </span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Buscar liga..."
+                            value={filterLeague}
+                            onChange={e => setFilterLeague(e.target.value)}
+                            className="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2 text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            <span className="flex items-center gap-2">
+                              Equipo
+                              <Tooltip
+                                content={`Encuentra partidos donde participe un equipo concreto. Acepta búsquedas parciales.`}
+                                className="inline-flex"
+                                side="top"
+                              >
+                                <span
+                                  tabIndex={0}
+                                  aria-label="Ayuda sobre el filtro de equipo"
+                                  className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-green-400/60"
+                                >
+                                  i
+                                </span>
+                              </Tooltip>
+                            </span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Buscar equipo..."
+                            value={filterTeam}
+                            onChange={e => setFilterTeam(e.target.value)}
+                            className="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2 text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            <span className="flex items-center gap-2">
+                              Estado
+                              <Tooltip
+                                content={`Limita los resultados a encuentros en vivo, próximos o ya finalizados.`}
+                                className="inline-flex"
+                                side="top"
+                              >
+                                <span
+                                  tabIndex={0}
+                                  aria-label="Ayuda sobre el estado del partido"
+                                  className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-green-400/60"
+                                >
+                                  i
+                                </span>
+                              </Tooltip>
+                            </span>
+                          </label>
+                          <select
+                            value={filterStatus}
+                            onChange={e => setFilterStatus(e.target.value)}
+                            className="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2 text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          >
+                            <option value="">Todos</option>
+                            <option value="live">En Vivo</option>
+                            <option value="upcoming">Próximos</option>
+                            <option value="finished">Finalizados</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Partidos favoritos */}
+                  {favoriteList.length > 0 && (
+                    <div className="mb-8">
+                      <h3 className="text-2xl font-bold text-white mb-6 text-center flex items-center justify-center gap-2">
+                        <Star filled={true} /> Partidos Favoritos
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+                        {favoriteList.slice(0, 4).map((match, _index) => (
+                          <FeaturedMatch key={match.id} match={match} onToggleFavorite={setFavoriteMatches} favoriteMatches={favoriteMatches} />
+                        ))}
+                      </div>
+                      {favoriteList.length > 4 && (
+                        <div className="text-center mt-6">
+                          <p className="text-gray-400">
+                            Y {favoriteList.length - 4} partidos favoritos más...
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Lista de partidos */}
+                  <div className="mb-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-2xl font-bold text-white">
+                        Partidos {timeframe === "today" ? "de Hoy" : timeframe === "tomorrow" ? "de Mañana" : "de Esta Semana"}
+                      </h3>
+                      <div className="text-sm text-gray-400">
+                        {filtered.length} partidos encontrados
+                      </div>
+                    </div>
+
+                    {loading ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                          <MatchSkeleton key={i} />
+                        ))}
+                      </div>
+                    ) : paginated.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+                        {paginated.map((match, _index) => (
+                          <FeaturedMatch key={match.id} match={match} onToggleFavorite={setFavoriteMatches} favoriteMatches={favoriteMatches} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16">
+                        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-12 border border-gray-700 max-w-md mx-auto">
+                          <div className="text-6xl mb-4">🎮</div>
+                          <h3 className="text-xl font-bold text-white mb-2">No hay partidos</h3>
+                          <p className="text-gray-400 mb-6">
+                            No hay partidos que coincidan con los filtros seleccionados.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Paginación */}
+                    {totalPages > 1 && (
+                      <div className="flex justify-center gap-2 mt-8">
+                        <button
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          disabled={page === 1}
+                          className="px-4 py-2 rounded-xl bg-gray-800 text-white disabled:opacity-40 hover:bg-gray-700 transition-colors"
+                        >
+                          Anterior
+                        </button>
+                        {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                          const pageNum = i + 1;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setPage(pageNum)}
+                              className={`px-4 py-2 rounded-xl font-semibold transition-colors ${page === pageNum
+                                  ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white'
+                                  : 'bg-gray-800 text-white hover:bg-gray-700'
+                                }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                        <button
+                          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={page === totalPages}
+                          className="px-4 py-2 rounded-xl bg-gray-800 text-white disabled:opacity-40 hover:bg-gray-700 transition-colors"
+                        >
+                          Siguiente
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {selectedView === "tournaments" && (
+                <>
+                  {/* Filtros específicos para torneos */}
+                  <div className="mb-8">
+                    <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-2xl p-6 border border-gray-700 max-w-4xl mx-auto">
+                      <h3 className="text-lg font-semibold text-white mb-4 text-center flex items-center justify-center gap-2">
+                        Filtros de Torneos
+                        <Tooltip
+                          content={`Refina la búsqueda de torneos según nombre o estado de competencia.`}
+                          className="inline-flex"
+                          side="right"
+                        >
+                          <span
+                            tabIndex={0}
+                            aria-label="Ayuda sobre filtros de torneos"
                             className="flex h-5 w-5 items-center justify-center rounded-full border border-purple-400/60 bg-purple-500/10 text-xs font-bold text-purple-200 hover:bg-purple-500/20 focus:outline-none focus:ring-2 focus:ring-purple-400/60"
                           >
                             i
                           </span>
                         </Tooltip>
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <Tooltip
-                          content={`Cantidad total de torneos disponibles tras aplicar los filtros.`}
-                          className="block h-full"
-                          side="top"
-                        >
-                          <div className="text-center bg-black/20 rounded-xl p-4">
-                            <div className="text-2xl font-bold text-purple-400">{tournaments.length}</div>
-                            <div className="text-sm text-gray-400">Total</div>
-                          </div>
-                        </Tooltip>
-                        <Tooltip
-                          content={`Torneos que actualmente están disputándose.`}
-                          className="block h-full"
-                          side="top"
-                        >
-                          <div className="text-center bg-black/20 rounded-xl p-4">
-                            <div className="text-2xl font-bold text-green-400">
-                              {tournaments.filter(t => {
-                                const now = Date.now() / 1000;
-                                return t.begin_at && t.begin_at <= now && (!t.end_at || t.end_at > now);
-                              }).length}
-                            </div>
-                            <div className="text-sm text-gray-400">En Curso</div>
-                          </div>
-                        </Tooltip>
-                        <Tooltip
-                          content={`Competencias programadas que aún no inician.`}
-                          className="block h-full"
-                          side="top"
-                        >
-                          <div className="text-center bg-black/20 rounded-xl p-4">
-                            <div className="text-2xl font-bold text-blue-400">
-                              {tournaments.filter(t => t.begin_at && t.begin_at > Date.now() / 1000).length}
-                            </div>
-                            <div className="text-sm text-gray-400">Próximos</div>
-                          </div>
-                        </Tooltip>
-                        <Tooltip
-                          content={`Torneos con bolsa de premios confirmada o comunicada.`}
-                          className="block h-full"
-                          side="top"
-                        >
-                          <div className="text-center bg-black/20 rounded-xl p-4">
-                            <div className="text-2xl font-bold text-yellow-400">
-                              {tournaments.filter(t => t.prizepool && t.prizepool.toLowerCase() !== 'tbd').length}
-                            </div>
-                            <div className="text-sm text-gray-400">Con Premio</div>
-                          </div>
-                        </Tooltip>
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            <span className="flex items-center gap-2">
+                              Liga/Torneo
+                              <Tooltip
+                                content={`Escribe parte del nombre del torneo o liga para filtrar coincidencias.`}
+                                className="inline-flex"
+                                side="top"
+                              >
+                                <span
+                                  tabIndex={0}
+                                  aria-label="Ayuda sobre la búsqueda de torneos"
+                                  className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-purple-400/60"
+                                >
+                                  i
+                                </span>
+                              </Tooltip>
+                            </span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Buscar torneo o liga..."
+                            value={filterLeague}
+                            onChange={e => setFilterLeague(e.target.value)}
+                            className="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            <span className="flex items-center gap-2">
+                              Estado
+                              <Tooltip
+                                content={`Muestra torneos en curso, próximos o ya finalizados según corresponda.`}
+                                className="inline-flex"
+                                side="top"
+                              >
+                                <span
+                                  tabIndex={0}
+                                  aria-label="Ayuda sobre el estado del torneo"
+                                  className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500/60 bg-gray-700/40 text-[10px] font-bold text-gray-200 hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-purple-400/60"
+                                >
+                                  i
+                                </span>
+                              </Tooltip>
+                            </span>
+                          </label>
+                          <select
+                            value={filterStatus}
+                            onChange={e => setFilterStatus(e.target.value)}
+                            className="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          >
+                            <option value="">Todos los estados</option>
+                            <option value="live">En curso</option>
+                            <option value="upcoming">Próximos</option>
+                            <option value="finished">Finalizados</option>
+                          </select>
+                        </div>
                       </div>
-                      
-                      {/* Acciones rápidas */}
-                      <div className="flex flex-wrap justify-center gap-4">
-                        <button
-                          onClick={() => setSelectedView("matches")}
-                          className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6 py-2 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"
-                        >
-                          🎯 Ver Partidos
-                        </button>
-                        <button
-                          onClick={() => {
-                            setFilterLeague("");
-                            setFilterStatus("live");
-                          }}
-                          className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-2 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"
-                        >
-                          🔴 Solo En Vivo
-                        </button>
-                        <button
-                          onClick={() => {
-                            setFilterLeague("");
-                            setFilterStatus("upcoming");
-                          }}
-                          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-2 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"
-                        >
-                          ⏰ Próximos
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-16">
-                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-12 border border-gray-700 max-w-md mx-auto">
-                      <div className="text-6xl mb-4">🏆</div>
-                      <h3 className="text-xl font-bold text-white mb-2">No hay torneos disponibles</h3>
-                      <p className="text-gray-400 mb-6">
-                        No hay torneos que coincidan con los filtros seleccionados para {GAMES.find(g => g.id === game)?.name}.
-                      </p>
-                      <button
-                        onClick={() => {
-                          setFilterLeague("");
-                          setFilterStatus("");
-                        }}
-                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
-                      >
-                        Limpiar Filtros
-                      </button>
                     </div>
                   </div>
-                )}
-              </div>
-            </>
-          )}
+
+                  {/* Lista de torneos */}
+                  <div className="mb-8">
+                    <h3 className="text-2xl font-bold text-white mb-6 text-center">
+                      🏆 Torneos de {GAMES.find(g => g.id === game)?.name}
+                    </h3>
+
+                    {loadingTournaments ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <TournamentSkeleton key={i} />
+                        ))}
+                      </div>
+                    ) : tournaments.length > 0 ? (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                          {tournaments
+                            .filter(tournament => {
+                              if (filterLeague) {
+                                return tournament.league.toLowerCase().includes(filterLeague.toLowerCase()) ||
+                                  tournament.name.toLowerCase().includes(filterLeague.toLowerCase());
+                              }
+                              return true;
+                            })
+                            .filter(tournament => {
+                              if (filterStatus) {
+                                const now = Date.now() / 1000;
+                                const isLive = tournament.begin_at && tournament.begin_at <= now && (!tournament.end_at || tournament.end_at > now);
+                                const isUpcoming = tournament.begin_at && tournament.begin_at > now;
+                                const isFinished = tournament.end_at && tournament.end_at < now;
+
+                                if (filterStatus === "live") return isLive;
+                                if (filterStatus === "upcoming") return isUpcoming;
+                                if (filterStatus === "finished") return isFinished;
+                              }
+                              return true;
+                            })
+                            .map((tournament, _index) => (
+                              <TournamentCard key={tournament.id} tournament={tournament} game={GAMES.find(g => g.id === game)} />
+                            ))}
+                        </div>
+
+                        {/* Información adicional de torneos */}
+                        <div className="mt-12 bg-gradient-to-r from-purple-900/20 to-pink-900/20 rounded-2xl p-8 border border-purple-500/30 max-w-4xl mx-auto">
+                          <h4 className="text-xl font-bold text-white mb-6 text-center flex items-center justify-center gap-2">
+                            📊 Estadísticas de Torneos
+                            <Tooltip
+                              content={`Resumen rápido de cómo se distribuyen los torneos filtrados.`}
+                              className="inline-flex"
+                              side="right"
+                            >
+                              <span
+                                tabIndex={0}
+                                aria-label="Ayuda sobre las estadísticas de torneos"
+                                className="flex h-5 w-5 items-center justify-center rounded-full border border-purple-400/60 bg-purple-500/10 text-xs font-bold text-purple-200 hover:bg-purple-500/20 focus:outline-none focus:ring-2 focus:ring-purple-400/60"
+                              >
+                                i
+                              </span>
+                            </Tooltip>
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                            <Tooltip
+                              content={`Cantidad total de torneos disponibles tras aplicar los filtros.`}
+                              className="block h-full"
+                              side="top"
+                            >
+                              <div className="text-center bg-black/20 rounded-xl p-4">
+                                <div className="text-2xl font-bold text-purple-400">{tournaments.length}</div>
+                                <div className="text-sm text-gray-400">Total</div>
+                              </div>
+                            </Tooltip>
+                            <Tooltip
+                              content={`Torneos que actualmente están disputándose.`}
+                              className="block h-full"
+                              side="top"
+                            >
+                              <div className="text-center bg-black/20 rounded-xl p-4">
+                                <div className="text-2xl font-bold text-green-400">
+                                  {tournaments.filter(t => {
+                                    const now = Date.now() / 1000;
+                                    return t.begin_at && t.begin_at <= now && (!t.end_at || t.end_at > now);
+                                  }).length}
+                                </div>
+                                <div className="text-sm text-gray-400">En Curso</div>
+                              </div>
+                            </Tooltip>
+                            <Tooltip
+                              content={`Competencias programadas que aún no inician.`}
+                              className="block h-full"
+                              side="top"
+                            >
+                              <div className="text-center bg-black/20 rounded-xl p-4">
+                                <div className="text-2xl font-bold text-blue-400">
+                                  {tournaments.filter(t => t.begin_at && t.begin_at > Date.now() / 1000).length}
+                                </div>
+                                <div className="text-sm text-gray-400">Próximos</div>
+                              </div>
+                            </Tooltip>
+                            <Tooltip
+                              content={`Torneos con bolsa de premios confirmada o comunicada.`}
+                              className="block h-full"
+                              side="top"
+                            >
+                              <div className="text-center bg-black/20 rounded-xl p-4">
+                                <div className="text-2xl font-bold text-yellow-400">
+                                  {tournaments.filter(t => t.prizepool && t.prizepool.toLowerCase() !== 'tbd').length}
+                                </div>
+                                <div className="text-sm text-gray-400">Con Premio</div>
+                              </div>
+                            </Tooltip>
+                          </div>
+
+                          {/* Acciones rápidas */}
+                          <div className="flex flex-wrap justify-center gap-4">
+                            <button
+                              onClick={() => setSelectedView("matches")}
+                              className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6 py-2 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"
+                            >
+                              🎯 Ver Partidos
+                            </button>
+                            <button
+                              onClick={() => {
+                                setFilterLeague("");
+                                setFilterStatus("live");
+                              }}
+                              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-2 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"
+                            >
+                              🔴 Solo En Vivo
+                            </button>
+                            <button
+                              onClick={() => {
+                                setFilterLeague("");
+                                setFilterStatus("upcoming");
+                              }}
+                              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-2 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"
+                            >
+                              ⏰ Próximos
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-16">
+                        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-12 border border-gray-700 max-w-md mx-auto">
+                          <div className="text-6xl mb-4">🏆</div>
+                          <h3 className="text-xl font-bold text-white mb-2">No hay torneos disponibles</h3>
+                          <p className="text-gray-400 mb-6">
+                            No hay torneos que coincidan con los filtros seleccionados para {GAMES.find(g => g.id === game)?.name}.
+                          </p>
+                          <button
+                            onClick={() => {
+                              setFilterLeague("");
+                              setFilterStatus("");
+                            }}
+                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
+                          >
+                            Limpiar Filtros
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             {isFiltering && !isViewLoading && (

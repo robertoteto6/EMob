@@ -7,10 +7,10 @@ const nextConfig: NextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
-  
+
   // Optimización de bundle
   poweredByHeader: false,
-  
+
   // Optimización de imágenes avanzada
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -66,7 +66,7 @@ const nextConfig: NextConfig = {
     ],
     unoptimized: false,
   },
-  
+
   // Headers de seguridad y performance mejorados
   async headers() {
     const isDev = process.env.NODE_ENV === 'development';
@@ -75,7 +75,7 @@ const nextConfig: NextConfig = {
     const cspDev = [
       "default-src 'self'",
       // Permitir inline y eval para React Refresh/Turbopack
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://vercel.live",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://vercel.live https://va.vercel-scripts.com",
       // Asegurar que las hojas de estilo de Next/Tailwind carguen
       "style-src 'self' 'unsafe-inline' blob: https://fonts.googleapis.com",
       // Algunos navegadores honran style-src-elem si está presente
@@ -97,7 +97,7 @@ const nextConfig: NextConfig = {
 
     const cspProd = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://va.vercel-scripts.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: https: blob:",
       "font-src 'self' https://fonts.gstatic.com https://r2cdn.perplexity.ai",
@@ -132,10 +132,10 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  
+
   // Compresión
   compress: true,
-  
+
   // Optimización experimental
   experimental: {
     optimizePackageImports: ['react', 'react-dom', 'framer-motion'],
@@ -143,7 +143,7 @@ const nextConfig: NextConfig = {
     parallelServerCompiles: true,
     parallelServerBuildTraces: true,
   },
-  
+
   // Configuración de webpack para optimización
   webpack: (config, { dev, isServer }) => {
     // Optimizaciones de producción
@@ -168,7 +168,7 @@ const nextConfig: NextConfig = {
         },
       };
     }
-    
+
     return config;
   },
 };

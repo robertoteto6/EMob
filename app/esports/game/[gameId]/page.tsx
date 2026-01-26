@@ -179,11 +179,11 @@ function CompactMatch({ match }: { match: Match }) {
               <p className="text-2xl font-bold text-green-400 mt-1">{match.team1_score}</p>
             )}
           </div>
-          
+
           <div className="px-3">
             <span className="text-gray-400 font-bold">VS</span>
           </div>
-          
+
           <div className="flex-1 text-center">
             <p className="font-semibold text-white group-hover:text-green-400 transition-colors duration-300 truncate">
               {match.team2}
@@ -209,11 +209,11 @@ function CompactTournament({ tournament }: { tournament: Tournament }) {
             ACTIVO
           </span>
         </div>
-        
+
         <h4 className="font-bold text-white group-hover:text-blue-400 transition-colors duration-300 mb-2 line-clamp-2">
           {tournament.name}
         </h4>
-        
+
         {tournament.prizepool && (
           <div className="bg-yellow-600/20 text-yellow-400 text-xs px-2 py-1 rounded-lg inline-block">
             💰 {tournament.prizepool}
@@ -243,7 +243,7 @@ function CompactTeam({ team }: { team: Team }) {
             alt={team.name}
             width={40}
             height={40}
-            className="w-10 h-10 rounded-lg object-cover bg-gray-600"
+            className="w-10 h-10 w-auto h-auto rounded-lg object-cover bg-gray-600"
             onError={() => {
               if (logoSrc !== fallbackLogo) {
                 setLogoSrc(fallbackLogo);
@@ -284,7 +284,7 @@ function CompactPlayer({ player }: { player: Player }) {
             alt={player.name}
             width={40}
             height={40}
-            className="w-10 h-10 rounded-full object-cover bg-gray-600"
+            className="w-10 h-10 w-auto h-auto rounded-full object-cover bg-gray-600"
             onError={() => {
               if (avatarSrc !== fallbackAvatar) {
                 setAvatarSrc(fallbackAvatar);
@@ -331,10 +331,10 @@ function GamePageContent({ gameId }: { gameId: string }) {
 
     async function loadData() {
       if (!isMounted) return;
-      
+
       setLoading(true);
       setError(null);
-      
+
       try {
         // Usar datos de fallback si hay problemas con la API
         const fallbackData = {
@@ -353,11 +353,11 @@ function GamePageContent({ gameId }: { gameId: string }) {
 
         // Intentar cargar datos reales con rate limiting
         const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-        
+
         // Cargar matches
         try {
           await delay(200);
-          const matchesRes = await fetch(`/api/esports/matches?game=${gameId}`, { 
+          const matchesRes = await fetch(`/api/esports/matches?game=${gameId}`, {
             cache: "force-cache",
             next: { revalidate: 300 }
           });
@@ -370,7 +370,7 @@ function GamePageContent({ gameId }: { gameId: string }) {
                 const dateStr = m.begin_at ?? m.scheduled_at;
                 const date = dateStr ? new Date(dateStr) : null;
                 const start_time = date && !isNaN(date.getTime()) ? date.getTime() / 1000 : Date.now() / 1000;
-                
+
                 return {
                   id: m.id,
                   team1: team1?.name ?? "TBD",
@@ -392,7 +392,7 @@ function GamePageContent({ gameId }: { gameId: string }) {
         // Cargar tournaments
         try {
           await delay(200);
-          const tournamentsRes = await fetch(`/api/esports/tournaments?game=${gameId}`, { 
+          const tournamentsRes = await fetch(`/api/esports/tournaments?game=${gameId}`, {
             cache: "force-cache",
             next: { revalidate: 300 }
           });
@@ -472,7 +472,7 @@ function GamePageContent({ gameId }: { gameId: string }) {
               <div className="text-6xl mb-4">⚠️</div>
               <h2 className="text-2xl font-bold mb-4">Error al cargar</h2>
               <p className="text-gray-400 mb-8">{error}</p>
-              <button 
+              <button
                 onClick={() => window.location.reload()}
                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-300"
               >
@@ -492,7 +492,7 @@ function GamePageContent({ gameId }: { gameId: string }) {
         <section className={`relative overflow-hidden bg-gradient-to-br ${game.gradient} py-20`}>
           <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10"></div>
           <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/50"></div>
-          
+
           <div className="container mx-auto px-6 relative z-10">
             {/* Breadcrumb */}
             <nav className="mb-8">
@@ -516,11 +516,11 @@ function GamePageContent({ gameId }: { gameId: string }) {
                   alt={game.name}
                   width={96}
                   height={96}
-                  className="w-24 h-24 group-hover:scale-110 transition-transform duration-300"
+                  className="w-8 h-8 w-auto h-auto group-hover:scale-110 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-white/20 rounded-full blur-xl opacity-50"></div>
               </div>
-              
+
               <div>
                 <h1 className="text-5xl font-bold mb-3 text-white">
                   {game.name}
@@ -546,7 +546,7 @@ function GamePageContent({ gameId }: { gameId: string }) {
 
         {/* Vista general */}
         <section className="container mx-auto px-6 py-12">
-          <GameOverview 
+          <GameOverview
             game={game}
             matches={data.matches}
             tournaments={data.tournaments}
@@ -564,17 +564,17 @@ function GamePageContent({ gameId }: { gameId: string }) {
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                   🏆 Partidos
                 </h2>
-                <Link 
+                <Link
                   href={`/esports?game=${game.id}`}
                   className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors duration-300"
                 >
                   Ver todos →
                 </Link>
               </div>
-              
+
               <div className="space-y-4">
                 {data.matches.slice(0, 6).map((match, index) => (
-                  <div 
+                  <div
                     key={match.id}
                     className="animate-fadein"
                     style={{ animationDelay: `${index * 0.1}s` }}
@@ -582,7 +582,7 @@ function GamePageContent({ gameId }: { gameId: string }) {
                     <CompactMatch match={match} />
                   </div>
                 ))}
-                
+
                 {data.matches.length === 0 && (
                   <div className="text-center py-8 text-gray-400">
                     <div className="text-4xl mb-2">📅</div>
@@ -598,17 +598,17 @@ function GamePageContent({ gameId }: { gameId: string }) {
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                   🏆 Torneos
                 </h2>
-                <Link 
+                <Link
                   href={`/esports?view=tournaments&game=${game.id}`}
                   className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors duration-300"
                 >
                   Ver todos →
                 </Link>
               </div>
-              
+
               <div className="space-y-4">
                 {data.tournaments.slice(0, 6).map((tournament, index) => (
-                  <div 
+                  <div
                     key={tournament.id}
                     className="animate-fadein"
                     style={{ animationDelay: `${index * 0.1}s` }}
@@ -616,7 +616,7 @@ function GamePageContent({ gameId }: { gameId: string }) {
                     <CompactTournament tournament={tournament} />
                   </div>
                 ))}
-                
+
                 {data.tournaments.length === 0 && (
                   <div className="text-center py-8 text-gray-400">
                     <div className="text-4xl mb-2">🏆</div>
@@ -637,17 +637,17 @@ function GamePageContent({ gameId }: { gameId: string }) {
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                   👥 Equipos
                 </h2>
-                <Link 
+                <Link
                   href={`/esports/teams?game=${game.id}`}
                   className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors duration-300"
                 >
                   Ver todos →
                 </Link>
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {data.teams.slice(0, 6).map((team, index) => (
-                  <div 
+                  <div
                     key={team.id}
                     className="animate-fadein"
                     style={{ animationDelay: `${index * 0.1}s` }}
@@ -655,7 +655,7 @@ function GamePageContent({ gameId }: { gameId: string }) {
                     <CompactTeam team={team} />
                   </div>
                 ))}
-                
+
                 {data.teams.length === 0 && (
                   <div className="col-span-2 text-center py-8 text-gray-400">
                     <div className="text-4xl mb-2">👥</div>
@@ -671,17 +671,17 @@ function GamePageContent({ gameId }: { gameId: string }) {
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                   ⭐ Jugadores
                 </h2>
-                <Link 
+                <Link
                   href={`/esports/players?game=${game.id}`}
                   className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors duration-300"
                 >
                   Ver todos →
                 </Link>
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {data.players.slice(0, 6).map((player, index) => (
-                  <div 
+                  <div
                     key={player.id}
                     className="animate-fadein"
                     style={{ animationDelay: `${index * 0.1}s` }}
@@ -689,7 +689,7 @@ function GamePageContent({ gameId }: { gameId: string }) {
                     <CompactPlayer player={player} />
                   </div>
                 ))}
-                
+
                 {data.players.length === 0 && (
                   <div className="col-span-2 text-center py-8 text-gray-400">
                     <div className="text-4xl mb-2">⭐</div>
@@ -708,21 +708,21 @@ function GamePageContent({ gameId }: { gameId: string }) {
             <p className="text-lg mb-6 opacity-90">
               Explora todos los partidos, equipos, jugadores y estadísticas detalladas
             </p>
-            
+
             <div className="flex flex-wrap justify-center gap-4">
-              <Link 
+              <Link
                 href={`/esports?game=${game.id}`}
                 className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
               >
                 Ver Todos los Partidos
               </Link>
-              <Link 
+              <Link
                 href={`/equipos?game=${game.id}`}
                 className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
               >
                 Explorar Equipos
               </Link>
-              <Link 
+              <Link
                 href={`/jugadores?game=${game.id}`}
                 className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
               >
@@ -751,6 +751,6 @@ function GamePageContent({ gameId }: { gameId: string }) {
 
 export default function GamePage({ params }: { params: Promise<{ gameId: string }> }) {
   const { gameId } = use(params);
-  
+
   return <GamePageContent gameId={gameId} />;
 }

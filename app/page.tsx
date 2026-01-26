@@ -117,7 +117,7 @@ const GAMES = SUPPORTED_GAMES;
 // Función para obtener partidos de múltiples juegos
 async function fetchAllMatches(): Promise<Match[]> {
   const allMatches: Match[] = [];
-  
+
   // Usar consultas en lote para mejor rendimiento
   const batchConfigs = GAMES.map(game => ({
     endpoint: `/api/esports/matches`,
@@ -125,49 +125,49 @@ async function fetchAllMatches(): Promise<Match[]> {
     cacheTTL: 2 * 60 * 1000, // 2 minutos
     priority: 'high' as const,
   }));
-  
+
   try {
     const { batchQuery } = await import('./lib/queryOptimizer');
     const results = await batchQuery(batchConfigs);
-    
+
     for (let i = 0; i < GAMES.length; i++) {
       const game = GAMES[i];
       const result = results[i];
-      
+
       if (result.error) {
         console.warn(`Failed to fetch matches for ${game.id}:`, result.error);
         continue;
       }
-      
+
       const data = result.data;
-      
+
       // Validar que data es un array
       if (!Array.isArray(data)) {
         console.warn(`Invalid data format for ${game.id}:`, data);
         continue;
       }
-      
+
       const gameMatches = data
         .map((m: PandaScoreMatch) => {
           // Validar datos requeridos
           if (!m || typeof m.id !== 'number') {
             return null;
           }
-          
+
           const team1 = m.opponents?.[0]?.opponent;
           const team2 = m.opponents?.[1]?.opponent;
           const dateStr = m.begin_at ?? m.scheduled_at;
           const date = dateStr ? new Date(dateStr) : null;
           const start_time = date && !isNaN(date.getTime()) ? date.getTime() / 1000 : null;
-          
+
           // Validar que tenemos un tiempo válido
           if (start_time === null) {
             return null;
           }
-          
+
           const radiant_score = Array.isArray(m.results) && m.results[0]?.score != null ? Number(m.results[0].score) : null;
           const dire_score = Array.isArray(m.results) && m.results[1]?.score != null ? Number(m.results[1].score) : null;
-          
+
           return {
             id: m.id,
             radiant: team1?.name ?? "TBD",
@@ -181,13 +181,13 @@ async function fetchAllMatches(): Promise<Match[]> {
           } as Match;
         })
         .filter((m: Match | null): m is Match => m !== null);
-        
+
       allMatches.push(...gameMatches);
     }
   } catch (error) {
     console.error('Error fetching matches:', error);
   }
-  
+
   // Sort once before returning to avoid allocating a new array unnecessarily
   allMatches.sort((a, b) => a.start_time - b.start_time);
   return allMatches;
@@ -196,7 +196,7 @@ async function fetchAllMatches(): Promise<Match[]> {
 // Función para obtener torneos de múltiples juegos
 async function fetchAllTournaments(): Promise<Tournament[]> {
   const allTournaments: Tournament[] = [];
-  
+
   // Usar consultas en lote optimizadas
   const batchConfigs = GAMES.map(game => ({
     endpoint: `/api/esports/tournaments`,
@@ -204,38 +204,38 @@ async function fetchAllTournaments(): Promise<Tournament[]> {
     cacheTTL: 5 * 60 * 1000, // 5 minutos (los torneos cambian menos frecuentemente)
     priority: 'medium' as const,
   }));
-  
+
   try {
     const { batchQuery } = await import('./lib/queryOptimizer');
     const results = await batchQuery(batchConfigs);
-    
+
     for (let i = 0; i < GAMES.length; i++) {
       const game = GAMES[i];
       const result = results[i];
-      
+
       if (result.error) {
         console.warn(`Failed to fetch tournaments for ${game.id}:`, result.error);
         continue;
       }
-      
+
       const data = result.data;
-      
+
       // Validar que data es un array
       if (!Array.isArray(data)) {
         console.warn(`Invalid tournament data format for ${game.id}:`, data);
         continue;
       }
-      
+
       const gameTournaments = data
         .map((t: any) => {
           // Validar datos requeridos
           if (!t || typeof t.id !== 'number') {
             return null;
           }
-          
+
           const beginAt = t.begin_at ? new Date(t.begin_at) : null;
           const endAt = t.end_at ? new Date(t.end_at) : null;
-          
+
           return {
             id: t.id,
             name: t.name ?? "",
@@ -251,13 +251,13 @@ async function fetchAllTournaments(): Promise<Tournament[]> {
           } as Tournament;
         })
         .filter((t: Tournament | null): t is Tournament => t !== null);
-      
+
       allTournaments.push(...gameTournaments);
     }
   } catch (error) {
     console.error('Error fetching tournaments:', error);
   }
-  
+
   return allTournaments;
 }
 
@@ -275,15 +275,15 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
               backgroundSize: '24px 24px'
             }} />
           </div>
-          
+
           {/* Efecto de brillo en hover */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" aria-hidden="true" />
-          
+
           {/* Icono flotante decorativo */}
           <div className="absolute top-3 right-3 opacity-10 group-hover:opacity-20 transition-opacity duration-500" aria-hidden="true">
-            <Image src={game.icon} alt="" width={64} height={64} className="w-14 h-14 group-hover:scale-110 transition-transform duration-500" />
+            <Image src={game.icon} alt="" width={64} height={64} className="w-14 h-14 w-auto h-auto group-hover:scale-110 transition-transform duration-500" priority />
           </div>
-          
+
           {/* Badge "Explorar" en hover */}
           <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-y-2 group-hover:translate-y-0">
             <div className="bg-white/10 backdrop-blur-sm rounded-full px-2.5 py-1 text-[10px] font-bold flex items-center gap-1.5 text-white/70">
@@ -291,13 +291,13 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
               <span>Explorar</span>
             </div>
           </div>
-          
+
           <div className="relative z-10 p-5 h-full flex flex-col">
             {/* Header */}
             <div className="flex items-center gap-3 mb-5">
               <div className="relative">
                 <div className="absolute -inset-1 bg-white/10 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
-                <Image src={game.icon} alt={`Icono de ${game.name}`} width={36} height={36} className="relative w-9 h-9 group-hover:scale-110 transition-transform duration-300" />
+                <Image src={game.icon} alt={`Icono de ${game.name}`} width={36} height={36} className="relative w-9 h-9 w-auto h-auto group-hover:scale-110 transition-transform duration-300" priority />
               </div>
               <div>
                 <h3 className="text-base font-bold text-white group-hover:text-white transition-colors duration-300 leading-tight">
@@ -306,7 +306,7 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
                 <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Live Stats</p>
               </div>
             </div>
-            
+
             {/* Estadísticas en grid 2x2 */}
             <div className="grid grid-cols-2 gap-2.5 flex-1">
               <Tooltip content={`Total de partidas registradas para ${game.name}`} className="block">
@@ -320,7 +320,7 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
                   </p>
                 </div>
               </Tooltip>
-              
+
               <Tooltip content={`Partidas en curso de ${game.name}`} className="block">
                 <div className="bg-white/5 rounded-lg p-3 group-hover:bg-white/10 transition-colors duration-300 border border-white/10">
                   <div className="flex items-center gap-1.5 mb-1.5">
@@ -332,7 +332,7 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
                   </p>
                 </div>
               </Tooltip>
-              
+
               <Tooltip content={`Partidas programadas de ${game.name}`} className="block">
                 <div className="bg-white/5 rounded-lg p-3 group-hover:bg-white/10 transition-colors duration-300 border border-white/5 group-hover:border-white/10">
                   <div className="flex items-center gap-1.5 mb-1.5">
@@ -344,7 +344,7 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
                   </p>
                 </div>
               </Tooltip>
-              
+
               <Tooltip content={`Torneos activos de ${game.name}`} className="block">
                 <div className="bg-white/5 rounded-lg p-3 group-hover:bg-white/10 transition-colors duration-300 border border-white/5 group-hover:border-white/10">
                   <div className="flex items-center gap-1.5 mb-1.5">
@@ -381,23 +381,22 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
   const isLive = match.start_time <= currentTime && match.radiant_win === null;
   const isUpcoming = match.start_time > currentTime;
   const isFinished = match.radiant_win !== null;
-  
+
   return (
     <Link href={`/esports/${match.id}`}>
       <div
-        className={`group relative overflow-hidden rounded-xl bg-black/80 border border-white/10 hover:border-white/20 transition-all duration-500 hover:scale-[1.02] ${
-          isLive ? "ring-1 ring-red-500/30" : ""
-        }`}
+        className={`group relative overflow-hidden rounded-xl bg-black/80 border border-white/10 hover:border-white/20 transition-all duration-500 hover:scale-[1.02] ${isLive ? "ring-1 ring-red-500/30" : ""
+          }`}
       >
         {/* Efecto de brillo animado */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-        
+
         {/* Indicador de estado */}
         {isLive && (
           <div className="absolute top-0 left-0 right-0 h-px bg-red-500/50">
           </div>
         )}
-        
+
         {/* Header del partido */}
         <div className="relative z-10 p-6">
           <div className="flex items-center justify-between mb-6">
@@ -409,7 +408,8 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
                     alt={`Icono de ${game.name}`}
                     width={32}
                     height={32}
-                    className="w-8 h-8 group-hover:scale-110 transition-transform duration-300"
+                    className="w-8 h-8 w-auto h-auto group-hover:scale-110 transition-transform duration-300"
+                    priority
                   />
                 </div>
               )}
@@ -420,12 +420,12 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
                 )}
               </div>
             </div>
-            
+
             {/* Estado del partido */}
             {isLive && (
               <LiveBadge className="pointer-events-none" />
             )}
-            
+
             {isUpcoming && (
               <span className="bg-white/10 text-white text-xs font-bold px-3 py-2 rounded-full flex items-center gap-2 border border-white/10">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -441,7 +441,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
               </span>
             )}
           </div>
-          
+
           {/* Equipos y marcador */}
           <div className="flex items-center justify-between mb-6">
             {/* Equipo 1 */}
@@ -463,7 +463,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
                 )}
               </div>
             </div>
-            
+
             {/* VS y tiempo */}
             <div className="text-center px-6">
               <div className="relative">
@@ -480,7 +480,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
                 </p>
               )}
             </div>
-            
+
             {/* Equipo 2 */}
             <div className="text-center flex-1 group/team">
               <div className="bg-white/5 rounded-lg p-4 group-hover/team:bg-white/10 transition-colors duration-300">
@@ -501,7 +501,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
               </div>
             </div>
           </div>
-          
+
           {/* Footer con fecha y acciones */}
           <div className="flex items-center justify-between pt-4 border-t border-white/10">
             <div className="text-left">
@@ -522,7 +522,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
                 </p>
               )}
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button
                 className="touch-target touch-ripple p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-all duration-300 group/btn"
@@ -565,7 +565,7 @@ const Home = memo(function Home() {
   const [selectedGame, setSelectedGame] = useState<string>("all");
   const [isFiltering, setIsFiltering] = useState(false);
   const filterAnimationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
+
   const triggerFilterFeedback = useCallback(() => {
     if (filterAnimationTimeoutRef.current) {
       clearTimeout(filterAnimationTimeoutRef.current);
@@ -602,7 +602,7 @@ const Home = memo(function Home() {
       }
     };
   }, []);
-  
+
   const { currentTime, isClient } = useCurrentTime();
   const clientExtrasReady = useDeferredClientRender(400);
   const notificationSystem = useNotifications({ enabled: clientExtrasReady });
@@ -885,7 +885,7 @@ const Home = memo(function Home() {
         <section className="relative overflow-hidden py-12 sm:py-20 lg:py-28">
           {/* Fondo negro puro */}
           <div className="absolute inset-0 -z-20 bg-black" aria-hidden="true" />
-          
+
           {/* Patrón de grid sutil */}
           <div className="absolute inset-0 -z-15 opacity-10" aria-hidden="true">
             <div className="absolute inset-0" style={{
@@ -893,7 +893,7 @@ const Home = memo(function Home() {
               backgroundSize: '40px 40px'
             }} />
           </div>
-          
+
           {/* Orbes de luz sutiles */}
           <div className="absolute -left-40 top-10 -z-10 h-[500px] w-[500px] rounded-full bg-white/5 blur-[100px]" aria-hidden="true" />
           <div className="absolute -right-40 top-40 -z-10 h-[400px] w-[400px] rounded-full bg-white/5 blur-[80px]" aria-hidden="true" />
@@ -913,7 +913,7 @@ const Home = memo(function Home() {
                       Temporada 2025 · En directo
                     </span>
                   </div>
-                  
+
                   {/* Título principal */}
                   <h1 className="text-3xl sm:text-4xl lg:text-6xl xl:text-7xl font-black leading-[1.1] tracking-tight">
                     <span className="text-white">Toda la escena</span>
@@ -927,15 +927,15 @@ const Home = memo(function Home() {
                       <span className="absolute -inset-1 -z-10 rounded-lg bg-white/10 blur-sm" aria-hidden="true"></span>
                     </span>
                   </h1>
-                  
+
                   {/* Descripción */}
                   <p className="max-w-xl text-sm sm:text-base lg:text-lg text-white/50 leading-relaxed">
-                    Monitoriza resultados en tiempo real, consulta horarios de las mejores ligas y recibe alertas instantáneas de 
-                    <span className="text-white font-semibold"> Dota 2</span>, 
-                    <span className="text-white font-semibold"> League of Legends</span>, 
+                    Monitoriza resultados en tiempo real, consulta horarios de las mejores ligas y recibe alertas instantáneas de
+                    <span className="text-white font-semibold"> Dota 2</span>,
+                    <span className="text-white font-semibold"> League of Legends</span>,
                     <span className="text-white font-semibold"> CS2</span> y más.
                   </p>
-                  
+
                   {/* Botones de acción */}
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                     <Link
@@ -951,7 +951,7 @@ const Home = memo(function Home() {
                         </svg>
                       </span>
                     </Link>
-                    
+
                     <Link
                       href="#torneos"
                       className="group touch-target touch-ripple inline-flex items-center justify-center gap-3 rounded-xl border border-white/20 bg-transparent px-8 py-4 text-base font-bold text-white/80 backdrop-blur-sm transition-all duration-300 hover:border-white/40 hover:bg-white/5 hover:text-white"
@@ -972,7 +972,7 @@ const Home = memo(function Home() {
                       >
                         {/* Acento decorativo */}
                         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/20 via-transparent to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
-                        
+
                         <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/40">
                           {metric.label}
                         </span>
@@ -1008,15 +1008,15 @@ const Home = memo(function Home() {
                   {/* Glows decorativos */}
                   <div className="absolute -right-20 top-0 h-60 w-60 rounded-full bg-white/5 blur-[80px]" aria-hidden="true" />
                   <div className="absolute -left-20 bottom-10 h-48 w-48 rounded-full bg-white/5 blur-[60px]" aria-hidden="true" />
-                  
+
                   {/* Tarjeta principal */}
                   <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/80 backdrop-blur-2xl">
                     {/* Borde superior brillante */}
                     <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" aria-hidden="true" />
-                    
+
                     {/* Efecto de reflejo */}
                     <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-transparent" aria-hidden="true" />
-                    
+
                     <div className="relative flex flex-col gap-6 p-6 sm:p-8">
                       {/* Header de la tarjeta */}
                       <div className="flex items-start justify-between gap-4">
@@ -1039,7 +1039,7 @@ const Home = memo(function Home() {
                             {heroFeaturedMatch ? heroFeaturedMatch.league || "Liga profesional" : "Sigue tus juegos favoritos"}
                           </p>
                         </div>
-                        
+
                         {/* Badge de estado */}
                         {heroFeaturedMatch ? (
                           heroMatchIsLive ? (
@@ -1069,13 +1069,13 @@ const Home = memo(function Home() {
                                   {typeof heroFeaturedMatch.radiant_score === "number" ? heroFeaturedMatch.radiant_score : "—"}
                                 </p>
                               </div>
-                              
+
                               {/* VS */}
                               <div className="flex flex-col items-center gap-2">
                                 <span className="text-lg font-bold text-white/20">VS</span>
                                 <div className="w-px h-8 bg-gradient-to-b from-transparent via-white/20 to-transparent" aria-hidden="true" />
                               </div>
-                              
+
                               {/* Equipo 2 */}
                               <div className="text-center space-y-2">
                                 <p className="text-xs font-bold uppercase tracking-wide text-white/40 truncate">{heroFeaturedMatch.dire}</p>
@@ -1084,7 +1084,7 @@ const Home = memo(function Home() {
                                 </p>
                               </div>
                             </div>
-                            
+
                             {/* Info de fecha/hora */}
                             <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-white/40">
                               <span className="flex items-center gap-2">
@@ -1158,7 +1158,7 @@ const Home = memo(function Home() {
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-white/5 rounded-full blur-[120px]" aria-hidden="true" />
           </div>
-          
+
           <div className="container mx-auto px-3 sm:px-6 lg:px-8">
             {/* Header de sección mejorado */}
             <div className="mx-auto mb-14 max-w-3xl text-center">
@@ -1168,7 +1168,7 @@ const Home = memo(function Home() {
                   Métricas en directo
                 </span>
               </div>
-              
+
               <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black text-white leading-tight">
                 Estadísticas en{" "}
                 <span className="text-white/80">
@@ -1179,7 +1179,7 @@ const Home = memo(function Home() {
                 Descubre qué escena está más activa ahora mismo y encuentra nuevas ligas para seguir
               </p>
             </div>
-            
+
             {/* Grid de juegos */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
               {GAMES.map((game, index) => (
@@ -1217,223 +1217,217 @@ const Home = memo(function Home() {
                   <p className="text-white/40 text-sm">Personaliza tu experiencia seleccionando período de tiempo y juegos</p>
                 </div>
 
-            {/* Filtros de Tiempo */}
-            <div className="mb-8">
-              <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <span className="text-white/60">⏰</span>
-                Período de Tiempo
-                <Tooltip
-                  content={`Selecciona el rango temporal que mejor se adapte a tu análisis.
+                {/* Filtros de Tiempo */}
+                <div className="mb-8">
+                  <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <span className="text-white/60">⏰</span>
+                    Período de Tiempo
+                    <Tooltip
+                      content={`Selecciona el rango temporal que mejor se adapte a tu análisis.
 Incluye partidos en vivo y próximos para ese período.`}
-                  className="ml-2 inline-flex"
-                >
-                  <span
-                    tabIndex={0}
-                    aria-label="Ayuda sobre el período de tiempo"
-                    className="flex h-5 w-5 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xs font-bold text-white/60 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
-                  >
-                    i
-                  </span>
-                </Tooltip>
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 auto-rows-fr">
-                {timeframeOptions.map((option, index) => (
-                  <Tooltip
-                    key={option.id}
-                    content={`${option.emoji} ${option.label}
-${option.description}. Coincidencias actuales: ${option.count}.`}
-                    className="block h-full w-full"
-                  >
-                    <button
-                      onClick={() => handleTimeframeChange(option.id)}
-                      className={`group relative touch-target touch-ripple overflow-hidden w-full h-full min-h-[140px] sm:min-h-[160px] px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border flex flex-col items-center justify-center text-center ${
-                        selectedTimeframe === option.id
-                          ? "bg-white text-black border-white"
-                          : "bg-white/5 text-white border-white/10 hover:border-white/20 hover:bg-white/10"
-                      }`}
-                      style={{ animationDelay: `${index * 0.1}s` }}
+                      className="ml-2 inline-flex"
                     >
-                      {/* Efecto de brillo */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                      
-                      <div className="relative z-10 text-center">
-                        <div className="text-2xl mb-2">{option.emoji}</div>
-                        <div className="font-bold text-base mb-1">{option.label}</div>
-                        <div className={`text-xs mb-2 ${selectedTimeframe === option.id ? 'text-black/60' : 'text-white/40'}`}>
-                          {option.description}
-                        </div>
-                        <div className={`text-xs font-bold px-2 py-1 rounded-full ${
-                          selectedTimeframe === option.id 
-                            ? 'bg-black/10 text-black' 
-                            : 'bg-white/10 text-white/60'
-                        }`}>
-                          {option.count} partidos
-                        </div>
-                      </div>
-
-                      {/* Indicador de selección */}
-                      {selectedTimeframe === option.id && (
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 rounded-b-xl"></div>
-                      )}
-                    </button>
-                  </Tooltip>
-                ))}
-              </div>
-            </div>
-
-            {/* Filtros de Juegos */}
-            <div className="mb-6">
-              <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <span className="text-white/60">🎮</span>
-                Seleccionar Juegos
-                <Tooltip
-                  content={`Filtra la lista por juego específico para centrarte en tus ligas favoritas.
-Los partidos mostrados y las estadísticas se ajustan automáticamente.`}
-                  className="ml-2 inline-flex"
-                >
-                  <span
-                    tabIndex={0}
-                    aria-label="Ayuda sobre el filtro de juegos"
-                    className="flex h-5 w-5 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xs font-bold text-white/60 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
-                  >
-                    i
-                  </span>
-                </Tooltip>
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 auto-rows-fr">
-                {/* Opción "Todos los juegos" */}
-                <Tooltip
-                  content={`Todos los juegos
-Reúne enfrentamientos de cada título disponible. Coincidencias actuales: ${matches.length}.`}
-                  className="block h-full w-full"
-                >
-                      <button
-                        onClick={() => handleGameChange("all")}
-                        className={`group relative touch-target touch-ripple overflow-hidden w-full h-full min-h-[140px] sm:min-h-[160px] px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border flex flex-col items-center justify-center text-center ${
-                          selectedGame === "all"
+                      <span
+                        tabIndex={0}
+                        aria-label="Ayuda sobre el período de tiempo"
+                        className="flex h-5 w-5 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xs font-bold text-white/60 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
+                      >
+                        i
+                      </span>
+                    </Tooltip>
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 auto-rows-fr">
+                    {timeframeOptions.map((option, index) => (
+                      <Tooltip
+                        key={option.id}
+                        content={`${option.emoji} ${option.label}
+${option.description}. Coincidencias actuales: ${option.count}.`}
+                        className="block h-full w-full"
+                      >
+                        <button
+                          onClick={() => handleTimeframeChange(option.id)}
+                          className={`group relative touch-target touch-ripple overflow-hidden w-full h-full min-h-[140px] sm:min-h-[160px] px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border flex flex-col items-center justify-center text-center ${selectedTimeframe === option.id
                             ? "bg-white text-black border-white"
                             : "bg-white/5 text-white border-white/10 hover:border-white/20 hover:bg-white/10"
-                        }`}
-                      >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                    
-                    <div className="relative z-10 text-center">
-                      <div className="text-3xl mb-3">🌟</div>
-                      <div className="font-bold text-sm mb-2">Todos</div>
-                      <div className={`text-xs px-2 py-1 rounded-full ${
-                        selectedGame === "all" 
-                          ? 'bg-black/10 text-black' 
-                          : 'bg-white/10 text-white/60'
-                      }`}>
-                        {matches.length} partidos
-                      </div>
-                    </div>
+                            }`}
+                          style={{ animationDelay: `${index * 0.1}s` }}
+                        >
+                          {/* Efecto de brillo */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
-                    {selectedGame === "all" && (
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 rounded-b-xl"></div>
-                    )}
-                  </button>
-                </Tooltip>
+                          <div className="relative z-10 text-center">
+                            <div className="text-2xl mb-2">{option.emoji}</div>
+                            <div className="font-bold text-base mb-1">{option.label}</div>
+                            <div className={`text-xs mb-2 ${selectedTimeframe === option.id ? 'text-black/60' : 'text-white/40'}`}>
+                              {option.description}
+                            </div>
+                            <div className={`text-xs font-bold px-2 py-1 rounded-full ${selectedTimeframe === option.id
+                              ? 'bg-black/10 text-black'
+                              : 'bg-white/10 text-white/60'
+                              }`}>
+                              {option.count} partidos
+                            </div>
+                          </div>
 
-                {/* Opciones de juegos individuales */}
-                {GAMES.map((game, index) => {
-                  const gameMatches = matchesByGame[game.id] ?? [];
-                  return (
+                          {/* Indicador de selección */}
+                          {selectedTimeframe === option.id && (
+                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 rounded-b-xl"></div>
+                          )}
+                        </button>
+                      </Tooltip>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Filtros de Juegos */}
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <span className="text-white/60">🎮</span>
+                    Seleccionar Juegos
                     <Tooltip
-                      key={game.id}
-                      content={`${game.name}
-${game.description ?? "Información del título"}. Coincidencias actuales: ${gameMatches.length}.`}
+                      content={`Filtra la lista por juego específico para centrarte en tus ligas favoritas.
+Los partidos mostrados y las estadísticas se ajustan automáticamente.`}
+                      className="ml-2 inline-flex"
+                    >
+                      <span
+                        tabIndex={0}
+                        aria-label="Ayuda sobre el filtro de juegos"
+                        className="flex h-5 w-5 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xs font-bold text-white/60 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
+                      >
+                        i
+                      </span>
+                    </Tooltip>
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 auto-rows-fr">
+                    {/* Opción "Todos los juegos" */}
+                    <Tooltip
+                      content={`Todos los juegos
+Reúne enfrentamientos de cada título disponible. Coincidencias actuales: ${matches.length}.`}
                       className="block h-full w-full"
                     >
                       <button
-                        onClick={() => handleGameChange(game.id)}
-                        className={`group relative touch-target touch-ripple overflow-hidden w-full h-full min-h-[140px] sm:min-h-[160px] px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border flex flex-col items-center justify-center text-center ${
-                          selectedGame === game.id
-                            ? "bg-white text-black border-white"
-                            : "bg-white/5 text-white border-white/10 hover:border-white/20 hover:bg-white/10"
-                        }`}
-                        style={{ animationDelay: `${(index + 1) * 0.1}s` }}
+                        onClick={() => handleGameChange("all")}
+                        className={`group relative touch-target touch-ripple overflow-hidden w-full h-full min-h-[140px] sm:min-h-[160px] px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border flex flex-col items-center justify-center text-center ${selectedGame === "all"
+                          ? "bg-white text-black border-white"
+                          : "bg-white/5 text-white border-white/10 hover:border-white/20 hover:bg-white/10"
+                          }`}
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                        
+
                         <div className="relative z-10 text-center">
-                          <div className="mb-3">
-                            <Image
-                              src={game.icon}
-                              alt={`Icono de ${game.name}`}
-                              width={32}
-                              height={32}
-                              className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300"
-                            />
-                          </div>
-                          <div className="font-bold text-sm mb-2 line-clamp-1" title={game.name}>
-                            {game.name}
-                          </div>
-                          <div className={`text-xs px-2 py-1 rounded-full ${
-                            selectedGame === game.id 
-                              ? 'bg-black/10 text-black' 
-                              : 'bg-white/10 text-white/60'
-                          }`}>
-                            {gameMatches.length} partidos
+                          <div className="text-3xl mb-3">🌟</div>
+                          <div className="font-bold text-sm mb-2">Todos</div>
+                          <div className={`text-xs px-2 py-1 rounded-full ${selectedGame === "all"
+                            ? 'bg-black/10 text-black'
+                            : 'bg-white/10 text-white/60'
+                            }`}>
+                            {matches.length} partidos
                           </div>
                         </div>
 
-                        {selectedGame === game.id && (
+                        {selectedGame === "all" && (
                           <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 rounded-b-xl"></div>
                         )}
                       </button>
                     </Tooltip>
-                  );
-                })}
-              </div>
-            </div>
 
-            {/* Información de resultados y acciones */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-white/10">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl text-sm text-white/50">
-                  <svg className="w-4 h-4 text-white/40" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  Actualización automática cada 30s
-                </div>
-                
-                <div className="bg-white/5 px-4 py-2 rounded-xl text-sm text-white border border-white/10">
-                  <span className="font-bold">{filteredMatches.length}</span> partidos encontrados
-                </div>
-              </div>
+                    {/* Opciones de juegos individuales */}
+                    {GAMES.map((game, index) => {
+                      const gameMatches = matchesByGame[game.id] ?? [];
+                      return (
+                        <Tooltip
+                          key={game.id}
+                          content={`${game.name}
+${game.description ?? "Información del título"}. Coincidencias actuales: ${gameMatches.length}.`}
+                          className="block h-full w-full"
+                        >
+                          <button
+                            onClick={() => handleGameChange(game.id)}
+                            className={`group relative touch-target touch-ripple overflow-hidden w-full h-full min-h-[140px] sm:min-h-[160px] px-4 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border flex flex-col items-center justify-center text-center ${selectedGame === game.id
+                              ? "bg-white text-black border-white"
+                              : "bg-white/5 text-white border-white/10 hover:border-white/20 hover:bg-white/10"
+                              }`}
+                            style={{ animationDelay: `${(index + 1) * 0.1}s` }}
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => {
-                    const timeframeChanged = handleTimeframeChange("today");
-                    const gameChanged = handleGameChange("all");
-                    if (!timeframeChanged && !gameChanged) {
-                      triggerFilterFeedback();
-                    }
-                  }}
-                  className="touch-target touch-ripple bg-white/5 hover:bg-white/10 text-white/50 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2"
-                  aria-label="Restablecer filtros a valores por defecto"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Restablecer
-                </button>
-                
-                {featuredMatches.length > 0 && (
-                  <Link
-                    href="/esports"
-                    className="touch-target touch-ripple bg-white hover:bg-white/90 text-black px-6 py-2 rounded-xl font-semibold transition-all duration-300 hover:scale-105 flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                    Ver Todos
-                  </Link>
-                )}
-              </div>
-            </div>
+                            <div className="relative z-10 text-center">
+                              <div className="mb-3">
+                                <Image
+                                  src={game.icon}
+                                  alt={`Icono de ${game.name}`}
+                                  width={32}
+                                  height={32}
+                                  className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300"
+                                />
+                              </div>
+                              <div className="font-bold text-sm mb-2 line-clamp-1" title={game.name}>
+                                {game.name}
+                              </div>
+                              <div className={`text-xs px-2 py-1 rounded-full ${selectedGame === game.id
+                                ? 'bg-black/10 text-black'
+                                : 'bg-white/10 text-white/60'
+                                }`}>
+                                {gameMatches.length} partidos
+                              </div>
+                            </div>
+
+                            {selectedGame === game.id && (
+                              <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 rounded-b-xl"></div>
+                            )}
+                          </button>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Información de resultados y acciones */}
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-white/10">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl text-sm text-white/50">
+                      <svg className="w-4 h-4 text-white/40" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Actualización automática cada 30s
+                    </div>
+
+                    <div className="bg-white/5 px-4 py-2 rounded-xl text-sm text-white border border-white/10">
+                      <span className="font-bold">{filteredMatches.length}</span> partidos encontrados
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        const timeframeChanged = handleTimeframeChange("today");
+                        const gameChanged = handleGameChange("all");
+                        if (!timeframeChanged && !gameChanged) {
+                          triggerFilterFeedback();
+                        }
+                      }}
+                      className="touch-target touch-ripple bg-white/5 hover:bg-white/10 text-white/50 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2"
+                      aria-label="Restablecer filtros a valores por defecto"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Restablecer
+                    </button>
+
+                    {featuredMatches.length > 0 && (
+                      <Link
+                        href="/esports"
+                        className="touch-target touch-ripple bg-white hover:bg-white/90 text-black px-6 py-2 rounded-xl font-semibold transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                        Ver Todos
+                      </Link>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1486,8 +1480,8 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
               ) : featuredMatches.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
                   {featuredMatches.map((match, index) => (
-                    <div 
-                      key={match.id} 
+                    <div
+                      key={match.id}
                       className="animate-fadein"
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
@@ -1528,7 +1522,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
               <div className="bg-white/5 rounded-xl p-6 border border-white/10 backdrop-blur-sm">
                 <h3 className="text-lg font-semibold text-white mb-4">Acciones Rápidas</h3>
                 <div className="flex flex-wrap justify-center gap-4">
-                  <Link 
+                  <Link
                     href="/esports"
                     className="bg-white hover:bg-white/90 text-black px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 flex items-center gap-2"
                   >
@@ -1540,7 +1534,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                   >
                     ⭐ Mis Favoritos
                   </button>
-                  <button 
+                  <button
                     className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 flex items-center gap-2 border border-white/10"
                     aria-label="Filtrar solo partidos en vivo"
                   >
@@ -1556,7 +1550,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
         <section className="container mx-auto px-3 sm:px-6 py-8 sm:py-16 relative">
           {/* Fondo */}
           <div className="absolute inset-0 bg-white/[0.02] rounded-2xl"></div>
-          
+
           <div className="relative z-10">
             <div className="text-center mb-12">
               <h2 className="text-2xl sm:text-4xl font-bold mb-4 text-white">
@@ -1591,20 +1585,19 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                     tournament.begin_at <= currentTime &&
                     (!tournament.end_at || tournament.end_at > currentTime);
                   return (
-                    <div 
-                      key={tournament.id} 
+                    <div
+                      key={tournament.id}
                       className="animate-fadein"
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
                       <Link href={`/esports/tournament/${tournament.id}`}>
                         <div
-                          className={`group relative overflow-hidden bg-black/60 rounded-xl p-8 hover:bg-black/80 transition-all duration-500 hover:scale-[1.02] border border-white/10 hover:border-white/20 ${
-                            isLive ? "ring-1 ring-white/20" : ""
-                          }`}
+                          className={`group relative overflow-hidden bg-black/60 rounded-xl p-8 hover:bg-black/80 transition-all duration-500 hover:scale-[1.02] border border-white/10 hover:border-white/20 ${isLive ? "ring-1 ring-white/20" : ""
+                            }`}
                         >
                           {/* Efecto de brillo */}
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                          
+
                           {/* Header del torneo */}
                           <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-6">
@@ -1615,7 +1608,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                                     alt={`Icono de ${game.name}`}
                                     width={40}
                                     height={40}
-                                    className="w-10 h-10 group-hover:scale-110 transition-transform duration-300"
+                                    className="w-10 h-10 w-auto h-auto group-hover:scale-110 transition-transform duration-300"
                                   />
                                 </div>
                               )}
@@ -1627,13 +1620,13 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                                   <p className="text-xs text-white/40">{game.name}</p>
                                 )}
                               </div>
-                              
+
                               {/* Estado activo */}
                               {isLive && (
                                 <LiveBadge label="EN CURSO" tone="emerald" className="pointer-events-none" />
                               )}
                             </div>
-                            
+
                             {/* Información del torneo */}
                             <h3 className="text-xl font-bold text-white mb-3 group-hover:text-white transition-colors duration-300 line-clamp-2">
                               {tournament.name}
@@ -1641,7 +1634,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                             <p className="text-sm text-white/40 mb-6 line-clamp-2">
                               {tournament.serie}
                             </p>
-                            
+
                             {/* Footer */}
                             <div className="flex items-center justify-between">
                               {tournament.prizepool ? (
@@ -1654,7 +1647,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                                   Prize Pool TBD
                                 </div>
                               )}
-                              
+
                               <div className="flex items-center gap-2 text-white/40">
                                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
@@ -1698,18 +1691,18 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
             <div className="absolute inset-0 bg-white/5" aria-hidden="true" />
             <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/5 rounded-full blur-[100px]" aria-hidden="true" />
             <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/5 rounded-full blur-[100px]" aria-hidden="true" />
-            
+
             {/* Borde decorativo */}
             <div className="absolute inset-0 rounded-2xl border border-white/10" aria-hidden="true" />
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" aria-hidden="true" />
-            
+
             <div className="relative text-center px-3 sm:px-6 py-8 sm:py-16 lg:py-24">
               {/* Badge */}
               <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-white/60 mb-6">
                 <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                 Únete ahora
               </span>
-              
+
               <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black text-white mb-6 max-w-3xl mx-auto leading-tight">
                 ¿Listo para sumergirte en el{" "}
                 <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
@@ -1717,14 +1710,14 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                 </span>
                 ?
               </h2>
-              
+
               <p className="text-sm sm:text-lg lg:text-xl text-white/50 mb-10 max-w-2xl mx-auto leading-relaxed">
                 Únete a miles de usuarios que ya siguen sus equipos favoritos y nunca se pierden un partido importante.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link 
-                  href="/esports" 
+                <Link
+                  href="/esports"
                   className="group relative inline-flex items-center justify-center gap-3 rounded-xl bg-white px-10 py-4 text-lg font-bold text-black transition-all duration-300 hover:bg-white/90 hover:scale-[1.02] overflow-hidden"
                 >
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" aria-hidden="true" />
@@ -1735,15 +1728,15 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                     </svg>
                   </span>
                 </Link>
-                
-                <Link 
+
+                <Link
                   href="/equipos"
                   className="group inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-transparent px-8 py-4 text-lg font-bold text-white/80 backdrop-blur-sm transition-all duration-300 hover:border-white/40 hover:bg-white/5 hover:text-white"
                 >
                   👥 Explorar Equipos
                 </Link>
               </div>
-              
+
               {/* Stats mini */}
               <div className="mt-12 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
                 {[

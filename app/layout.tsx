@@ -110,29 +110,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className="scroll-smooth">
+    <html lang="es" style={{ scrollBehavior: 'smooth' }}>
       <head>
         <meta name="theme-color" content="#00FF80" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="format-detection" content="telephone=no" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`}>
+
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`} suppressHydrationWarning>
         <ErrorBoundary>
           <AccessibilityProvider>
             <UXProvider>
               <AuthProvider>
                 <SkipToContent />
-                
+
                 <Suspense fallback={
                   <div className="animate-pulse bg-gray-800 h-16 w-full" role="status" aria-label="Cargando navegación"></div>
                 }>
                   <Header />
                 </Suspense>
-                
+
                 <main id="main-content" className="focus:outline-none" role="main">
                   {children}
                 </main>
