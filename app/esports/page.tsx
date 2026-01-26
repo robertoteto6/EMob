@@ -799,7 +799,7 @@ function EsportsPageContent() {
     <>
       <LiveScoreTicker currentGame={game} />
 
-      <main className="min-h-screen pt-20">
+      <main className="min-h-screen pt-20 pb-24 md:pb-0">
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 py-12">
           <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-5"></div>

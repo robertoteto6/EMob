@@ -65,7 +65,7 @@ function HeaderContent() {
 
   return (
     <header
-      className={`group fixed top-0 left-0 right-0 z-50 transition-[background,box-shadow,border-color] duration-300 ${isClient && isScrolled
+      className={`group fixed top-0 left-0 right-0 z-50 transition-[background,box-shadow,border-color] duration-300 safe-top ${isClient && isScrolled
         ? "bg-black/85 backdrop-blur-2xl border-b border-white/10 shadow-[0_12px_30px_rgba(0,0,0,0.35)]"
         : "bg-transparent"
         }`}
@@ -236,8 +236,8 @@ function HeaderContent() {
           }}
         >
           {/* Backdrop blur mejorado */}
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-2xl" aria-hidden="true" />
-          <div className="relative bg-black/95 backdrop-blur-xl border-b border-white/5 shadow-2xl shadow-black/50 mobile-scroll-y max-h-[85vh] overflow-y-auto">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-2xl touch-none" aria-hidden="true" onClick={() => setIsMobileMenuOpen(false)} />
+          <div className="relative bg-black/95 backdrop-blur-xl border-b border-white/5 shadow-2xl shadow-black/50 mobile-scroll-y max-h-[85vh] overflow-y-auto overscroll-contain">
             {/* Handle indicator para swipe */}
             <div className="flex justify-center py-2 border-b border-white/5">
               <div className="w-10 h-1 bg-white/20 rounded-full" aria-hidden="true" />

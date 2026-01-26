@@ -272,22 +272,22 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
         <div className="text-center max-w-md mx-auto">
           <div className="mb-6 p-4 rounded-full bg-red-900/20 border border-red-500/30 w-20 h-20 flex items-center justify-center mx-auto">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-400">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>
           <h2 className="text-xl font-bold text-red-400 mb-2">Error al cargar el partido</h2>
           <p className="text-gray-400 mb-6">{error}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button 
-              onClick={() => loadMatchData(true)} 
+            <button
+              onClick={() => loadMatchData(true)}
               className="px-6 py-3 bg-[var(--accent,#00FF80)] text-black font-bold rounded-xl hover:bg-green-400 transition-colors"
             >
               Reintentar
             </button>
-            <a 
-              href="/esports" 
+            <a
+              href="/esports"
               className="px-6 py-3 bg-gray-800 text-white font-bold rounded-xl hover:bg-gray-700 transition-colors border border-gray-600"
             >
               Volver a partidos
@@ -308,15 +308,15 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
         <div className="text-center max-w-md mx-auto">
           <div className="mb-6 p-4 rounded-full bg-gray-800 border border-gray-600 w-20 h-20 flex items-center justify-center mx-auto">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="M21 21l-4.35-4.35"/>
-              <path d="M8 11h6"/>
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+              <path d="M8 11h6" />
             </svg>
           </div>
           <h2 className="text-xl font-bold text-gray-300 mb-2">Partido no encontrado</h2>
           <p className="text-gray-500 mb-6">El partido que buscas no existe o ha sido eliminado.</p>
-          <a 
-            href="/esports" 
+          <a
+            href="/esports"
             className="inline-block px-6 py-3 bg-[var(--accent,#00FF80)] text-black font-bold rounded-xl hover:bg-green-400 transition-colors"
           >
             Ver todos los partidos
@@ -327,7 +327,7 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
   }
 
   return (
-    <main className="pt-16 font-sans min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white" role="main" aria-labelledby="match-title">
+    <main className="pt-16 pb-24 md:pb-0 font-sans min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white" role="main" aria-labelledby="match-title">
       <div className="w-full max-w-6xl mx-auto px-4 sm:px-8">
         <MatchHeader matchName={match.name} lang={lang} langs={LANGS} onLangChange={handleLangChange} showNotification={showNotification} />
 
@@ -353,10 +353,10 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
           {/* Left/Main Column: Games, Lineups, Predictions */}
           <div className="lg:col-span-2 space-y-8">
-            <MatchGames 
-              games={match.games} 
-              radiantName={match.radiant} 
-              direName={match.dire} 
+            <MatchGames
+              games={match.games}
+              radiantName={match.radiant}
+              direName={match.dire}
               radiantId={match.radiant_id}
               direId={match.dire_id}
             />
@@ -379,9 +379,9 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
             <div className="p-6 rounded-2xl bg-gray-800/20 border border-gray-700/50">
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--accent,#00FF80)]">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="16" x2="12" y2="12"/>
-                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
                 </svg>
                 Información
               </h3>
@@ -389,7 +389,7 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-lg bg-gray-800">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                     </svg>
                   </div>
                   <div>
@@ -402,7 +402,7 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-gray-800">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                       </svg>
                     </div>
                     <div>
@@ -416,9 +416,9 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-gray-800">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="3" y1="9" x2="21" y2="9"/>
-                        <line x1="9" y1="21" x2="9" y2="9"/>
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <line x1="3" y1="9" x2="21" y2="9" />
+                        <line x1="9" y1="21" x2="9" y2="9" />
                       </svg>
                     </div>
                     <div>
@@ -432,8 +432,8 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-gray-800">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                       </svg>
                     </div>
                     <div>
@@ -449,21 +449,20 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
             <div className="p-6 rounded-2xl bg-gray-800/20 border border-gray-700/50">
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-purple-400">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                 </svg>
                 Acciones Rápidas
               </h3>
               <div className="space-y-2">
                 <button
                   onClick={toggleFavorite}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${
-                    isFavorite 
-                      ? 'bg-yellow-900/20 border-yellow-500/30 text-yellow-400' 
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${isFavorite
+                      ? 'bg-yellow-900/20 border-yellow-500/30 text-yellow-400'
                       : 'bg-gray-800/50 border-gray-700 text-gray-300 hover:bg-gray-700/50 hover:border-gray-600'
-                  }`}
+                    }`}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                   </svg>
                   <span className="text-sm font-semibold">
                     {isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
@@ -476,9 +475,9 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700/50 hover:border-gray-600 transition-all text-left disabled:opacity-50"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={loading ? 'animate-spin' : ''}>
-                    <path d="M23 4v6h-6"/>
-                    <path d="M1 20v-6h6"/>
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    <path d="M23 4v6h-6" />
+                    <path d="M1 20v-6h6" />
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
                   </svg>
                   <span className="text-sm font-semibold">
                     {loading ? 'Actualizando...' : 'Actualizar datos'}
@@ -488,11 +487,10 @@ export default function MatchPage(props: { params: Promise<{ matchId: string }> 
             </div>
 
             {/* Connection Status */}
-            <div className={`p-4 rounded-xl border ${
-              isOnline 
-                ? 'bg-green-900/10 border-green-500/20' 
+            <div className={`p-4 rounded-xl border ${isOnline
+                ? 'bg-green-900/10 border-green-500/20'
                 : 'bg-red-900/10 border-red-500/20'
-            }`}>
+              }`}>
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
                 <span className={`text-xs font-semibold ${isOnline ? 'text-green-400' : 'text-red-400'}`}>

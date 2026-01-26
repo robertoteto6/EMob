@@ -23,7 +23,7 @@ const ChatBot = nextDynamic(() => import("../components/ChatBot"), {
 });
 
 // Icono de favorito (estrella)
-function Star({ filled, ...props }: { filled: boolean; [key: string]: any }) {
+function Star({ filled, ...props }: { filled: boolean;[key: string]: any }) {
   return (
     <svg
       width="22"
@@ -79,22 +79,22 @@ async function fetchPlayers(game: string, search?: string, signal?: AbortSignal)
     if (cached) {
       return cached as Player[];
     }
-    
+
     console.log(`Fetching players for game: ${game}, search: ${search || 'none'}`);
-    
+
     const res = await fetch(`/api/esports/players?${params.toString()}`, {
       cache: "no-store",
       signal,
     });
-    
+
     console.log(`API response status: ${res.status}`);
-    
+
     if (!res.ok) {
       const errorText = await res.text();
       console.error(`Failed to fetch players: ${res.status} - ${errorText}`);
       return [];
     }
-    
+
     const data = await res.json();
     if (signal?.aborted) {
       return [];
@@ -113,9 +113,9 @@ async function fetchPlayers(game: string, search?: string, signal?: AbortSignal)
 }
 
 // Componente de tarjeta de jugador mejorado
-function PlayerCard({ player, onToggleFavorite, favoritePlayers }: { 
-  player: Player; 
-  onToggleFavorite: React.Dispatch<React.SetStateAction<number[]>>; 
+function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
+  player: Player;
+  onToggleFavorite: React.Dispatch<React.SetStateAction<number[]>>;
   favoritePlayers: number[];
 }) {
   const isFavorite = favoritePlayers.includes(player.id);
@@ -147,13 +147,13 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
       <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 hover:border-green-500/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl">
         {/* Efecto de brillo animado */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-        
+
         {/* Indicador de nivel en la esquina superior */}
         <div className={`absolute top-3 left-3 px-2 py-1 rounded-full bg-gradient-to-r ${titleInfo.color} text-white text-xs font-bold z-20 flex items-center gap-1`}>
           <span>{titleInfo.icon}</span>
           <span>{titleInfo.level}</span>
         </div>
-        
+
         {/* Header del jugador */}
         <div className="relative z-10 p-6">
           <div className="flex items-center justify-between mb-4">
@@ -174,17 +174,17 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
                     }}
                   />
                 </div>
-                
+
                 {/* Indicador de equipo si tiene */}
                 {player.current_team && (
                   <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-gray-800">
                     T
                   </div>
                 )}
-                
+
                 <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
               </div>
-              
+
               <div className="flex-1">
                 <h3 className="font-bold text-lg text-white group-hover:text-green-400 transition-colors duration-300 line-clamp-1">
                   {player.name}
@@ -204,14 +204,14 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
                 </div>
               </div>
             </div>
-            
+
             {/* Botón de favorito */}
             <button
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onToggleFavorite(prev => 
-                  prev.includes(player.id) 
+                onToggleFavorite(prev =>
+                  prev.includes(player.id)
                     ? prev.filter(id => id !== player.id)
                     : [...prev, player.id]
                 );
@@ -221,21 +221,19 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
               <Star filled={isFavorite} />
             </button>
           </div>
-          
+
           {/* Información del jugador */}
-          <div className="space-y-3">            
+          <div className="space-y-3">
             {/* Estatus profesional */}
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full animate-pulse ${
-                player.professional_status === "Activo" ? "bg-green-400" : "bg-yellow-400"
-              }`}></div>
-              <span className={`text-sm font-medium ${
-                player.professional_status === "Activo" ? "text-green-400" : "text-yellow-400"
-              }`}>
+              <div className={`w-2 h-2 rounded-full animate-pulse ${player.professional_status === "Activo" ? "bg-green-400" : "bg-yellow-400"
+                }`}></div>
+              <span className={`text-sm font-medium ${player.professional_status === "Activo" ? "text-green-400" : "text-yellow-400"
+                }`}>
                 {player.professional_status}
               </span>
             </div>
-            
+
             {/* Estadísticas mejoradas */}
             <div className="grid grid-cols-3 gap-2 text-sm">
               <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-800/50">
@@ -247,7 +245,7 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
                   <div className="text-xs text-gray-400">Puntos</div>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-800/50">
                 <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
@@ -260,7 +258,7 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
 
               <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-800/50">
                 <svg className="w-4 h-4 text-pink-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                 </svg>
                 <div>
                   <div className="text-pink-400 font-bold">{formatInstagramFollowers(player.instagram_followers)}</div>
@@ -269,13 +267,13 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
               </div>
             </div>
           </div>
-          
+
           {/* Footer con acciones */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-700 mt-4">
             <div className="text-left">
               <span className="text-xs text-gray-400">Ver Perfil Completo</span>
             </div>
-            
+
             <div className={`bg-gradient-to-r ${titleInfo.color} p-2 rounded-lg opacity-80`}>
               <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -294,24 +292,24 @@ function PlayerCard({ player, onToggleFavorite, favoritePlayers }: {
 function PlayersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Obtener el juego de los parámetros de URL o usar dota2 por defecto
   const [game, setGame] = useState<string>(() => {
     return searchParams?.get('game') || GAMES[0].id;
   });
-  
+
   // Función para cambiar el juego y actualizar la URL sin recargar
   const handleGameChange = (newGame: string) => {
     if (newGame === game) return; // Evitar cambios innecesarios
-    
+
     setIsTransitioning(true);
     setGame(newGame);
-    
+
     const params = new URLSearchParams(searchParams?.toString());
     params.set('game', newGame);
     // Usar replace en lugar de push para evitar agregar al historial
     router.replace(`/esports/players?${params.toString()}`, { scroll: false });
-    
+
     // Reset del estado de transición después de un breve delay
     setTimeout(() => setIsTransitioning(false), 300);
   };
@@ -322,14 +320,14 @@ function PlayersPageContent() {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("titles"); // Nuevo estado para ordenación
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false); // Estado para transiciones
-  
+
   // Sistemas
   const clientExtrasReady = useDeferredClientRender(400);
   const notificationSystem = useNotifications({ enabled: clientExtrasReady });
-  
+
   // Cache simple para evitar recargas innecesarias
   const [playersCache, setPlayersCache] = useState<Map<string, Player[]>>(new Map());
-  
+
   // Favoritos: ids de jugadores favoritos
   const [favoritePlayers, setFavoritePlayers] = useState<number[]>(() => {
     if (typeof window !== "undefined") {
@@ -341,7 +339,7 @@ function PlayersPageContent() {
     }
     return [];
   });
-  
+
   // Paginación
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 12;
@@ -351,7 +349,7 @@ function PlayersPageContent() {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm);
     }, 300);
-    
+
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
@@ -365,7 +363,7 @@ function PlayersPageContent() {
     const controller = new AbortController();
     async function load() {
       const cacheKey = `${game}-${debouncedSearch}`;
-      
+
       // Verificar si ya tenemos estos datos en caché
       if (playersCache.has(cacheKey)) {
         if (!controller.signal.aborted) {
@@ -373,17 +371,17 @@ function PlayersPageContent() {
         }
         return;
       }
-      
+
       setLoading(true);
       setIsTransitioning(true);
-      
+
       try {
         const data = await fetchPlayers(game, debouncedSearch, controller.signal);
         if (controller.signal.aborted) {
           return;
         }
         setPlayers(data);
-        
+
         // Guardar en caché
         setPlayersCache(prev => new Map(prev).set(cacheKey, data));
       } catch (error) {
@@ -413,7 +411,7 @@ function PlayersPageContent() {
   // Filtrado, ordenación y paginación
   const sortedAndPaginatedPlayers = useMemo(() => {
     const sortedPlayers = [...players];
-    
+
     // Aplicar ordenación
     switch (sortBy) {
       case "titles":
@@ -443,7 +441,7 @@ function PlayersPageContent() {
         // Mantener orden por títulos como predeterminado
         sortedPlayers.sort((a, b) => b.title_score - a.title_score);
     }
-    
+
     // Aplicar paginación
     const start = (page - 1) * PAGE_SIZE;
     return sortedPlayers.slice(start, start + PAGE_SIZE);
@@ -461,7 +459,7 @@ function PlayersPageContent() {
     const totalTitulos = players.reduce((sum, p) => sum + p.title_score, 0);
     const jugadoresActivos = players.filter(p => p.professional_status === "Activo").length;
     const conEquipo = players.filter(p => p.current_team).length;
-    
+
     return {
       total: players.length,
       favoritos: favoriteList.length,
@@ -476,8 +474,8 @@ function PlayersPageContent() {
   return (
     <>
       <LiveScoreTicker currentGame={game} />
-      
-      <main className="min-h-screen pt-20">
+
+      <main className="min-h-screen pt-20 pb-24 md:pb-0">
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900 py-12">
           <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-5"></div>
@@ -489,7 +487,7 @@ function PlayersPageContent() {
               <p className="text-xl text-gray-300 mb-6 max-w-2xl mx-auto">
                 Descubre los mejores jugadores profesionales de esports del mundo
               </p>
-              
+
               {/* Estadísticas rápidas mejoradas */}
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 max-w-6xl mx-auto">
                 <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700 hover:border-green-500/30 transition-colors">
@@ -501,7 +499,7 @@ function PlayersPageContent() {
                   </div>
                   <div className="text-sm text-gray-400">Jugadores</div>
                 </div>
-                
+
                 <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700 hover:border-yellow-500/30 transition-colors">
                   <div className="flex items-center gap-2 mb-2">
                     <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
@@ -511,7 +509,7 @@ function PlayersPageContent() {
                   </div>
                   <div className="text-sm text-gray-400">Favoritos</div>
                 </div>
-                
+
                 <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700 hover:border-blue-500/30 transition-colors">
                   <div className="flex items-center gap-2 mb-2">
                     <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
@@ -521,7 +519,7 @@ function PlayersPageContent() {
                   </div>
                   <div className="text-sm text-gray-400">Con Foto</div>
                 </div>
-                
+
                 <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700 hover:border-purple-500/30 transition-colors">
                   <div className="flex items-center gap-2 mb-2">
                     <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
@@ -531,7 +529,7 @@ function PlayersPageContent() {
                   </div>
                   <div className="text-sm text-gray-400">Activos</div>
                 </div>
-                
+
                 <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700 hover:border-cyan-500/30 transition-colors">
                   <div className="flex items-center gap-2 mb-2">
                     <svg className="w-5 h-5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
@@ -541,7 +539,7 @@ function PlayersPageContent() {
                   </div>
                   <div className="text-sm text-gray-400">En Equipo</div>
                 </div>
-                
+
                 <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700 hover:border-orange-500/30 transition-colors">
                   <div className="flex items-center gap-2 mb-2">
                     <svg className="w-5 h-5 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
@@ -566,15 +564,14 @@ function PlayersPageContent() {
                   key={g.id}
                   onClick={() => handleGameChange(g.id)}
                   disabled={isTransitioning}
-                  className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                    game === g.id
+                  className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 disabled:opacity-50 disabled:cursor-not-allowed ${game === g.id
                       ? `bg-gradient-to-r ${g.gradient} text-white border-white/30 shadow-lg`
                       : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
-                  }`}
+                    }`}
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                  
+
                   <div className="relative z-10 text-center">
                     <div className="mb-3">
                       <Image
@@ -633,11 +630,10 @@ function PlayersPageContent() {
                 <button
                   onClick={() => setSortBy("titles")}
                   disabled={isTransitioning}
-                  className={`px-4 py-3 rounded-xl font-semibold transition-all duration-300 border-2 disabled:opacity-50 ${
-                    sortBy === "titles"
+                  className={`px-4 py-3 rounded-xl font-semibold transition-all duration-300 border-2 disabled:opacity-50 ${sortBy === "titles"
                       ? "bg-gradient-to-r from-orange-600 to-red-600 text-white border-orange-400 shadow-lg"
                       : "bg-gray-800/50 text-white border-gray-600 hover:border-orange-500/50 hover:bg-gray-700/50"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-center gap-2">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -646,32 +642,30 @@ function PlayersPageContent() {
                     <span className="text-sm">Títulos</span>
                   </div>
                 </button>
-                
+
                 <button
                   onClick={() => setSortBy("instagram")}
                   disabled={isTransitioning}
-                  className={`px-4 py-3 rounded-xl font-semibold transition-all duration-300 border-2 disabled:opacity-50 ${
-                    sortBy === "instagram"
+                  className={`px-4 py-3 rounded-xl font-semibold transition-all duration-300 border-2 disabled:opacity-50 ${sortBy === "instagram"
                       ? "bg-gradient-to-r from-pink-600 to-purple-600 text-white border-pink-400 shadow-lg"
                       : "bg-gray-800/50 text-white border-gray-600 hover:border-pink-500/50 hover:bg-gray-700/50"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-center gap-2">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                     </svg>
                     <span className="text-sm">Instagram</span>
                   </div>
                 </button>
-                
+
                 <button
                   onClick={() => setSortBy("name")}
                   disabled={isTransitioning}
-                  className={`px-4 py-3 rounded-xl font-semibold transition-all duration-300 border-2 disabled:opacity-50 ${
-                    sortBy === "name"
+                  className={`px-4 py-3 rounded-xl font-semibold transition-all duration-300 border-2 disabled:opacity-50 ${sortBy === "name"
                       ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-blue-400 shadow-lg"
                       : "bg-gray-800/50 text-white border-gray-600 hover:border-blue-500/50 hover:bg-gray-700/50"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-center gap-2">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -680,15 +674,14 @@ function PlayersPageContent() {
                     <span className="text-sm">Nombre</span>
                   </div>
                 </button>
-                
+
                 <button
                   onClick={() => setSortBy("team")}
                   disabled={isTransitioning}
-                  className={`px-4 py-3 rounded-xl font-semibold transition-all duration-300 border-2 disabled:opacity-50 ${
-                    sortBy === "team"
+                  className={`px-4 py-3 rounded-xl font-semibold transition-all duration-300 border-2 disabled:opacity-50 ${sortBy === "team"
                       ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-purple-400 shadow-lg"
                       : "bg-gray-800/50 text-white border-gray-600 hover:border-purple-500/50 hover:bg-gray-700/50"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-center gap-2">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -697,15 +690,14 @@ function PlayersPageContent() {
                     <span className="text-sm">Equipo</span>
                   </div>
                 </button>
-                
+
                 <button
                   onClick={() => setSortBy("status")}
                   disabled={isTransitioning}
-                  className={`px-4 py-3 rounded-xl font-semibold transition-all duration-300 border-2 disabled:opacity-50 ${
-                    sortBy === "status"
+                  className={`px-4 py-3 rounded-xl font-semibold transition-all duration-300 border-2 disabled:opacity-50 ${sortBy === "status"
                       ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white border-green-400 shadow-lg"
                       : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-center gap-2">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -753,7 +745,7 @@ function PlayersPageContent() {
                 )}
               </div>
             </div>
-            
+
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto animate-pulse">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -763,15 +755,15 @@ function PlayersPageContent() {
             ) : sortedAndPaginatedPlayers.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto transition-all duration-500 ease-in-out">
                 {sortedAndPaginatedPlayers.map((player: Player, index) => (
-                  <div 
-                    key={player.id} 
+                  <div
+                    key={player.id}
                     className="animate-fade-in-up"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    <PlayerCard 
-                      player={player} 
-                      onToggleFavorite={setFavoritePlayers} 
-                      favoritePlayers={favoritePlayers} 
+                    <PlayerCard
+                      player={player}
+                      onToggleFavorite={setFavoritePlayers}
+                      favoritePlayers={favoritePlayers}
                     />
                   </div>
                 ))}
@@ -813,11 +805,10 @@ function PlayersPageContent() {
                     <button
                       key={pageNum}
                       onClick={() => setPage(pageNum)}
-                      className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                        page === pageNum 
-                          ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white' 
+                      className={`px-4 py-2 rounded-xl font-semibold transition-colors ${page === pageNum
+                          ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white'
                           : 'bg-gray-800 text-white hover:bg-gray-700'
-                      }`}
+                        }`}
                     >
                       {pageNum}
                     </button>
@@ -837,7 +828,7 @@ function PlayersPageContent() {
           {/* Información adicional */}
           <div className="mt-12 bg-gradient-to-r from-green-900/20 to-blue-900/20 rounded-2xl p-8 border border-green-500/30 max-w-4xl mx-auto">
             <h4 className="text-xl font-bold text-white mb-6 text-center">🎮 Explora Más</h4>
-            
+
             {/* Acciones rápidas */}
             <div className="flex flex-wrap justify-center gap-4">
               <Link

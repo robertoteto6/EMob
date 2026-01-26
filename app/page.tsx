@@ -879,7 +879,7 @@ const Home = memo(function Home() {
 
       <main
         ref={pullToRefresh.setRef}
-        className="min-h-screen pt-20"
+        className="min-h-screen pt-20 pb-24 md:pb-0"
       >
         {/* Hero Section - Diseño Minimalista */}
         <section className="relative overflow-hidden py-12 sm:py-20 lg:py-28">

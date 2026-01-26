@@ -158,10 +158,10 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
   // Modo minimizado: solo un pequeño indicador
   if (isMinimized && !isExpanded) {
     return (
-      <div className="fixed top-[72px] right-6 z-40 animate-slide-in-right">
+      <div className="fixed bottom-4 left-4 right-4 z-40 md:top-[72px] md:bottom-auto animate-slide-in-right">
         <button
           onClick={() => setIsMinimized(false)}
-          className="group relative touch-target touch-feedback flex items-center gap-2.5 bg-black/60 backdrop-blur-xl text-white px-4 py-2 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] hover:shadow-green-500/10 transition-all duration-300 hover:scale-105 border border-white/10 hover:border-green-500/30 overflow-hidden"
+          className="group relative touch-target touch-feedback flex items-center gap-2.5 bg-black/80 backdrop-blur-xl text-white px-4 py-3 md:py-2 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] hover:shadow-green-500/10 transition-all duration-300 hover:scale-105 border border-white/10 hover:border-green-500/30 overflow-hidden w-full md:w-auto justify-center md:justify-start"
         >
           {/* Brillo interno */}
           <div className="absolute inset-0 bg-gradient-to-tr from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -179,43 +179,43 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
   }
 
   return (
-    <div className="fixed top-[72px] left-4 right-4 z-40">
-      <div className="max-w-7xl mx-auto px-2">
-        <div className="bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-slide-down">
-          <div className="flex items-center justify-between py-2 px-4 border-b border-white/5 bg-white/5">
+    <div className="fixed bottom-0 left-0 right-0 z-40 p-4 md:top-[72px] md:bottom-auto md:max-w-7xl md:mx-auto md:px-6 safe-bottom">
+      <div className="w-full">
+        <div className="bg-black/80 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-slide-down md:animate-slide-in-left">
+          <div className="flex items-center justify-between py-3 px-4 md:py-2 border-b border-white/5 bg-white/5">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2.5 bg-green-500/15 px-3 py-1 rounded-full border border-green-500/20">
+              <div className="flex items-center gap-2.5 bg-green-500/15 px-3 py-1.5 md:py-1 rounded-full border border-green-500/20">
                 <div className="relative w-1.5 h-1.5 bg-green-500 rounded-full">
                   <div className="absolute inset-0 bg-green-400 rounded-full animate-ping opacity-75" />
                 </div>
                 <span className="text-green-400 font-bold text-[10px] tracking-widest uppercase">
-                  {liveMatches.length} Partidos en directo
+                  {liveMatches.length} <span className="hidden sm:inline">Partidos en directo</span><span className="sm:hidden">En Vivo</span>
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="text-gray-300 hover:text-white transition-colors text-xs bg-gray-700/50 hover:bg-gray-600/50 px-3 py-1 rounded-full flex items-center gap-1"
+                  className="text-gray-300 hover:text-white transition-colors text-xs bg-gray-700/50 hover:bg-gray-600/50 px-3 py-1.5 md:py-1 rounded-full flex items-center gap-1 touch-target-sm"
                 >
                   {isExpanded ? (
                     <>
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                       </svg>
-                      Contraer
+                      <span className="hidden sm:inline">Contraer</span>
                     </>
                   ) : (
                     <>
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
-                      Ver más
+                      <span className="hidden sm:inline">Ver más</span>
                     </>
                   )}
                 </button>
                 <button
                   onClick={() => setIsMinimized(true)}
-                  className="text-gray-400 hover:text-white transition-colors text-xs bg-gray-700/50 hover:bg-gray-600/50 px-2 py-1 rounded-full"
+                  className="text-gray-400 hover:text-white transition-colors text-xs bg-gray-700/50 hover:bg-gray-600/50 px-2.5 py-1.5 md:py-1 rounded-full touch-target-sm"
                   title="Minimizar"
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,7 +226,7 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
             </div>
             <button
               onClick={() => setIsVisible(false)}
-              className="text-gray-400 hover:text-white transition-colors text-sm font-bold hover:bg-gray-700/50 rounded-full w-6 h-6 flex items-center justify-center"
+              className="text-gray-400 hover:text-white transition-colors text-sm font-bold hover:bg-gray-700/50 rounded-full w-8 h-8 md:w-6 md:h-6 flex items-center justify-center touch-target-sm"
               aria-label="Cerrar ticker"
             >
               ×
