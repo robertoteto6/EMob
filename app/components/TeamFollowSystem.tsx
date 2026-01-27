@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { getTeamImageUrl } from "../lib/imageFallback";
 import { Team } from "../lib/types";
+import { useGameStore } from "../contexts/GameContext";
 
 export interface TeamFollow {
   teamId: string;
@@ -15,11 +16,13 @@ export interface TeamFollow {
 }
 
 interface TeamFollowSystemProps {
-  currentGame: string;
   onTeamFollowChange?: (teams: TeamFollow[]) => void;
 }
 
-export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: TeamFollowSystemProps) {
+export default function TeamFollowSystem({ onTeamFollowChange }: TeamFollowSystemProps) {
+  // Usar el contexto global de juegos seleccionados
+  const { selectedGames } = useGameStore();
+  
   const [followedTeams, setFollowedTeams] = useState<TeamFollow[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<Team[]>([]);
@@ -47,14 +50,16 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
   }, [followedTeams, onTeamFollowChange]);
 
   const searchTeams = async (term: string) => {
-    if (!term.trim()) {
+    if (!term.trim() || selectedGames.length === 0) {
       setSearchResults([]);
       return;
     }
 
     setIsSearching(true);
     try {
-      const res = await fetch(`/api/esports/teams?game=${currentGame}&search=${encodeURIComponent(term)}`);
+      // Buscar en todos los juegos seleccionados
+      const gamesParam = selectedGames.join(',');
+      const res = await fetch(`/api/esports/teams?games=${gamesParam}&search=${encodeURIComponent(term)}`);
       if (res.ok) {
         const teams = await res.json();
         setSearchResults(teams);
@@ -70,18 +75,18 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
     }
   };
 
-  const followTeam = (team: Team) => {
+  const followTeam = (team: Team, gameId: string) => {
     const newFollow: TeamFollow = {
       teamId: team.id,
       teamName: team.name,
-      game: currentGame,
+      game: gameId,
       notifications: true,
       addedAt: Date.now(),
       teamLogo: getTeamImageUrl({ id: team.id, name: team.name, image_url: team.logo })
     };
 
     setFollowedTeams(prev => {
-      const exists = prev.find(t => t.teamId === team.id && t.game === currentGame);
+      const exists = prev.find(t => t.teamId === team.id && t.game === gameId);
       if (exists) return prev;
       return [...prev, newFollow];
     });
@@ -106,8 +111,9 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
     );
   };
 
-  const currentGameTeams = followedTeams.filter(t => t.game === currentGame);
-  const allGamesTeams = followedTeams.filter(t => t.game !== currentGame);
+  // Filtrar equipos seguidos por juegos seleccionados
+  const currentGamesTeams = followedTeams.filter(t => selectedGames.includes(t.game));
+  const otherGamesTeams = followedTeams.filter(t => !selectedGames.includes(t.game));
 
   return (
     <>
@@ -127,14 +133,14 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
         )}
       </button>
 
-      {/* Current Game Followed Teams (Quick View) */}
-      {currentGameTeams.length > 0 && (
+      {/* Current Games Followed Teams (Quick View) */}
+      {currentGamesTeams.length > 0 && (
         <div className="mt-4 p-3 bg-[#111] border border-[#222] rounded-lg">
           <h3 className="text-sm font-semibold text-[var(--accent,#00FF80)] mb-2 flex items-center gap-2">
-            <span>👥</span> Equipos Seguidos ({currentGame.toUpperCase()})
+            <span>👥</span> Equipos Seguidos ({selectedGames.length} juego{selectedGames.length !== 1 ? 's' : ''})
           </h3>
           <div className="space-y-2">
-            {currentGameTeams.slice(0, 3).map((team) => (
+            {currentGamesTeams.slice(0, 3).map((team) => (
               <div key={`${team.teamId}-${team.game}`} className="flex items-center gap-2 text-sm">
                 <Image
                   src={team.teamLogo || getTeamImageUrl({ id: team.teamId, name: team.teamName, image_url: null })}
@@ -144,6 +150,7 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                   className="w-4 h-4 rounded"
                 />
                 <span className="text-white">{team.teamName}</span>
+                <span className="text-xs text-gray-500 uppercase">{team.game}</span>
                 <button
                   onClick={() => toggleNotifications(team.teamId, team.game)}
                   className={`text-xs ${team.notifications ? 'text-green-400' : 'text-gray-500'}`}
@@ -155,12 +162,12 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                 </button>
               </div>
             ))}
-            {currentGameTeams.length > 3 && (
+            {currentGamesTeams.length > 3 && (
               <button
                 onClick={() => setShowFollowModal(true)}
                 className="text-xs text-gray-400 hover:text-white"
               >
-                Ver todos ({currentGameTeams.length})
+                Ver todos ({currentGamesTeams.length})
               </button>
             )}
           </div>
@@ -194,8 +201,11 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
             {/* Search for new teams */}
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-[var(--accent,#00FF80)] mb-2">
-                Buscar Equipos ({currentGame.toUpperCase()})
+                Buscar Equipos ({selectedGames.length} juego{selectedGames.length !== 1 ? 's' : ''} seleccionado{selectedGames.length !== 1 ? 's' : ''})
               </h3>
+              {selectedGames.length === 0 ? (
+                <p className="text-gray-400 text-sm">Selecciona al menos un juego para buscar equipos.</p>
+              ) : (
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -208,16 +218,19 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                   className="flex-1 bg-[#111] border border-[#333] rounded px-3 py-2 text-white focus:border-[var(--accent,#00FF80)] focus:outline-none"
                 />
               </div>
+              )}
 
               {/* Search Results */}
               {searchResults.length > 0 && (
                 <div className="mt-2 max-h-32 overflow-y-auto bg-[#111] border border-[#333] rounded">
                   {searchResults.map((team) => {
-                    const isFollowed = followedTeams.some(t => t.teamId === team.id && t.game === currentGame);
+                    // Detectar el juego del equipo desde los metadatos o usar el primer juego seleccionado
+                    const teamGame = (team as Team & { _gameId?: string })._gameId || selectedGames[0];
+                    const isFollowed = followedTeams.some(t => t.teamId === team.id && t.game === teamGame);
                     return (
                       <button
-                        key={team.id}
-                        onClick={() => !isFollowed && followTeam(team)}
+                        key={`${team.id}-${teamGame}`}
+                        onClick={() => !isFollowed && followTeam(team, teamGame)}
                         disabled={isFollowed}
                         className={`w-full text-left p-2 flex items-center gap-2 hover:bg-[#222] border-b border-[#333] last:border-b-0 ${isFollowed ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
@@ -229,7 +242,8 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
                           className="w-6 h-6 rounded"
                         />
                         <span className="text-white">{team.name}</span>
-                        {isFollowed && <span className="text-green-400 text-xs ml-auto">✓ Seguido</span>}
+                        <span className="text-xs text-gray-500 uppercase ml-auto mr-2">{teamGame}</span>
+                        {isFollowed && <span className="text-green-400 text-xs">✓ Seguido</span>}
                       </button>
                     );
                   })}
@@ -249,19 +263,20 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
 
             {/* Currently Followed Teams */}
             <div className="space-y-4 max-h-60 overflow-y-auto">
-              {/* Current Game Teams */}
-              {currentGameTeams.length > 0 && (
+              {/* Selected Games Teams */}
+              {currentGamesTeams.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold text-[var(--accent,#00FF80)] mb-2">
-                    {currentGame.toUpperCase()} ({currentGameTeams.length})
+                    Juegos Seleccionados ({currentGamesTeams.length})
                   </h3>
                   <div className="space-y-2">
-                    {currentGameTeams.map((team) => (
+                    {currentGamesTeams.map((team) => (
                       <div key={`${team.teamId}-${team.game}`} className="flex items-center gap-3 p-2 bg-[#111] rounded border border-[#333]">
                         {team.teamLogo && (
                           <Image src={team.teamLogo} alt={team.teamName} width={24} height={24} className="w-6 h-6 rounded" />
                         )}
                         <span className="flex-1 text-white">{team.teamName}</span>
+                        <span className="text-xs text-gray-500 uppercase">{team.game}</span>
                         <button
                           onClick={() => toggleNotifications(team.teamId, team.game)}
                           className={`p-1 rounded ${team.notifications ? 'text-green-400' : 'text-gray-500'}`}
@@ -286,13 +301,13 @@ export default function TeamFollowSystem({ currentGame, onTeamFollowChange }: Te
               )}
 
               {/* Other Games Teams */}
-              {allGamesTeams.length > 0 && (
+              {otherGamesTeams.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-400 mb-2">
-                    Otros Juegos ({allGamesTeams.length})
+                    Otros Juegos ({otherGamesTeams.length})
                   </h3>
                   <div className="space-y-2">
-                    {allGamesTeams.map((team) => (
+                    {otherGamesTeams.map((team) => (
                       <div key={`${team.teamId}-${team.game}`} className="flex items-center gap-3 p-2 bg-[#111] rounded border border-[#333] opacity-70">
                         {team.teamLogo && (
                           <Image src={team.teamLogo} alt={team.teamName} width={24} height={24} className="w-6 h-6 rounded" />

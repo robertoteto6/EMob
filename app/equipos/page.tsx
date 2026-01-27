@@ -4,13 +4,14 @@ import { useEffect, useState, useMemo, Suspense } from "react";
 import nextDynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import { TeamSkeleton } from "../components/Skeleton";
 import LiveScoreTicker from "../components/LiveScoreTicker";
 import { useNotifications } from "../hooks/useNotifications";
 import { useDeferredClientRender } from "../hooks/useDeferredClientRender";
 import { getTeamFallbackUrl, getTeamImageUrl } from "../lib/imageFallback";
 import { apiCache } from "../lib/utils";
+import { useGameStore } from "../contexts/GameContext";
+import { SUPPORTED_GAMES } from "../lib/gameConfig";
 
 const NotificationSystem = nextDynamic(() => import("../components/NotificationSystem"), {
   ssr: false,
@@ -129,14 +130,6 @@ interface Team {
   gloryScore: number;
   _gameId?: string; // Metadata del juego desde la API
 }
-
-const GAMES = [
-  { id: "dota2", name: "Dota 2", icon: "/dota2.svg", color: "#A970FF", gradient: "from-purple-600 to-purple-800" },
-  { id: "lol", name: "League of Legends", icon: "/leagueoflegends.svg", color: "#1E90FF", gradient: "from-blue-600 to-blue-800" },
-  { id: "csgo", name: "Counter-Strike 2", icon: "/counterstrike.svg", color: "#FFD700", gradient: "from-yellow-600 to-yellow-800" },
-  { id: "r6siege", name: "Rainbow Six Siege", icon: "/rainbow6siege.png", color: "#FF6B35", gradient: "from-orange-600 to-orange-800" },
-  { id: "overwatch", name: "Overwatch 2", icon: "/overwatch.svg", color: "#FF9500", gradient: "from-orange-500 to-orange-700" },
-];
 
 // Mapeo de IDs de juegos a slugs de la API
 const GAME_SLUG_MAPPING: Record<string, string> = {
@@ -408,21 +401,11 @@ function TeamCard({ team, onToggleFavorite, favoriteTeams }: {
 }
 
 function TeamsPageContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  // Obtener el juego de los parámetros de URL o usar dota2 por defecto
-  const [game, setGame] = useState<string>(() => {
-    return searchParams?.get('game') || GAMES[0].id;
-  });
-
-  // Función para cambiar el juego y actualizar la URL
-  const handleGameChange = (newGame: string) => {
-    setGame(newGame);
-    const params = new URLSearchParams(searchParams?.toString());
-    params.set('game', newGame);
-    router.push(`/equipos?${params.toString()}`);
-  };
+  // Usar el contexto global de juegos seleccionados
+  const { selectedGames, toggleGame, hasGame } = useGameStore();
+  
+  // Si no hay juegos seleccionados, mostrar mensaje
+  const hasSelectedGames = selectedGames.length > 0;
 
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -464,38 +447,55 @@ function TeamsPageContent() {
   // Resetear página cuando cambian los filtros
   useEffect(() => {
     setPage(1);
-  }, [game, debouncedSearch]);
+  }, [selectedGames, debouncedSearch]);
 
-  // Cargar equipos
+  // Cargar equipos para todos los juegos seleccionados
   useEffect(() => {
+    if (!hasSelectedGames) {
+      setTeams([]);
+      setLoading(false);
+      return;
+    }
+
     const controller = new AbortController();
     async function load() {
       setLoading(true);
       setRateLimited(false);
       setUsingFallback(false);
 
-      const data = await fetchTeams(game, debouncedSearch, controller.signal);
+      // Cargar equipos de todos los juegos seleccionados en paralelo
+      const allTeamsPromises = selectedGames.map(gameId => 
+        fetchTeams(gameId, debouncedSearch, controller.signal)
+      );
+      
+      const results = await Promise.all(allTeamsPromises);
       if (controller.signal.aborted) {
         return;
       }
 
+      // Combinar todos los equipos
+      const allTeams = results.flat();
+
       // Detectar si estamos usando datos de respaldo (IDs altos indican datos sintéticos)
-      if (data.length > 0 && data[0].id > 1000) {
+      if (allTeams.length > 0 && allTeams[0].id > 1000) {
         setUsingFallback(true);
         setShowCacheInfo(true);
       }
 
       // Si no hay datos y no hay búsqueda, probablemente sea rate limit
-      if (data.length === 0 && !debouncedSearch) {
+      if (allTeams.length === 0 && !debouncedSearch) {
         setRateLimited(true);
       }
 
-      setTeams(data);
+      // Ordenar por gloryScore descendente
+      allTeams.sort((a, b) => b.gloryScore - a.gloryScore);
+
+      setTeams(allTeams);
       setLoading(false);
     }
     load();
     return () => controller.abort();
-  }, [game, debouncedSearch]);
+  }, [selectedGames, debouncedSearch, hasSelectedGames]);
 
   // Guardar favoritos en localStorage
   useEffect(() => {
@@ -504,10 +504,12 @@ function TeamsPageContent() {
     }
   }, [favoriteTeams]);
 
-  // Filtrar equipos por juego seleccionado
+  // Filtrar equipos por juegos seleccionados
   const filteredTeams = useMemo(() => {
-    return teams.filter(team => matchesGame(team, game));
-  }, [teams, game]);
+    return teams.filter(team => 
+      selectedGames.some(gameId => matchesGame(team, gameId))
+    );
+  }, [teams, selectedGames]);
 
   // Filtrado y paginación
   const paginatedTeams = useMemo(() => {
@@ -540,7 +542,7 @@ function TeamsPageContent() {
 
   return (
     <>
-      <LiveScoreTicker currentGame={game} />
+      <LiveScoreTicker />
 
       <main className="min-h-screen pt-20 pb-24 md:pb-0">
         {/* Indicador de estado de cache */}
@@ -616,42 +618,70 @@ function TeamsPageContent() {
         </section>
 
         <div className="container mx-auto px-6 py-8">
-          {/* Filtros de juegos */}
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold text-white mb-4 text-center">Seleccionar Juego</h3>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
-              {GAMES.map((g, index) => (
-                <button
-                  key={g.id}
-                  onClick={() => handleGameChange(g.id)}
-                  className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${game === g.id
-                      ? `bg-gradient-to-r ${g.gradient} text-white border-white/30 shadow-lg`
-                      : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50"
-                    }`}
-                  style={{ animationDelay: `${index * 0.1}s` }}
+          {/* Mensaje si no hay juegos seleccionados */}
+          {!hasSelectedGames && (
+            <div className="mb-8 text-center">
+              <div className="bg-gradient-to-br from-orange-800/50 to-red-800/50 rounded-2xl p-8 border border-orange-500/50 max-w-lg mx-auto">
+                <div className="text-6xl mb-4">🎮</div>
+                <h3 className="text-xl font-bold text-white mb-2">No hay juegos seleccionados</h3>
+                <p className="text-gray-300 mb-4">
+                  Selecciona al menos un juego para ver los equipos.
+                </p>
+                <Link
+                  href="/"
+                  className="inline-block bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-
-                  <div className="relative z-10 text-center">
-                    <div className="mb-3">
-                      <Image
-                        src={g.icon}
-                        alt={g.name}
-                        width={32}
-                        height={32}
-                        className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300"
-                      />
-                    </div>
-                    <div className="font-bold text-sm">{g.name}</div>
-                  </div>
-
-                  {game === g.id && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-b-xl"></div>
-                  )}
-                </button>
-              ))}
+                  Seleccionar Juegos
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Indicador de juegos activos */}
+          {hasSelectedGames && (
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold text-white mb-4 text-center">Juegos Seleccionados</h3>
+              <p className="text-sm text-gray-400 text-center mb-4">Haz clic para añadir o quitar juegos del filtro</p>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
+                {SUPPORTED_GAMES.map((g, index) => {
+                  const isSelected = hasGame(g.id);
+                  return (
+                    <button
+                      key={g.id}
+                      onClick={() => toggleGame(g.id)}
+                      className={`group relative overflow-hidden px-6 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 border-2 ${isSelected
+                          ? `bg-gradient-to-r ${g.gradient} text-white border-white/30 shadow-lg`
+                          : "bg-gray-800/50 text-white border-gray-600 hover:border-green-500/50 hover:bg-gray-700/50 opacity-50"
+                        }`}
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                      <div className="relative z-10 text-center">
+                        <div className="mb-3">
+                          <Image
+                            src={g.icon}
+                            alt={g.name}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 mx-auto group-hover:scale-110 transition-transform duration-300"
+                          />
+                        </div>
+                        <div className="font-bold text-sm">{g.name}</div>
+                        {isSelected && (
+                          <div className="text-xs text-green-300 mt-1">✓ Activo</div>
+                        )}
+                      </div>
+
+                      {isSelected && (
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-b-xl"></div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Barra de búsqueda */}
           <div className="mb-8">
@@ -802,10 +832,13 @@ function TeamsPageContent() {
           )}
 
           {/* Lista de equipos */}
+          {hasSelectedGames && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                🏆 Equipos de {GAMES.find(g => g.id === game)?.name}
+                🏆 Equipos de {selectedGames.length === 1 
+                  ? SUPPORTED_GAMES.find(g => g.id === selectedGames[0])?.name 
+                  : `${selectedGames.length} Juegos`}
                 <span className="text-sm font-normal text-gray-400 ml-2">
                   (Ordenados por Gloria)
                 </span>
@@ -848,9 +881,14 @@ function TeamsPageContent() {
                         setTeams([]);
                         // Intentar cargar de nuevo después de un breve delay
                         setTimeout(async () => {
-                          const data = await fetchTeams(game, debouncedSearch);
-                          setTeams(data);
-                          if (data.length === 0) {
+                          const allTeamsPromises = selectedGames.map(gameId => 
+                            fetchTeams(gameId, debouncedSearch)
+                          );
+                          const results = await Promise.all(allTeamsPromises);
+                          const allTeams = results.flat();
+                          allTeams.sort((a, b) => b.gloryScore - a.gloryScore);
+                          setTeams(allTeams);
+                          if (allTeams.length === 0) {
                             setRateLimited(true);
                           }
                         }, 2000);
@@ -858,16 +896,6 @@ function TeamsPageContent() {
                       className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg mr-3"
                     >
                       Reintentar
-                    </button>
-                    <button
-                      onClick={() => {
-                        setGame(GAMES[0].id);
-                        setSearchTerm("");
-                        setRateLimited(false);
-                      }}
-                      className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
-                    >
-                      Cambiar Juego
                     </button>
                   </div>
                   <p className="text-xs text-gray-400 mt-4">
@@ -937,6 +965,7 @@ function TeamsPageContent() {
               </div>
             )}
           </div>
+          )}
 
           {/* Información adicional */}
           <div className="mt-12 bg-gradient-to-r from-green-900/20 to-blue-900/20 rounded-2xl p-8 border border-green-500/30 max-w-4xl mx-auto">
@@ -959,12 +988,11 @@ function TeamsPageContent() {
               <button
                 onClick={() => {
                   setSearchTerm("");
-                  setGame(GAMES[0].id);
                   setPage(1);
                 }}
                 className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-2"
               >
-                🔄 Reiniciar Filtros
+                🔄 Reiniciar Búsqueda
               </button>
             </div>
           </div>

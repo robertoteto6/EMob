@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { getTeamImageUrl } from "../lib/imageFallback";
+import { useGameStore } from "../contexts/GameContext";
 
 interface Team {
   id: number;
@@ -11,27 +12,31 @@ interface Team {
   image_url: string | null;
 }
 
-export default function TeamSearch({ game = "dota2" }: { game?: string }) {
+export default function TeamSearch() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Team[]>([]);
   const [show, setShow] = useState(false);
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Usar juegos seleccionados del contexto global
+  const { selectedGames } = useGameStore();
+  const gamesParam = selectedGames.length > 0 ? selectedGames.join(',') : '';
 
   useEffect(() => {
-    if (query.length < 2) {
+    if (query.length < 2 || !gamesParam) {
       setResults([]);
       return;
     }
     const controller = new AbortController();
-    fetch(`/api/esports/teams?q=${encodeURIComponent(query)}&game=${game}`, {
+    fetch(`/api/esports/teams?q=${encodeURIComponent(query)}&games=${gamesParam}`, {
       signal: controller.signal,
     })
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => setResults(data))
       .catch(() => {});
     return () => controller.abort();
-  }, [query, game]);
+  }, [query, gamesParam]);
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
