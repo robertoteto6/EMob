@@ -112,7 +112,7 @@ export default function Search({
 
     setLoading(true);
     setError(null);
-    
+
     // Cancelar petición anterior
     controllerRef.current?.abort();
     if (timeoutRef.current) {
@@ -156,7 +156,7 @@ export default function Search({
       }
 
       const data = await res.json();
-      
+
       if (!controller.signal.aborted) {
         apiCache.set(cacheKey, data || []);
         setResults(data || []);
@@ -328,8 +328,8 @@ export default function Search({
   const memoizedGetTypeColor = useCallback(getTypeColor, []);
 
   return (
-    <div 
-      className={`relative w-full ${compact ? '' : 'max-w-md'}`} 
+    <div
+      className={`relative w-full ${compact ? '' : 'max-w-md'}`}
       ref={containerRef}
       role="search"
       aria-label="Buscador de equipos, jugadores y partidos"
@@ -381,8 +381,8 @@ export default function Search({
             transition-all duration-300 ease-in-out
             hover:border-gray-500/70
             placeholder-gray-400
-            ${error 
-              ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50' 
+            ${error
+              ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50'
               : 'border-gray-600/50 focus:ring-green-500/50 focus:border-green-500/50'
             }
             ${compact ? 'py-2' : 'py-3'}
@@ -392,6 +392,24 @@ export default function Search({
           aria-invalid={error ? "true" : "false"}
           aria-describedby={error ? "search-error" : undefined}
         />
+
+        {/* Indicador de juegos seleccionados dentro del input */}
+        {!globalSearch && hasAnyGame && !loading && !query && (
+          <div className="absolute inset-y-0 right-8 pr-2 flex items-center gap-1 pointer-events-none opacity-60">
+            {selectedGames.slice(0, 3).map(gameId => {
+              const config = getGameConfig(gameId);
+              if (!config) return null;
+              return (
+                <div key={gameId} className="w-4 h-4 relative">
+                  <Image src={config.icon} alt={config.name} fill className="object-contain" />
+                </div>
+              );
+            })}
+            {selectedGames.length > 3 && (
+              <span className="text-[10px] text-gray-400">+{selectedGames.length - 3}</span>
+            )}
+          </div>
+        )}
 
         {/* Indicador de carga */}
         {loading && (
@@ -423,7 +441,7 @@ export default function Search({
 
       {/* Resultados */}
       {show && (
-        <div 
+        <div
           className="absolute z-50 left-0 right-0 mt-2 bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-xl shadow-2xl overflow-hidden max-h-80 sm:max-h-96"
           role="listbox"
           aria-label="Resultados de búsqueda"
@@ -488,9 +506,9 @@ export default function Search({
               )}
 
               {error && !loading && (
-                <div 
-                  className="p-4 text-center" 
-                  role="alert" 
+                <div
+                  className="p-4 text-center"
+                  role="alert"
                   aria-live="assertive"
                   id="search-error"
                 >
@@ -524,13 +542,21 @@ export default function Search({
                       Intenta buscar con otros términos o verifica la ortografía
                     </div>
                     {!globalSearch && hasAnyGame && (
-                      <div className="mt-1 text-xs text-gray-500">
-                        Búsqueda en: <span className="text-gray-300">
-                          {selectedGames.map(gameId => {
-                            const config = getGameConfig(gameId);
-                            return config?.name || gameId;
-                          }).join(', ')}
-                        </span>
+                      <div className="mt-3">
+                        <div className="text-xs text-gray-500 mb-2">
+                          Buscando solo en: <span className="text-gray-300">
+                            {selectedGames.map(gameId => {
+                              const config = getGameConfig(gameId);
+                              return config?.name || gameId;
+                            }).join(', ')}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => performSearch(query, [], true)}
+                          className="px-4 py-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-blue-300 rounded-xl text-xs font-semibold transition-all border border-blue-500/30 hover:border-blue-500/50"
+                        >
+                          🌐 Buscar en todos los juegos
+                        </button>
                       </div>
                     )}
                     {globalSearch && (

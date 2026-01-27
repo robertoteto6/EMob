@@ -549,7 +549,7 @@ function TournamentCard({ tournament, game }: { tournament: Tournament; game?: t
 function EsportsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { selectedGames, hasAnyGame } = useGameContext();
+  const { selectedGames, hasAnyGame, toggleGame } = useGameContext();
 
   const [timeframe, setTimeframe] = useState<TimeframeId>("today");
   const [matches, setMatches] = useState<Match[]>([]);
@@ -929,7 +929,7 @@ function EsportsPageContent() {
                     return (
                       <div
                         key={gameId}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/20"
+                        className="group flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/15 transition-all"
                       >
                         <Image
                           src={game.icon}
@@ -939,13 +939,27 @@ function EsportsPageContent() {
                           className="object-contain"
                         />
                         <span className="text-sm font-semibold text-white">{game.name}</span>
+                        {selectedGames.length > 1 && (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (toggleGame) toggleGame(game.id);
+                            }}
+                            className="ml-2 p-0.5 rounded-full hover:bg-white/20 text-white/50 hover:text-white transition-colors"
+                            aria-label={`Remover ${game.name}`}
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     );
                   })}
+                  <p className="text-sm text-white/50 text-center mt-2">
+                    Puedes cambiar los juegos seleccionados desde el menú superior
+                  </p>
                 </div>
-                <p className="text-sm text-white/50 text-center mt-2">
-                  Puedes cambiar los juegos seleccionados desde el menú superior
-                </p>
               </div>
 
               {selectedView === "matches" && (

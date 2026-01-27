@@ -192,9 +192,27 @@ function HeaderContent() {
               className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
               aria-label="Seleccionar juegos"
             >
-              <span className="text-sm font-semibold text-white/90">
-                {selectedGames.length === 0 ? "Juegos" : `${selectedGames.length} ${selectedGames.length === 1 ? 'juego' : 'juegos'}`}
-              </span>
+              {selectedGames.length > 0 ? (
+                <div className="flex -space-x-2">
+                  {getSelectedGamesConfig().slice(0, 3).map((game) => (
+                    <div key={game.id} className="relative w-6 h-6 rounded-full border border-black bg-gray-800 overflow-hidden">
+                      <Image src={game.icon} alt={game.name} fill className="object-cover" />
+                    </div>
+                  ))}
+                  {selectedGames.length > 3 && (
+                    <div className="relative w-6 h-6 rounded-full border border-black bg-gray-700 flex items-center justify-center text-[10px] text-white font-bold">
+                      +{selectedGames.length - 3}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <span className="text-sm font-semibold text-white/90">Juegos</span>
+              )}
+              {selectedGames.length > 0 && (
+                <span className="text-xs font-medium text-white/50 ml-1">
+                  {selectedGames.length}
+                </span>
+              )}
               <ChevronDownIcon className={`w-4 h-4 text-white/70 transition-transform ${isGameSelectorOpen ? 'rotate-180' : ''}`} />
             </button>
 
@@ -222,15 +240,13 @@ function HeaderContent() {
                           handleGameToggle(game.id);
                         }}
                         disabled={isSelected && !canRemove}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-left ${
-                          isSelected
-                            ? 'bg-white/10 border border-white/20'
-                            : 'hover:bg-white/5 border border-transparent'
-                        } ${isSelected && !canRemove ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-left ${isSelected
+                          ? 'bg-white/10 border border-white/20'
+                          : 'hover:bg-white/5 border border-transparent'
+                          } ${isSelected && !canRemove ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                       >
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                          isSelected ? 'border-emerald-400 bg-emerald-400/20' : 'border-white/30'
-                        }`}>
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${isSelected ? 'border-emerald-400 bg-emerald-400/20' : 'border-white/30'
+                          }`}>
                           {isSelected && (
                             <svg className="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -249,7 +265,10 @@ function HeaderContent() {
 
           {/* Search Bar mejorado */}
           <div className="hidden lg:block w-72 xl:w-80">
-            <SearchLazy globalSearch={true} placeholder="Buscar equipos, jugadores..." />
+            <SearchLazy
+              globalSearch={selectedGames.length === 0}
+              placeholder={selectedGames.length > 0 ? "Buscar en tus juegos..." : "Buscar equipos, jugadores..."}
+            />
           </div>
 
           {/* Actions mejoradas */}
@@ -359,15 +378,13 @@ function HeaderContent() {
                         handleGameToggle(game.id);
                       }}
                       disabled={isSelected && !canRemove}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                        isSelected
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isSelected
                           ? 'bg-white/10 border border-white/20'
                           : 'bg-white/5 hover:bg-white/10 border border-white/10'
-                      } ${isSelected && !canRemove ? 'opacity-60' : ''}`}
+                        } ${isSelected && !canRemove ? 'opacity-60' : ''}`}
                     >
-                      <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
-                        isSelected ? 'border-emerald-400 bg-emerald-400/20' : 'border-white/30'
-                      }`}>
+                      <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${isSelected ? 'border-emerald-400 bg-emerald-400/20' : 'border-white/30'
+                        }`}>
                         {isSelected && (
                           <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
