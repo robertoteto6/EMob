@@ -109,6 +109,7 @@ interface Tournament {
   tier: string | null;
   region: string | null;
   live_supported: boolean;
+  game?: string;
 }
 
 const GAMES = [

@@ -449,11 +449,6 @@ function PlayersPageContent() {
     return sortedPlayers.slice(start, start + PAGE_SIZE);
   }, [filteredPlayers, page, sortBy]);
 
-  // Filtrar jugadores por juegos seleccionados
-  const filteredPlayers = useMemo(() => {
-    return players.filter(p => p.game && selectedGames.includes(p.game));
-  }, [players, selectedGames]);
-
   const totalPages = Math.ceil(filteredPlayers.length / PAGE_SIZE);
 
   const favoriteList = useMemo(
