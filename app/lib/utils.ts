@@ -195,3 +195,47 @@ export function optimizeScroll(callback: () => void): () => void {
   
   return handleScroll;
 }
+
+// Tipos para el estado de un partido
+export type MatchStatus = 'live' | 'upcoming' | 'recent';
+
+export interface MatchStatusInfo {
+  status: MatchStatus;
+  isLive: boolean;
+  isUpcoming: boolean;
+  isFinished: boolean;
+}
+
+/**
+ * Determina el estado de un partido basado en su hora de inicio y resultado.
+ * Centraliza la lógica de clasificación de partidos en "en curso" (live),
+ * "próximos" (upcoming) y "recientes" (recent/finished).
+ * 
+ * @param match - Objeto del partido que debe tener start_time y radiant_win
+ * @param currentTime - Timestamp actual en segundos
+ * @returns Información del estado del partido
+ */
+export function getMatchStatus(
+  match: { start_time: number; radiant_win: boolean | null },
+  currentTime: number
+): MatchStatusInfo {
+  const isLive = match.start_time <= currentTime && match.radiant_win === null;
+  const isUpcoming = match.start_time > currentTime;
+  const isFinished = match.radiant_win !== null;
+
+  let status: MatchStatus;
+  if (isLive) {
+    status = 'live';
+  } else if (isUpcoming) {
+    status = 'upcoming';
+  } else {
+    status = 'recent';
+  }
+
+  return {
+    status,
+    isLive,
+    isUpcoming,
+    isFinished,
+  };
+}
