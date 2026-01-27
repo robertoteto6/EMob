@@ -907,15 +907,20 @@ const Home = memo(function Home() {
   }, [filteredMatches, currentTime]);
 
   const dashboardMatches = useMemo(() => {
-    const live = filteredMatches.filter(
-      (match) => getMatchStatus(match, currentTime).status === 'live'
-    );
-    const upcoming = filteredMatches.filter(
-      (match) => getMatchStatus(match, currentTime).status === 'upcoming'
-    );
-    const recent = filteredMatches.filter(
-      (match) => getMatchStatus(match, currentTime).status === 'recent'
-    );
+    const live: Match[] = [];
+    const upcoming: Match[] = [];
+    const recent: Match[] = [];
+
+    for (const match of filteredMatches) {
+      const { status } = getMatchStatus(match, currentTime);
+      if (status === 'live') {
+        live.push(match);
+      } else if (status === 'upcoming') {
+        upcoming.push(match);
+      } else {
+        recent.push(match);
+      }
+    }
 
     recent.sort((a, b) => b.start_time - a.start_time);
 
