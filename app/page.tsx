@@ -822,7 +822,7 @@ const Home = memo(function Home() {
     {
       label: "Próximos",
       value: numberFormatter.format(Math.max(aggregatedStats.upcomingMatches, 0)),
-      helper: "programados esta semana",
+      helper: "todos los próximos partidos",
       accent: "Agenda",
     },
     {
