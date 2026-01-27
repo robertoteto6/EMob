@@ -229,6 +229,7 @@ export function getMatchStatus(
   } else if (isUpcoming) {
     status = 'upcoming';
   } else {
+    // Match is finished (recent) - either completed or not started but with a result
     status = 'recent';
   }
 
