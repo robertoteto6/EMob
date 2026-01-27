@@ -65,6 +65,15 @@ const nextConfig: NextConfig = {
       },
     ],
     unoptimized: false,
+    localPatterns: [
+      {
+        pathname: '/**',
+        search: '',
+      },
+      {
+        pathname: '/api/esports/**',
+      },
+    ],
   },
 
   // Headers de seguridad y performance mejorados
