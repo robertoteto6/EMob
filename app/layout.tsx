@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
+import ScrollToTop from "./components/ScrollToTop";
 import Footer from "./components/Footer";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -139,6 +140,7 @@ export default function RootLayout({
                 <Footer />
                 <NotificationContainer />
                 <GlobalLoader />
+                <ScrollToTop />
               </AuthProvider>
             </UXProvider>
           </AccessibilityProvider>

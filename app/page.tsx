@@ -5,7 +5,6 @@ import nextDynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import LiveScoreTicker from "./components/LiveScoreTicker";
-import ScrollToTop from "./components/ScrollToTop";
 import Tooltip from "./components/Tooltip";
 import Spinner from "./components/Spinner";
 import LiveBadge from "./components/LiveBadge";
@@ -1806,7 +1805,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
           <ChatBot />
         </>
       )}
-      <ScrollToTop />
+
 
       {/* Gestos móviles */}
       <ScrollIndicator />
