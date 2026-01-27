@@ -9,6 +9,8 @@ import ThemeToggle from "./ThemeToggle";
 import { useSwipeToClose } from "../hooks/useSwipeGesture";
 import { optimizeScroll } from "../lib/utils";
 import { useUX } from "./UXEnhancer";
+import { useNotifications } from "../hooks/useNotifications";
+import NotificationSystem from "./NotificationSystem";
 import { useGameContext } from "../contexts/GameContext";
 import { SUPPORTED_GAMES, getGameConfig } from "../lib/gameConfig";
 import Image from "next/image";
@@ -30,6 +32,12 @@ function HeaderContent() {
   const isScrolledRef = useRef(false);
   const gameSelectorRef = useRef<HTMLDivElement>(null);
   const { addNotification } = useUX();
+  const {
+    notifications,
+    markAsRead,
+    clearAll,
+    deleteNotification
+  } = useNotifications();
   const { selectedGames, toggleGame, hasGame, getSelectedGamesConfig } = useGameContext();
 
   // Hook para swipe gestures en menú móvil
@@ -66,23 +74,7 @@ function HeaderContent() {
     }
   }, [isGameSelectorOpen]);
 
-  const handleAlertsClick = useCallback(() => {
-    addNotification({
-      type: "info",
-      title: "Alertas",
-      message: "Estamos preparando un centro de alertas más completo. Próximamente.",
-      duration: 3500,
-    });
-  }, [addNotification]);
 
-  const handleProClick = useCallback(() => {
-    addNotification({
-      type: "info",
-      title: "EMob Pro",
-      message: "La suscripción Pro estará disponible pronto.",
-      duration: 3500,
-    });
-  }, [addNotification]);
 
   const handleGameToggle = useCallback((gameId: string) => {
     toggleGame(gameId);
@@ -273,29 +265,17 @@ function HeaderContent() {
 
           {/* Actions mejoradas */}
           <div className="hidden md:flex items-center gap-2 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-2xl shadow-inner shadow-black/20 px-2 py-1.5">
-            {/* Botón de alertas con badge */}
-            <button
-              type="button"
-              onClick={handleAlertsClick}
-              className="group relative touch-target touch-ripple inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500/80 to-emerald-600/80 hover:from-emerald-500 hover:to-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-300 hover:scale-[1.02] shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 overflow-hidden"
-              aria-label="Ver notificaciones"
-            >
-              {/* Efecto de brillo */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" aria-hidden="true" />
-
-              <BellIcon className="w-5 h-5 relative z-10" aria-hidden="true" />
-              <span className="relative z-10">Alertas</span>
-
-              {/* Badge de notificaciones - más pequeño y elegante */}
-              <span className="absolute top-1 right-1 px-1.5 py-0.5 min-w-[18px] h-[18px] bg-red-500 rounded-full text-[10px] font-bold flex items-center justify-center animate-pulse text-white shadow-sm">
-                3
-              </span>
-            </button>
+            {/* Sistema de Notificaciones */}
+            <NotificationSystem
+              notifications={notifications}
+              onMarkAsRead={markAsRead}
+              onClearAll={clearAll}
+              onDeleteNotification={deleteNotification}
+            />
 
             {/* Botón Pro/Premium - Armonizado con Alertas */}
-            <button
-              type="button"
-              onClick={handleProClick}
+            <Link
+              href="/pro"
               className="group relative hidden xl:inline-flex touch-target touch-ripple items-center gap-2 bg-gradient-to-r from-amber-400/80 to-orange-500/80 hover:from-amber-400 hover:to-orange-500 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-300 hover:scale-[1.02] shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 overflow-hidden border border-white/10"
               aria-label="Actualizar a Pro"
             >
@@ -304,7 +284,7 @@ function HeaderContent() {
 
               <SparklesIcon className="w-4 h-4 relative z-10" aria-hidden="true" />
               <span className="relative z-10">Pro</span>
-            </button>
+            </Link>
 
             <ThemeToggle />
           </div>
@@ -379,8 +359,8 @@ function HeaderContent() {
                       }}
                       disabled={isSelected && !canRemove}
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isSelected
-                          ? 'bg-white/10 border border-white/20'
-                          : 'bg-white/5 hover:bg-white/10 border border-white/10'
+                        ? 'bg-white/10 border border-white/20'
+                        : 'bg-white/5 hover:bg-white/10 border border-white/10'
                         } ${isSelected && !canRemove ? 'opacity-60' : ''}`}
                     >
                       <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${isSelected ? 'border-emerald-400 bg-emerald-400/20' : 'border-white/30'
@@ -432,33 +412,16 @@ function HeaderContent() {
 
             {/* Acciones móviles con padding para safe area */}
             <div className="p-4 border-t border-white/5 space-y-3 safe-bottom">
-              <button
-                type="button"
-                onClick={handleAlertsClick}
-                className="w-full touch-target touch-feedback inline-flex items-center justify-center gap-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3.5 rounded-xl font-semibold shadow-lg shadow-emerald-500/30 gpu-accelerated"
-                aria-label="Ver notificaciones"
-                style={{
-                  transition: 'transform 0.1s ease-out, background 0.2s ease'
-                }}
+              <Link
+                href="/pro"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full touch-target touch-feedback inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-400/15 to-orange-400/20 text-amber-200 px-4 py-3 rounded-xl font-semibold text-sm border border-amber-400/30 gpu-accelerated"
               >
-                <BellIcon className="w-5 h-5" aria-hidden="true" />
-                <span>Ver Alertas</span>
-                <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">3</span>
-              </button>
+                <SparklesIcon className="w-4 h-4" aria-hidden="true" />
+                <span>Ir a Pro</span>
+              </Link>
 
               <div className="flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={handleProClick}
-                  className="flex-1 touch-target touch-feedback inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-400/15 to-orange-400/20 text-amber-200 px-4 py-3 rounded-xl font-semibold text-sm border border-amber-400/30 gpu-accelerated"
-                  aria-label="Actualizar a Pro"
-                  style={{
-                    transition: 'transform 0.1s ease-out, background 0.2s ease'
-                  }}
-                >
-                  <SparklesIcon className="w-4 h-4" aria-hidden="true" />
-                  <span>Ir a Pro</span>
-                </button>
                 <ThemeToggle className="flex-shrink-0" />
               </div>
             </div>

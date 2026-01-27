@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { useUX } from "./UXEnhancer";
+
 export default function Footer() {
+  const { addNotification } = useUX();
   const year = new Date().getFullYear();
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
@@ -17,13 +20,23 @@ export default function Footer() {
     }
   };
 
+  const handlePlaceholderClick = (e: React.MouseEvent, name: string) => {
+    e.preventDefault();
+    addNotification({
+      type: "info",
+      title: "Próximamente",
+      message: `La página de ${name} estará disponible muy pronto.`,
+      duration: 3000,
+    });
+  };
+
   return (
     <footer className="relative mt-24 text-sm text-white/50">
       {/* Fondo sutil */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/95 to-transparent" aria-hidden="true" />
       </div>
-      
+
       {/* Línea decorativa superior */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" aria-hidden="true" />
 
@@ -36,7 +49,7 @@ export default function Footer() {
                 <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/40 mb-3">
                   Newsletter
                 </span>
-                
+
                 <h2 className="text-xl sm:text-2xl font-semibold text-white leading-tight">
                   Mantente informado
                 </h2>
@@ -44,7 +57,7 @@ export default function Footer() {
                   Recibe notificaciones de partidos y estadísticas exclusivas.
                 </p>
               </div>
-              
+
               {/* Formulario */}
               <div className="w-full lg:w-auto lg:min-w-[320px]">
                 <form onSubmit={handleSubscribe} className="space-y-3">
@@ -101,7 +114,7 @@ export default function Footer() {
             <p className="text-white/40 mt-4 leading-relaxed max-w-sm text-sm">
               Tu plataforma para seguir esports en vivo, estadísticas y torneos.
             </p>
-            
+
             {/* Social links */}
             <div className="flex items-center gap-2 mt-5">
               {[
@@ -112,7 +125,8 @@ export default function Footer() {
               ].map((social) => (
                 <a
                   key={social.name}
-                  href={social.href}
+                  href="#"
+                  onClick={(e) => handlePlaceholderClick(e, social.name)}
                   aria-label={social.name}
                   className="touch-target touch-ripple w-9 h-9 rounded-lg border border-white/5 bg-white/[0.02] flex items-center justify-center text-white/40 transition-all duration-200 hover:border-white/10 hover:bg-white/5 hover:text-white"
                 >
@@ -133,7 +147,7 @@ export default function Footer() {
                 { name: "Jugadores", href: "/jugadores" },
               ].map((link) => (
                 <li key={link.name}>
-                  <Link 
+                  <Link
                     href={link.href}
                     className="text-white/40 transition-colors duration-200 hover:text-white text-sm"
                   >
@@ -172,18 +186,18 @@ export default function Footer() {
             <h3 className="text-xs font-medium text-white/60 tracking-wider uppercase mb-4">Legal</h3>
             <ul className="space-y-2.5">
               {[
-                { name: "Privacidad", href: "#" },
-                { name: "Términos de uso", href: "#" },
-                { name: "Cookies", href: "#" },
-                { name: "Contactar", href: "#" },
+                { name: "Privacidad", href: "/legal/privacy" },
+                { name: "Términos de uso", href: "/legal/terms" },
+                { name: "Cookies", href: "/legal/cookies" },
+                { name: "Contactar", href: "/contact" },
               ].map((link) => (
                 <li key={link.name}>
-                  <a 
+                  <Link
                     href={link.href}
                     className="text-white/40 transition-colors duration-200 hover:text-white text-sm"
                   >
                     {link.name}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
