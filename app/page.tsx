@@ -574,7 +574,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
 });
 
 const Home = memo(function Home() {
-  const { selectedGames, hasAnyGame, toggleGame, hasGame } = useGameContext();
+  const { selectedGames, hasAnyGame, toggleGame, hasGame, getSelectedGamesConfig } = useGameContext();
   const [matches, setMatches] = useState<Match[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
@@ -738,6 +738,8 @@ const Home = memo(function Home() {
 
     return stats;
   }, [currentTime, matchesByGame, tournamentsByGame]);
+
+  const selectedGameConfigs = useMemo(() => getSelectedGamesConfig(), [getSelectedGamesConfig, selectedGames]);
 
   const numberFormatter = useMemo(() => new Intl.NumberFormat("es-ES"), []);
 
@@ -1176,51 +1178,53 @@ const Home = memo(function Home() {
         </section>
 
         {/* Estadísticas por Juego - Diseño Minimalista */}
-        <section className="relative py-12 sm:py-20 overflow-hidden">
-          {/* Fondo decorativo */}
-          <div className="absolute inset-0 -z-10">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-white/5 rounded-full blur-[120px]" aria-hidden="true" />
-          </div>
+        {selectedGameConfigs.length > 0 && (
+          <section className="relative py-12 sm:py-20 overflow-hidden">
+            {/* Fondo decorativo */}
+            <div className="absolute inset-0 -z-10">
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-white/5 rounded-full blur-[120px]" aria-hidden="true" />
+            </div>
 
-          <div className="container mx-auto px-3 sm:px-6 lg:px-8">
-            {/* Header de sección mejorado */}
-            <div className="mx-auto mb-14 max-w-3xl text-center">
-              <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/5 px-5 py-2 mb-6">
-                <span className="flex h-2 w-2 rounded-full bg-white animate-pulse" />
-                <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/60">
-                  Métricas en directo
-                </span>
+            <div className="container mx-auto px-3 sm:px-6 lg:px-8">
+              {/* Header de sección mejorado */}
+              <div className="mx-auto mb-14 max-w-3xl text-center">
+                <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/5 px-5 py-2 mb-6">
+                  <span className="flex h-2 w-2 rounded-full bg-white animate-pulse" />
+                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/60">
+                    Métricas en directo
+                  </span>
+                </div>
+
+                <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black text-white leading-tight">
+                  Estadísticas en{" "}
+                  <span className="text-white/80">
+                    tiempo real
+                  </span>
+                </h2>
+                <p className="mt-4 text-sm sm:text-base lg:text-lg text-white/50 max-w-2xl mx-auto">
+                  Descubre qué escena está más activa ahora mismo y encuentra nuevas ligas para seguir
+                </p>
               </div>
 
-              <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black text-white leading-tight">
-                Estadísticas en{" "}
-                <span className="text-white/80">
-                  tiempo real
-                </span>
-              </h2>
-              <p className="mt-4 text-sm sm:text-base lg:text-lg text-white/50 max-w-2xl mx-auto">
-                Descubre qué escena está más activa ahora mismo y encuentra nuevas ligas para seguir
-              </p>
+              {/* Grid de juegos */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
+                {selectedGameConfigs.map((game, index) => (
+                  <div
+                    key={game.id}
+                    className="animate-fadein"
+                    style={{ animationDelay: `${index * 80}ms` }}
+                  >
+                    <GameStatsCard
+                      game={game}
+                      stats={gameStats[game.id] || { totalMatches: 0, liveMatches: 0, upcomingMatches: 0, completedMatches: 0, activeTournaments: 0 }}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
-
-            {/* Grid de juegos */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
-              {GAMES.map((game, index) => (
-                <div
-                  key={game.id}
-                  className="animate-fadein"
-                  style={{ animationDelay: `${index * 80}ms` }}
-                >
-                  <GameStatsCard
-                    game={game}
-                    stats={gameStats[game.id] || { totalMatches: 0, liveMatches: 0, upcomingMatches: 0, completedMatches: 0, activeTournaments: 0 }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Filtros Avanzados */}
         <section className="relative py-8 sm:py-16">
