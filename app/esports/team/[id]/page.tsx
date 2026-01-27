@@ -266,8 +266,8 @@ function TeamContent({ id }: { id: string }) {
             <div className="bg-gradient-to-br from-red-900/20 via-red-800/10 to-red-900/20 rounded-2xl border border-red-700/50 p-12">
               <h1 className="text-2xl font-bold text-red-400 mb-4">Equipo no encontrado</h1>
               <p className="text-gray-400 mb-6">El equipo que buscas no existe o no está disponible.</p>
-              <Link 
-                href="/esports/teams" 
+              <Link
+                href="/equipos"
                 className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105"
               >
                 ← Ver todos los equipos

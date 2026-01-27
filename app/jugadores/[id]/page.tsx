@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function JugadorRedirect({ params }: PageProps) {
-  redirect(`/esports/player/${params.id}`);
+export default async function JugadorRedirect({ params }: PageProps) {
+  const { id } = await params;
+  redirect(`/esports/player/${id}`);
 }

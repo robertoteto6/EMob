@@ -150,13 +150,13 @@ export default function Footer() {
             <ul className="space-y-2.5">
               {[
                 { name: "Dota 2", href: "/esports/game/dota2" },
-                { name: "League of Legends", href: "/esports/game/leagueoflegends" },
-                { name: "Counter-Strike 2", href: "/esports/game/counterstrike" },
+                { name: "League of Legends", href: "/esports/game/lol" },
+                { name: "Counter-Strike 2", href: "/esports/game/csgo" },
                 { name: "Overwatch 2", href: "/esports/game/overwatch" },
-                { name: "Rainbow Six", href: "/esports/game/rainbow6siege" },
+                { name: "Rainbow Six", href: "/esports/game/r6siege" },
               ].map((link) => (
                 <li key={link.name}>
-                  <Link 
+                  <Link
                     href={link.href}
                     className="text-white/40 transition-colors duration-200 hover:text-white text-sm"
                   >
