@@ -739,7 +739,7 @@ const Home = memo(function Home() {
     return stats;
   }, [currentTime, matchesByGame, tournamentsByGame]);
 
-  const selectedGameConfigs = useMemo(() => getSelectedGamesConfig(), [getSelectedGamesConfig, selectedGames]);
+  const selectedGameConfigs = getSelectedGamesConfig();
 
   const numberFormatter = useMemo(() => new Intl.NumberFormat("es-ES"), []);
 
