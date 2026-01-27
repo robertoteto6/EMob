@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback, use } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useParams } from "next/navigation";
 import MatchHeader from "../../components/MatchHeader";
 import MatchCard from "../../components/MatchCard";
 import MatchStreams from "../../components/MatchStreams";
@@ -138,9 +139,14 @@ async function fetchMatch(matchId: string, forceRefresh = false): Promise<MatchD
 
 const LANGS: Language[] = [{ code: "es-ES", label: "Español" }, { code: "en-US", label: "English" }];
 
-export default function MatchPage(props: { params: Promise<{ matchId: string }> }) {
-  const params = use(props.params);
-  const matchId = params.matchId;
+export default function MatchPage() {
+  const params = useParams<{ matchId?: string | string[] }>();
+  const rawMatchId = params?.matchId;
+  const matchId = Array.isArray(rawMatchId) ? rawMatchId[0] : rawMatchId;
+
+  if (!matchId) {
+    return null;
+  }
 
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [match, setMatch] = useState<MatchDetail | null>(null);

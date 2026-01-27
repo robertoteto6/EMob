@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { apiCache } from "../lib/utils";
 import { useGameContext } from "../contexts/GameContext";
+import { getGameConfig } from "../lib/gameConfig";
 
 interface PandaScoreMatch {
   id: number;
@@ -40,21 +41,20 @@ interface LiveScoreTickerProps {
   currentGame: string;
 }
 
-const GAME_ICONS: Record<string, string> = {
-  dota2: "/dota2.svg",
-  lol: "/leagueoflegends.svg",
-  csgo: "/counterstrike.svg",
-  r6siege: "/rainbow6siege.png",
-  overwatch: "/overwatch.svg",
+const FALLBACK_GAME_VISUALS = {
+  icon: "/file.svg",
+  gradient: "from-slate-700 to-slate-800",
+  name: "Esports",
 };
 
-const GAME_COLORS: Record<string, string> = {
-  dota2: "from-purple-500/80 to-purple-600/80",
-  lol: "from-blue-500/80 to-blue-600/80",
-  csgo: "from-yellow-500/80 to-yellow-600/80",
-  r6siege: "from-orange-500/80 to-orange-600/80",
-  overwatch: "from-orange-400/80 to-orange-500/80",
-};
+function getGameVisuals(gameId: string) {
+  const config = getGameConfig(gameId);
+  return {
+    icon: config?.icon ?? FALLBACK_GAME_VISUALS.icon,
+    gradient: config?.gradient ?? FALLBACK_GAME_VISUALS.gradient,
+    name: config?.name ?? FALLBACK_GAME_VISUALS.name,
+  };
+}
 
 const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScoreTickerProps) {
   const { selectedGames, hasAnyGame } = useGameContext();
@@ -256,7 +256,9 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
           {!isExpanded && (
             <div className="overflow-hidden pb-2">
               <div className="animate-marquee flex gap-6 whitespace-nowrap">
-                {liveMatches.map((match, index) => (
+                {liveMatches.map((match, index) => {
+                  const visuals = getGameVisuals(match.game);
+                  return (
                   <Link
                     key={`${match.id}-${index}`}
                     href={`/esports/${match.id}`}
@@ -264,8 +266,8 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
                   >
                     <div className="flex items-center gap-2 bg-gray-800/30 hover:bg-gray-700/40 px-3 py-1.5 rounded-lg border border-gray-600/20 group-hover:border-green-500/30 transition-all duration-300">
                       <Image
-                        src={GAME_ICONS[match.game]}
-                        alt={match.game}
+                        src={visuals.icon}
+                        alt={visuals.name}
                         width={16}
                         height={16}
                         className="w-4 h-4 opacity-70 group-hover:opacity-100"
@@ -282,7 +284,8 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
                       <span className="text-xs text-gray-400 ml-1">• {match.league}</span>
                     </div>
                   </Link>
-                ))}
+                );
+                })}
               </div>
             </div>
           )}
@@ -291,17 +294,19 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
           {isExpanded && (
             <div className="pb-3">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {liveMatches.map((match, index) => (
+                {liveMatches.map((match, index) => {
+                  const visuals = getGameVisuals(match.game);
+                  return (
                   <Link
                     key={`expanded-${match.id}-${index}`}
                     href={`/esports/${match.id}`}
                     className="block group"
                   >
-                    <div className={`bg-gradient-to-r ${GAME_COLORS[match.game]} p-3 rounded-lg hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border border-white/10 group-hover:border-white/20`}>
+                    <div className={`bg-gradient-to-r ${visuals.gradient} p-3 rounded-lg hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border border-white/10 group-hover:border-white/20`}>
                       <div className="flex items-center gap-2 mb-2">
                         <Image
-                          src={GAME_ICONS[match.game]}
-                          alt={match.game}
+                          src={visuals.icon}
+                          alt={visuals.name}
                           width={20}
                           height={20}
                           className="w-5 h-5"
@@ -348,7 +353,8 @@ const LiveScoreTicker = memo(function LiveScoreTicker({ currentGame }: LiveScore
                       )}
                     </div>
                   </Link>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

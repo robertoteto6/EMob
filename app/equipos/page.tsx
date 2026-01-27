@@ -11,7 +11,7 @@ import { useDeferredClientRender } from "../hooks/useDeferredClientRender";
 import { getTeamFallbackUrl, getTeamImageUrl } from "../lib/imageFallback";
 import { apiCache } from "../lib/utils";
 import { useGameStore } from "../contexts/GameContext";
-import { SUPPORTED_GAMES } from "../lib/gameConfig";
+import { SUPPORTED_GAMES, getGameApiName } from "../lib/gameConfig";
 
 const NotificationSystem = nextDynamic(() => import("../components/NotificationSystem"), {
   ssr: false,
@@ -131,20 +131,11 @@ interface Team {
   _gameId?: string; // Metadata del juego desde la API
 }
 
-// Mapeo de IDs de juegos a slugs de la API
-const GAME_SLUG_MAPPING: Record<string, string> = {
-  "dota2": "dota2",
-  "lol": "lol",
-  "csgo": "csgo",
-  "r6siege": "r6siege",
-  "overwatch": "ow"  // Overwatch usa "ow" en la API
-};
-
 // Función para verificar si un equipo pertenece al juego seleccionado
 function matchesGame(team: Team, gameId: string): boolean {
   // Primero intentar usar current_videogame.slug
   if (team.current_videogame?.slug) {
-    const expectedSlug = GAME_SLUG_MAPPING[gameId];
+    const expectedSlug = getGameApiName(gameId);
     if (expectedSlug && team.current_videogame.slug === expectedSlug) {
       return true;
     }
@@ -170,14 +161,10 @@ async function fetchTeams(game: string, search?: string, signal?: AbortSignal): 
       return cached as Team[];
     }
 
-    console.log(`Fetching teams for game: ${game}, search: ${search || 'none'}`);
-
     const res = await fetch(`/api/esports/teams?${params.toString()}`, {
       cache: "no-store",
       signal,
     });
-
-    console.log(`API response status: ${res.status}`);
 
     if (!res.ok) {
       const errorText = await res.text();
@@ -185,7 +172,6 @@ async function fetchTeams(game: string, search?: string, signal?: AbortSignal): 
 
       // Si es rate limit (429), devolver array vacío en lugar de error
       if (res.status === 429) {
-        console.log("Rate limit encountered, returning empty array");
         return [];
       }
 
@@ -196,7 +182,6 @@ async function fetchTeams(game: string, search?: string, signal?: AbortSignal): 
     if (signal?.aborted) {
       return [];
     }
-    console.log(`Received ${data.length} teams for ${game}`);
     const normalized = Array.isArray(data) ? data : [];
     apiCache.set(cacheKey, normalized);
     return normalized;

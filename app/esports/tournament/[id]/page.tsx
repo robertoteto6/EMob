@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import SearchLazy from "../../../components/SearchLazy";
 import { getTeamImageUrl } from "../../../lib/imageFallback";
 
@@ -50,14 +51,22 @@ async function fetchTournament(id: string): Promise<TournamentDetail | null> {
   };
 }
 
-export default function TournamentPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function TournamentPage() {
+  const params = useParams<{ id?: string | string[] }>();
+  const rawId = params?.id;
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
   const [tournament, setTournament] = useState<TournamentDetail | null>(null);
   const [matches, setMatches] = useState<MatchInfo[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
 
   useEffect(() => {
     async function load() {
+      if (!id) {
+        setTournament(null);
+        setMatches([]);
+        setTeams([]);
+        return;
+      }
       const data = await fetchTournament(id);
       setTournament(data);
       const res = await fetch(`/api/esports/matches?tournamentId=${id}`, { cache: "no-store" });

@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState } from "react";
 import nextDynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useNotifications } from "../../../hooks/useNotifications";
 import { useDeferredClientRender } from "../../../hooks/useDeferredClientRender";
 import { getPlayerImageUrl, getTeamImageUrl } from "../../../lib/imageFallback";
+import { getGameConfig, type GameConfig } from "../../../lib/gameConfig";
 
 const NotificationSystem = nextDynamic(() => import("../../../components/NotificationSystem"), {
   ssr: false,
@@ -68,17 +69,9 @@ interface Team {
   current_roster?: Player[];
 }
 
-const GAMES = [
-  { id: "dota2", name: "Dota 2", icon: "/dota2.svg", color: "#A970FF", gradient: "from-purple-600 to-purple-800", description: "El MOBA más competitivo del mundo" },
-  { id: "lol", name: "League of Legends", icon: "/leagueoflegends.svg", color: "#1E90FF", gradient: "from-blue-600 to-blue-800", description: "El juego más popular de esports" },
-  { id: "csgo", name: "Counter-Strike 2", icon: "/counterstrike.svg", color: "#FFD700", gradient: "from-yellow-600 to-yellow-800", description: "El FPS táctico por excelencia" },
-  { id: "r6siege", name: "Rainbow Six Siege", icon: "/rainbow6siege.png", color: "#FF6B35", gradient: "from-orange-600 to-orange-800", description: "Combate táctico intenso" },
-  { id: "overwatch", name: "Overwatch 2", icon: "/overwatch.svg", color: "#FF9500", gradient: "from-orange-500 to-orange-700", description: "Acción de héroes en equipo" },
-];
-
 // Componente de estadísticas principales
 function GameOverview({ game: _game, matches, tournaments, teams, players: _players }: {
-  game: typeof GAMES[0];
+  game: GameConfig;
   matches: Match[];
   tournaments: Tournament[];
   teams: Team[];
@@ -319,7 +312,7 @@ function GamePageContent({ gameId }: { gameId: string }) {
   const notificationSystem = useNotifications({ enabled: clientExtrasReady });
   const router = useRouter();
 
-  const game = GAMES.find(g => g.id === gameId);
+  const game = getGameConfig(gameId);
 
   useEffect(() => {
     if (!game) {
@@ -749,8 +742,14 @@ function GamePageContent({ gameId }: { gameId: string }) {
   );
 }
 
-export default function GamePage({ params }: { params: Promise<{ gameId: string }> }) {
-  const { gameId } = use(params);
+export default function GamePage() {
+  const params = useParams<{ gameId?: string | string[] }>();
+  const rawGameId = params?.gameId;
+  const gameId = Array.isArray(rawGameId) ? rawGameId[0] : rawGameId;
+
+  if (!gameId) {
+    return null;
+  }
 
   return <GamePageContent gameId={gameId} />;
 }

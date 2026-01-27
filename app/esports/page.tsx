@@ -17,6 +17,7 @@ import { useDeferredClientRender } from "../hooks/useDeferredClientRender";
 import { apiCache } from "../lib/utils";
 import { useGameContext } from "../contexts/GameContext";
 import GameSelector from "../components/GameSelector";
+import { SUPPORTED_GAMES, type GameConfig } from "../lib/gameConfig";
 
 interface PandaScoreMatch {
   id: number;
@@ -90,8 +91,8 @@ interface Match {
   id: number;
   radiant: string;
   dire: string;
-  radiant_score: number;
-  dire_score: number;
+  radiant_score: number | null;
+  dire_score: number | null;
   start_time: number;
   league: string;
   radiant_win: boolean | null;
@@ -112,13 +113,7 @@ interface Tournament {
   game?: string;
 }
 
-const GAMES = [
-  { id: "dota2", name: "Dota 2", icon: "/dota2.svg", color: "#A970FF", gradient: "from-purple-600 to-purple-800" },
-  { id: "lol", name: "League of Legends", icon: "/leagueoflegends.svg", color: "#1E90FF", gradient: "from-blue-600 to-blue-800" },
-  { id: "csgo", name: "Counter-Strike 2", icon: "/counterstrike.svg", color: "#FFD700", gradient: "from-yellow-600 to-yellow-800" },
-  { id: "r6siege", name: "Rainbow Six Siege", icon: "/rainbow6siege.png", color: "#FF6600", gradient: "from-orange-600 to-orange-800" },
-  { id: "overwatch", name: "Overwatch 2", icon: "/overwatch.svg", color: "#F99E1A", gradient: "from-orange-500 to-orange-700" },
-];
+const GAMES: GameConfig[] = SUPPORTED_GAMES;
 
 const TIMEFRAMES = [
   { id: "today", label: "Hoy", offset: 0, emoji: "📅", description: "Partidos de hoy" },
@@ -162,6 +157,9 @@ async function fetchMatches(gameIds: string[], signal?: AbortSignal): Promise<Ma
         const dateStr = m.begin_at ?? m.scheduled_at;
         const date = dateStr ? new Date(dateStr) : null;
         const start_time = date && !isNaN(date.getTime()) ? date.getTime() / 1000 : null;
+        if (!start_time) {
+          return null;
+        }
         // Validar resultados
         const radiant_score = Array.isArray(m.results) && m.results[0]?.score != null ? m.results[0].score : null;
         const dire_score = Array.isArray(m.results) && m.results[1]?.score != null ? m.results[1].score : null;
@@ -178,9 +176,9 @@ async function fetchMatches(gameIds: string[], signal?: AbortSignal): Promise<Ma
               ? m.winner.id === team1.id
               : null,
           game: m._gameId || gameIds[0], // Incluir el juego del partido
-        } as Match;
+        } satisfies Match;
       })
-      .filter((m: Match) => m.start_time !== null); // Filtrar partidos sin fecha válida
+      .filter((m: Match | null): m is Match => m !== null); // Filtrar partidos sin fecha válida
 
     apiCache.set(cacheKey, normalized);
     return normalized;

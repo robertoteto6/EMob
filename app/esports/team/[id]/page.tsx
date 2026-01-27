@@ -1,6 +1,7 @@
 "use client";
 
-import { use, useEffect, useState, Suspense, useCallback, useMemo } from "react";
+import { useEffect, useState, Suspense, useCallback, useMemo } from "react";
+import { useParams } from "next/navigation";
 import nextDynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
@@ -479,8 +480,14 @@ function TeamContent({ id }: { id: string }) {
   );
 }
 
-export default function TeamPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function TeamPage() {
+  const params = useParams<{ id?: string | string[] }>();
+  const rawId = params?.id;
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+
+  if (!id) {
+    return null;
+  }
   
   return (
     <Suspense fallback={

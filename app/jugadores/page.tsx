@@ -13,6 +13,7 @@ import { useGameContext } from "../contexts/GameContext";
 import GameSelector from "../components/GameSelector";
 import { getPlayerFallbackUrl, getPlayerImageUrl } from "../lib/imageFallback";
 import { apiCache } from "../lib/utils";
+import { SUPPORTED_GAMES, type GameConfig } from "../lib/gameConfig";
 import "./animations.css";
 
 const NotificationSystem = nextDynamic(() => import("../components/NotificationSystem"), {
@@ -64,13 +65,7 @@ interface Player {
   _gameId?: string; // Metadata del juego desde la API
 }
 
-const GAMES = [
-  { id: "dota2", name: "Dota 2", icon: "/dota2.svg", color: "#A970FF", gradient: "from-purple-600 to-purple-800" },
-  { id: "lol", name: "League of Legends", icon: "/leagueoflegends.svg", color: "#1E90FF", gradient: "from-blue-600 to-blue-800" },
-  { id: "csgo", name: "Counter-Strike 2", icon: "/counterstrike.svg", color: "#FFD700", gradient: "from-yellow-600 to-yellow-800" },
-  { id: "r6siege", name: "Rainbow Six Siege", icon: "/rainbow6siege.png", color: "#FF6600", gradient: "from-orange-600 to-orange-800" },
-  { id: "overwatch", name: "Overwatch 2", icon: "/overwatch.svg", color: "#F99E1A", gradient: "from-orange-500 to-orange-700" },
-];
+const GAMES: GameConfig[] = SUPPORTED_GAMES;
 
 async function fetchPlayers(gameIds: string[], search?: string, signal?: AbortSignal): Promise<Player[]> {
   if (gameIds.length === 0) {
@@ -88,14 +83,10 @@ async function fetchPlayers(gameIds: string[], search?: string, signal?: AbortSi
       return cached as Player[];
     }
 
-    console.log(`Fetching players for games: ${gameIds.join(',')}, search: ${search || 'none'}`);
-
     const res = await fetch(`/api/esports/players?${params.toString()}`, {
       cache: "no-store",
       signal,
     });
-
-    console.log(`API response status: ${res.status}`);
 
     if (!res.ok) {
       const errorText = await res.text();
@@ -107,7 +98,6 @@ async function fetchPlayers(gameIds: string[], search?: string, signal?: AbortSi
     if (signal?.aborted) {
       return [];
     }
-    console.log(`Received ${data.length} players`);
     // Normalizar datos y agregar campo game
     const normalized = Array.isArray(data) ? data.map((p: Player & { _gameId?: string }) => ({
       ...p,

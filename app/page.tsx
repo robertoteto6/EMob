@@ -140,11 +140,11 @@ async function fetchAllMatches(selectedGameIds: string[] = []): Promise<Match[]>
     const { batchQuery } = await import('./lib/queryOptimizer');
     const results = await batchQuery(batchConfigs);
 
-    for (let i = 0; i < GAMES.length; i++) {
-      const game = GAMES[i];
+    for (let i = 0; i < gamesToFetch.length; i++) {
+      const game = gamesToFetch[i];
       const result = results[i];
 
-      if (result.error) {
+      if (!result || result.error) {
         console.warn(`Failed to fetch matches for ${game.id}:`, result.error);
         continue;
       }
@@ -227,11 +227,11 @@ async function fetchAllTournaments(selectedGameIds: string[] = []): Promise<Tour
     const { batchQuery } = await import('./lib/queryOptimizer');
     const results = await batchQuery(batchConfigs);
 
-    for (let i = 0; i < GAMES.length; i++) {
-      const game = GAMES[i];
+    for (let i = 0; i < gamesToFetch.length; i++) {
+      const game = gamesToFetch[i];
       const result = results[i];
 
-      if (result.error) {
+      if (!result || result.error) {
         console.warn(`Failed to fetch tournaments for ${game.id}:`, result.error);
         continue;
       }

@@ -1,8 +1,9 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useParams } from "next/navigation";
 
 // Import player components (lazy loaded for better performance)
 import {
@@ -263,20 +264,28 @@ function useFavorites(playerId: number) {
   return { isFavorite, toggleFavorite };
 }
 
-export default function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function PlayerPage() {
+  const params = useParams<{ id?: string | string[] }>();
+  const rawId = params?.id;
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+  const playerId = id ? Number(id) : NaN;
   const [player, setPlayer] = useState<PlayerDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       setLoading(true);
+      if (!id || Number.isNaN(playerId)) {
+        setPlayer(null);
+        setLoading(false);
+        return;
+      }
       const data = await fetchPlayer(id);
       setPlayer(data);
       setLoading(false);
     }
     load();
-  }, [id]);
+  }, [id, playerId]);
 
   const { isFavorite, toggleFavorite } = useFavorites(player?.id || 0);
 
