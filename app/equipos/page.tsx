@@ -127,6 +127,7 @@ interface Team {
     league: string | null;
   }[];
   gloryScore: number;
+  _gameId?: string; // Metadata del juego desde la API
 }
 
 const GAMES = [
@@ -136,6 +137,33 @@ const GAMES = [
   { id: "r6siege", name: "Rainbow Six Siege", icon: "/rainbow6siege.png", color: "#FF6B35", gradient: "from-orange-600 to-orange-800" },
   { id: "overwatch", name: "Overwatch 2", icon: "/overwatch.svg", color: "#FF9500", gradient: "from-orange-500 to-orange-700" },
 ];
+
+// Mapeo de IDs de juegos a slugs de la API
+const GAME_SLUG_MAPPING: Record<string, string> = {
+  "dota2": "dota2",
+  "lol": "lol",
+  "csgo": "csgo",
+  "r6siege": "r6siege",
+  "overwatch": "ow"  // Overwatch usa "ow" en la API
+};
+
+// Función para verificar si un equipo pertenece al juego seleccionado
+function matchesGame(team: Team, gameId: string): boolean {
+  // Primero intentar usar current_videogame.slug
+  if (team.current_videogame?.slug) {
+    const expectedSlug = GAME_SLUG_MAPPING[gameId];
+    if (expectedSlug && team.current_videogame.slug === expectedSlug) {
+      return true;
+    }
+  }
+  
+  // Si no tiene current_videogame, usar _gameId como fallback
+  if (team._gameId) {
+    return team._gameId === gameId;
+  }
+  
+  return false;
+}
 
 async function fetchTeams(game: string, search?: string, signal?: AbortSignal): Promise<Team[]> {
   try {
@@ -476,34 +504,39 @@ function TeamsPageContent() {
     }
   }, [favoriteTeams]);
 
+  // Filtrar equipos por juego seleccionado
+  const filteredTeams = useMemo(() => {
+    return teams.filter(team => matchesGame(team, game));
+  }, [teams, game]);
+
   // Filtrado y paginación
   const paginatedTeams = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
-    return teams.slice(start, start + PAGE_SIZE);
-  }, [teams, page]);
+    return filteredTeams.slice(start, start + PAGE_SIZE);
+  }, [filteredTeams, page]);
 
-  const totalPages = Math.ceil(teams.length / PAGE_SIZE);
+  const totalPages = Math.ceil(filteredTeams.length / PAGE_SIZE);
 
   const favoriteList = useMemo(
-    () => teams.filter((t) => favoriteTeams.includes(t.id)),
-    [teams, favoriteTeams]
+    () => filteredTeams.filter((t) => favoriteTeams.includes(t.id)),
+    [filteredTeams, favoriteTeams]
   );
 
   // Estadísticas
   const stats = useMemo(() => {
-    const avgGlory = teams.length > 0 ? Math.round(teams.reduce((sum, t) => sum + t.gloryScore, 0) / teams.length) : 0;
-    const totalTrophies = teams.reduce((sum, t) => sum + t.tournaments.length, 0);
-    const legendaryTeams = teams.filter(t => t.gloryScore >= 30).length;
+    const avgGlory = filteredTeams.length > 0 ? Math.round(filteredTeams.reduce((sum, t) => sum + t.gloryScore, 0) / filteredTeams.length) : 0;
+    const totalTrophies = filteredTeams.reduce((sum, t) => sum + t.tournaments.length, 0);
+    const legendaryTeams = filteredTeams.filter(t => t.gloryScore >= 30).length;
 
     return {
-      total: teams.length,
+      total: filteredTeams.length,
       favoritos: favoriteList.length,
-      conJugadores: teams.filter(t => t.players > 0).length,
+      conJugadores: filteredTeams.filter(t => t.players > 0).length,
       trofeos: totalTrophies,
       avgGlory,
       legendarios: legendaryTeams
     };
-  }, [teams, favoriteList]);
+  }, [filteredTeams, favoriteList]);
 
   return (
     <>
@@ -671,13 +704,13 @@ function TeamsPageContent() {
           )}
 
           {/* Hall of Fame - Top 3 equipos más gloriosos */}
-          {teams.length > 0 && teams.slice(0, 3).some(t => t.gloryScore > 0) && (
+          {filteredTeams.length > 0 && filteredTeams.slice(0, 3).some(t => t.gloryScore > 0) && (
             <div className="mb-8">
               <h3 className="text-3xl font-bold text-white mb-6 text-center flex items-center justify-center gap-2">
                 👑 Hall of Fame - Los Más Gloriosos
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-                {teams.slice(0, 3).map((team, index) => (
+                {filteredTeams.slice(0, 3).map((team, index) => (
                   <div key={team.id} className="relative">
                     {/* Posición del podio */}
                     <div className={`absolute -top-4 left-1/2 transform -translate-x-1/2 z-20 ${index === 0 ? 'text-6xl' : index === 1 ? 'text-5xl' : 'text-4xl'
@@ -778,7 +811,7 @@ function TeamsPageContent() {
                 </span>
               </h3>
               <div className="text-sm text-gray-400">
-                {teams.length} equipos encontrados
+                {filteredTeams.length} equipos encontrados
               </div>
             </div>
 

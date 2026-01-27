@@ -60,6 +60,8 @@ interface Player {
   tournaments_played: number;
   instagram_followers: number;
   instagram_handle: string | null;
+  game?: string; // Juego al que pertenece el jugador
+  _gameId?: string; // Metadata del juego desde la API
 }
 
 const GAMES = [
@@ -106,7 +108,11 @@ async function fetchPlayers(gameIds: string[], search?: string, signal?: AbortSi
       return [];
     }
     console.log(`Received ${data.length} players`);
-    const normalized = Array.isArray(data) ? data : [];
+    // Normalizar datos y agregar campo game
+    const normalized = Array.isArray(data) ? data.map((p: Player & { _gameId?: string }) => ({
+      ...p,
+      game: p._gameId || gameIds[0], // Incluir el juego del jugador
+    })) : [];
     apiCache.set(cacheKey, normalized);
     return normalized;
   } catch (error) {
@@ -399,9 +405,14 @@ function PlayersPageContent() {
     }
   }, [favoritePlayers]);
 
+  // Filtrar jugadores por juegos seleccionados
+  const filteredPlayers = useMemo(() => {
+    return players.filter(p => p.game && selectedGames.includes(p.game));
+  }, [players, selectedGames]);
+
   // Filtrado, ordenación y paginación
   const sortedAndPaginatedPlayers = useMemo(() => {
-    const sortedPlayers = [...players];
+    const sortedPlayers = [...filteredPlayers];
 
     // Aplicar ordenación
     switch (sortBy) {
@@ -436,30 +447,35 @@ function PlayersPageContent() {
     // Aplicar paginación
     const start = (page - 1) * PAGE_SIZE;
     return sortedPlayers.slice(start, start + PAGE_SIZE);
-  }, [players, page, sortBy]);
+  }, [filteredPlayers, page, sortBy]);
 
-  const totalPages = Math.ceil(players.length / PAGE_SIZE);
+  // Filtrar jugadores por juegos seleccionados
+  const filteredPlayers = useMemo(() => {
+    return players.filter(p => p.game && selectedGames.includes(p.game));
+  }, [players, selectedGames]);
+
+  const totalPages = Math.ceil(filteredPlayers.length / PAGE_SIZE);
 
   const favoriteList = useMemo(
-    () => players.filter((p) => favoritePlayers.includes(p.id)),
-    [players, favoritePlayers]
+    () => filteredPlayers.filter((p) => favoritePlayers.includes(p.id)),
+    [filteredPlayers, favoritePlayers]
   );
 
   // Estadísticas mejoradas
   const stats = useMemo(() => {
-    const totalTitulos = players.reduce((sum, p) => sum + p.title_score, 0);
-    const jugadoresActivos = players.filter(p => p.professional_status === "Activo").length;
-    const conEquipo = players.filter(p => p.current_team).length;
+    const totalTitulos = filteredPlayers.reduce((sum, p) => sum + p.title_score, 0);
+    const jugadoresActivos = filteredPlayers.filter(p => p.professional_status === "Activo").length;
+    const conEquipo = filteredPlayers.filter(p => p.current_team).length;
 
     return {
-      total: players.length,
+      total: filteredPlayers.length,
       favoritos: favoriteList.length,
-      conFoto: players.filter(p => p.image_url).length,
+      conFoto: filteredPlayers.filter(p => p.image_url).length,
       activos: jugadoresActivos,
       conEquipo: conEquipo,
       totalTitulos: totalTitulos,
     };
-  }, [players, favoriteList]);
+  }, [filteredPlayers, favoriteList]);
 
   // Si no hay juegos seleccionados, mostrar selector
   if (!hasAnyGame) {

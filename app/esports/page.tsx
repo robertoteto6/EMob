@@ -95,6 +95,7 @@ interface Match {
   start_time: number;
   league: string;
   radiant_win: boolean | null;
+  game?: string; // Juego al que pertenece el partido
 }
 
 interface Tournament {
@@ -175,6 +176,7 @@ async function fetchMatches(gameIds: string[], signal?: AbortSignal): Promise<Ma
             m.winner?.id !== undefined && team1?.id !== undefined
               ? m.winner.id === team1.id
               : null,
+          game: m._gameId || gameIds[0], // Incluir el juego del partido
         } as Match;
       })
       .filter((m: Match) => m.start_time !== null); // Filtrar partidos sin fecha válida
@@ -730,7 +732,10 @@ function EsportsPageContent() {
 
   // Filtrado avanzado y favoritos
   const filtered = useMemo(() => {
-    let res = matches.filter(matchOnSelectedTimeframe);
+    // Primero filtrar por juegos seleccionados
+    let res = matches.filter(m => m.game && selectedGames.includes(m.game));
+    // Luego filtrar por timeframe
+    res = res.filter(matchOnSelectedTimeframe);
     if (filterLeague) {
       res = res.filter((m) => m.league.toLowerCase().includes(filterLeague.toLowerCase()));
     }
@@ -751,7 +756,7 @@ function EsportsPageContent() {
       });
     }
     return res;
-  }, [matches, timeframe, filterLeague, filterTeam, filterStatus]);
+  }, [matches, selectedGames, timeframe, filterLeague, filterTeam, filterStatus]);
 
   // Paginación de partidos filtrados
   const paginated = useMemo(() => {
@@ -762,25 +767,27 @@ function EsportsPageContent() {
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
 
   const favoriteList = useMemo(
-    () => matches.filter((m) => favoriteMatches.includes(m.id)),
-    [matches, favoriteMatches]
+    () => matches.filter((m) => favoriteMatches.includes(m.id) && m.game && selectedGames.includes(m.game)),
+    [matches, favoriteMatches, selectedGames]
   );
 
   // Estadísticas rápidas
   const stats = useMemo(() => {
+    // Filtrar matches por juegos seleccionados para estadísticas
+    const matchesByGame = matches.filter(m => m.game && selectedGames.includes(m.game));
     return {
       total: filtered.length,
       favoritos: favoriteList.length,
-      hoy: matches.filter(m => {
+      hoy: matchesByGame.filter(m => {
         if (!m.start_time) return false;
         const now = new Date();
         const ms = m.start_time * 1000;
         return new Date(ms).toDateString() === now.toDateString();
       }).length,
-      equipos: Array.from(new Set(matches.flatMap(m => [m.radiant, m.dire]))).length,
-      ligas: Array.from(new Set(matches.map(m => m.league))).length,
+      equipos: Array.from(new Set(matchesByGame.flatMap(m => [m.radiant, m.dire]))).length,
+      ligas: Array.from(new Set(matchesByGame.map(m => m.league))).length,
     };
-  }, [filtered, favoriteList, matches]);
+  }, [filtered, favoriteList, matches, selectedGames]);
 
   // Monitoreo de partidos favoritos para notificaciones
   useEffect(() => {
@@ -1296,6 +1303,7 @@ ${t.description}. Ajusta la lista de partidos al período indicado.`}
                       <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
                           {tournaments
+                            .filter(tournament => tournament.game && selectedGames.includes(tournament.game))
                             .filter(tournament => {
                               if (filterLeague) {
                                 return tournament.league.toLowerCase().includes(filterLeague.toLowerCase()) ||
@@ -1359,6 +1367,7 @@ ${t.description}. Ajusta la lista de partidos al período indicado.`}
                               <div className="text-center bg-black/20 rounded-xl p-4">
                                 <div className="text-2xl font-bold text-green-400">
                                   {tournaments.filter(t => {
+                                    if (!t.game || !selectedGames.includes(t.game)) return false;
                                     const now = Date.now() / 1000;
                                     return t.begin_at && t.begin_at <= now && (!t.end_at || t.end_at > now);
                                   }).length}
@@ -1373,7 +1382,10 @@ ${t.description}. Ajusta la lista de partidos al período indicado.`}
                             >
                               <div className="text-center bg-black/20 rounded-xl p-4">
                                 <div className="text-2xl font-bold text-blue-400">
-                                  {tournaments.filter(t => t.begin_at && t.begin_at > Date.now() / 1000).length}
+                                  {tournaments.filter(t => {
+                                    if (!t.game || !selectedGames.includes(t.game)) return false;
+                                    return t.begin_at && t.begin_at > Date.now() / 1000;
+                                  }).length}
                                 </div>
                                 <div className="text-sm text-gray-400">Próximos</div>
                               </div>
@@ -1385,7 +1397,10 @@ ${t.description}. Ajusta la lista de partidos al período indicado.`}
                             >
                               <div className="text-center bg-black/20 rounded-xl p-4">
                                 <div className="text-2xl font-bold text-yellow-400">
-                                  {tournaments.filter(t => t.prizepool && t.prizepool.toLowerCase() !== 'tbd').length}
+                                  {tournaments.filter(t => {
+                                    if (!t.game || !selectedGames.includes(t.game)) return false;
+                                    return t.prizepool && t.prizepool.toLowerCase() !== 'tbd';
+                                  }).length}
                                 </div>
                                 <div className="text-sm text-gray-400">Con Premio</div>
                               </div>
