@@ -542,7 +542,7 @@ function TeamsPageContent() {
 
   return (
     <>
-      <LiveScoreTicker />
+      <LiveScoreTicker currentGame={selectedGames.join(',')} />
 
       <main className="min-h-screen pt-20 pb-24 md:pb-0">
         {/* Indicador de estado de cache */}

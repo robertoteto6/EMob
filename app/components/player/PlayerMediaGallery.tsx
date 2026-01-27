@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MediaItem } from '../../lib/types/player';
@@ -12,8 +12,31 @@ interface PlayerMediaGalleryProps {
 
 type TabType = 'all' | 'images' | 'videos' | 'highlights';
 
+// Quality levels for YouTube thumbnails (fallback chain)
+const YOUTUBE_THUMBNAIL_QUALITIES = [
+  'maxresdefault',
+  'sddefault', 
+  'hqdefault',
+  'mqdefault',
+  'default'
+] as const;
+
 function YouTubeEmbed({ videoId, title }: { videoId: string; title: string }) {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [thumbnailError, setThumbnailError] = useState(false);
+  const [currentQualityIndex, setCurrentQualityIndex] = useState(0);
+
+  const handleThumbnailError = useCallback(() => {
+    if (currentQualityIndex < YOUTUBE_THUMBNAIL_QUALITIES.length - 1) {
+      setCurrentQualityIndex(prev => prev + 1);
+    } else {
+      setThumbnailError(true);
+    }
+  }, [currentQualityIndex]);
+
+  const thumbnailUrl = thumbnailError 
+    ? '/placeholder-video.jpg'
+    : `https://img.youtube.com/vi/${videoId}/${YOUTUBE_THUMBNAIL_QUALITIES[currentQualityIndex]}.jpg`;
 
   return (
     <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-900">
@@ -21,13 +44,25 @@ function YouTubeEmbed({ videoId, title }: { videoId: string; title: string }) {
         <div 
           className="absolute inset-0 cursor-pointer group"
           onClick={() => setIsLoaded(true)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setIsLoaded(true)}
+          aria-label={`Reproducir video: ${title}`}
         >
-          <Image
-            src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
-            alt={title}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-          />
+          {thumbnailError ? (
+            <div className="absolute inset-0 bg-gradient-to-br from-red-900/50 to-gray-900 flex items-center justify-center">
+              <span className="text-6xl">🎬</span>
+            </div>
+          ) : (
+            <Image
+              src={thumbnailUrl}
+              alt={title}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              onError={handleThumbnailError}
+              unoptimized
+            />
+          )}
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/30 transition-colors">
             <motion.div 
               whileHover={{ scale: 1.1 }}
@@ -42,11 +77,12 @@ function YouTubeEmbed({ videoId, title }: { videoId: string; title: string }) {
       )}
       {isLoaded && (
         <iframe
-          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`}
+          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
           title={title}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           className="w-full h-full"
+          loading="lazy"
         />
       )}
     </div>
@@ -67,7 +103,9 @@ function TwitchEmbed({ videoId, title }: { videoId: string; title: string }) {
 }
 
 function MediaCard({ item, onClick }: { item: MediaItem; onClick: () => void }) {
+  const [imageError, setImageError] = useState(false);
   const isVideo = item.type === 'video' || item.type === 'highlight';
+  const isHighlight = item.type === 'highlight';
   
   // Extract YouTube video ID from URL
   const getYouTubeId = (url: string) => {
@@ -76,7 +114,14 @@ function MediaCard({ item, onClick }: { item: MediaItem; onClick: () => void }) 
   };
 
   const youtubeId = item.source === 'youtube' ? getYouTubeId(item.url) : null;
-  const thumbnail = item.thumbnail || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : '/placeholder-media.jpg');
+  
+  // Fallback chain for thumbnails
+  const getThumbnail = () => {
+    if (imageError) return '/placeholder-video.jpg';
+    if (item.thumbnail) return item.thumbnail;
+    if (youtubeId) return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+    return '/placeholder-media.jpg';
+  };
 
   return (
     <motion.div
@@ -86,16 +131,33 @@ function MediaCard({ item, onClick }: { item: MediaItem; onClick: () => void }) 
       exit={{ opacity: 0, scale: 0.9 }}
       whileHover={{ y: -4 }}
       onClick={onClick}
-      className="relative group cursor-pointer rounded-xl overflow-hidden bg-gray-900 border border-gray-700 hover:border-green-500/50 transition-all duration-300 shadow-lg"
+      className={`relative group cursor-pointer rounded-xl overflow-hidden bg-gray-900 border transition-all duration-300 shadow-lg ${
+        isHighlight 
+          ? 'border-yellow-500/50 hover:border-yellow-400 ring-1 ring-yellow-500/20' 
+          : 'border-gray-700 hover:border-green-500/50'
+      }`}
     >
+      {/* Highlight glow effect */}
+      {isHighlight && (
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-transparent pointer-events-none z-10" />
+      )}
+
       {/* Thumbnail */}
       <div className="relative aspect-video">
-        <Image
-          src={thumbnail}
-          alt={item.title}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
-        />
+        {imageError ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+            <span className="text-5xl">{isVideo ? '🎬' : '📷'}</span>
+          </div>
+        ) : (
+          <Image
+            src={getThumbnail()}
+            alt={item.title}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            onError={() => setImageError(true)}
+            unoptimized={item.source === 'youtube'}
+          />
+        )}
         
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
@@ -138,10 +200,10 @@ function MediaCard({ item, onClick }: { item: MediaItem; onClick: () => void }) 
            '🎬 Video'}
         </div>
 
-        {/* Type badge */}
-        {item.type === 'highlight' && (
-          <div className="absolute top-2 right-2 px-2 py-1 bg-yellow-600 rounded text-xs font-bold text-white">
-            ⭐ Highlight
+        {/* Type badge - Enhanced for highlights */}
+        {isHighlight && (
+          <div className="absolute top-2 right-2 px-3 py-1 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-full text-xs font-bold text-white flex items-center gap-1 shadow-lg shadow-yellow-500/30">
+            <span className="animate-pulse">⭐</span> Highlight
           </div>
         )}
       </div>
@@ -198,6 +260,11 @@ export default function PlayerMediaGallery({ media, playerName }: PlayerMediaGal
     return true;
   });
 
+  // Get featured highlight (most viewed)
+  const featuredHighlight = media
+    .filter(m => m.type === 'highlight' && m.views)
+    .sort((a, b) => (b.views || 0) - (a.views || 0))[0];
+
   // Get YouTube video ID
   const getYouTubeId = (url: string) => {
     const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
@@ -214,8 +281,84 @@ export default function PlayerMediaGallery({ media, playerName }: PlayerMediaGal
     return null;
   }
 
+  const highlightsCount = media.filter(m => m.type === 'highlight').length;
+
   return (
     <section className="mb-12">
+      {/* Featured Highlight for important players */}
+      {featuredHighlight && highlightsCount >= 3 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 p-1 rounded-2xl bg-gradient-to-r from-yellow-500/30 via-orange-500/30 to-red-500/30"
+        >
+          <div className="bg-gray-900/95 rounded-xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-2xl">🏆</span>
+              <h3 className="text-xl font-bold text-white">Highlight Destacado</h3>
+              <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs font-bold rounded-full">
+                FEATURED
+              </span>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div 
+                className="cursor-pointer"
+                onClick={() => setSelectedMedia(featuredHighlight)}
+              >
+                {featuredHighlight.source === 'youtube' && getYouTubeId(featuredHighlight.url) && (
+                  <YouTubeEmbed
+                    videoId={getYouTubeId(featuredHighlight.url)!}
+                    title={featuredHighlight.title}
+                  />
+                )}
+              </div>
+              <div className="flex flex-col justify-center">
+                <h4 className="text-2xl font-bold text-white mb-3 line-clamp-2">
+                  {featuredHighlight.title}
+                </h4>
+                {featuredHighlight.description && (
+                  <p className="text-gray-400 mb-4 line-clamp-3">
+                    {featuredHighlight.description}
+                  </p>
+                )}
+                <div className="flex items-center gap-4 text-sm text-gray-400">
+                  {featuredHighlight.views && (
+                    <span className="flex items-center gap-1">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                      </svg>
+                      {featuredHighlight.views >= 1000000 
+                        ? `${(featuredHighlight.views / 1000000).toFixed(1)}M views` 
+                        : featuredHighlight.views >= 1000 
+                        ? `${(featuredHighlight.views / 1000).toFixed(0)}K views`
+                        : `${featuredHighlight.views} views`}
+                    </span>
+                  )}
+                  {featuredHighlight.duration && (
+                    <span className="flex items-center gap-1">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                      </svg>
+                      {featuredHighlight.duration}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setSelectedMedia(featuredHighlight)}
+                  className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white rounded-xl font-semibold transition-all duration-300 hover:scale-105 w-fit"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                  Ver Highlight Completo
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Section Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}

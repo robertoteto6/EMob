@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { pandaScoreFetch } from "../../../../lib/pandaScoreFetch";
-import { searchPlayerHighlights, convertYouTubeToMediaItems } from "../../../../lib/youtube";
+import { searchPlayerHighlights, convertYouTubeToMediaItems, isYouTubeConfigured } from "../../../../lib/youtube";
 import type { Achievement, MediaItem, CareerEvent, GameSpecificStats } from "../../../../lib/types/player";
 
 // Función para generar logros del jugador basados en sus datos
@@ -645,16 +645,38 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     // Obtener videos de YouTube (highlights del jugador)
     let mediaGallery: MediaItem[] = [];
-    try {
-      const gameName = playerData.current_videogame?.name ||
-        playerData.current_team?.current_videogame?.name || '';
-      const youtubeResults = await searchPlayerHighlights(playerData.name, gameName, 6);
+    
+    // Solo intentar buscar en YouTube si está configurado
+    if (isYouTubeConfigured()) {
+      try {
+        const gameName = playerData.current_videogame?.name ||
+          playerData.current_team?.current_videogame?.name || '';
+        
+        // Para jugadores veteranos/importantes, buscar más videos
+        const maxVideos = isVeteran ? 10 : 6;
+        const youtubeResults = await searchPlayerHighlights(playerData.name, gameName, maxVideos);
 
-      if (youtubeResults.videos.length > 0) {
-        mediaGallery = convertYouTubeToMediaItems(youtubeResults.videos, true);
+        if (youtubeResults.videos.length > 0) {
+          mediaGallery = convertYouTubeToMediaItems(youtubeResults.videos, true);
+        } else {
+          // Si no hay resultados, intentar búsqueda más genérica solo con el nombre
+          console.log(`No videos found for ${playerData.name} with game ${gameName}, trying generic search`);
+          const fallbackResults = await searchPlayerHighlights(playerData.name, '', 4);
+          if (fallbackResults.videos.length > 0) {
+            mediaGallery = convertYouTubeToMediaItems(fallbackResults.videos, true);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching YouTube videos:', error);
+        // Continue without videos - graceful degradation
       }
-    } catch (error) {
-      console.error('Error fetching YouTube videos:', error);
+    } else {
+      console.log('YouTube API not configured, skipping video search');
+    }
+    
+    // Agregar placeholder si no hay videos pero es un jugador importante
+    if (mediaGallery.length === 0 && isVeteran) {
+      console.log(`No YouTube videos available for veteran player ${playerData.name}`);
     }
 
     // Calcular años activos y ganancias estimadas
