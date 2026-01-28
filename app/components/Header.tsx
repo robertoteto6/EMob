@@ -273,6 +273,18 @@ function HeaderContent() {
               onDeleteNotification={deleteNotification}
             />
 
+            {/* Botón Info */}
+            <Link
+              href="/info"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white/50 hover:text-white hover:bg-white/10 transition-all"
+              aria-label="Información"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Info</span>
+            </Link>
+
             {/* Botón Pro/Premium - Armonizado con Alertas */}
             <Link
               href="/pro"
@@ -412,6 +424,17 @@ function HeaderContent() {
 
             {/* Acciones móviles con padding para safe area */}
             <div className="p-4 border-t border-white/5 space-y-3 safe-bottom">
+              <Link
+                href="/info"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full touch-target touch-feedback inline-flex items-center justify-center gap-2 bg-white/5 text-white/90 px-4 py-3 rounded-xl font-semibold text-sm border border-white/10"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Información</span>
+              </Link>
+
               <Link
                 href="/pro"
                 onClick={() => setIsMobileMenuOpen(false)}

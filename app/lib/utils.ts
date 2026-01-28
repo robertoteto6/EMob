@@ -77,17 +77,17 @@ class OptimizedCache {
   get(key: string): any | null {
     const item = this.cache.get(key);
     if (!item) return null;
-    
+
     const now = Date.now();
     if (now - item.timestamp > this.ttl) {
       this.cache.delete(key);
       return null;
     }
-    
+
     // Actualizar estadísticas de acceso
     item.accessCount++;
     item.lastAccess = now;
-    
+
     return item.data;
   }
 
@@ -96,7 +96,7 @@ class OptimizedCache {
     if (this.cache.size >= this.maxSize) {
       this.evictLeastUsed();
     }
-    
+
     const now = Date.now();
     this.cache.set(key, {
       data,
@@ -110,16 +110,16 @@ class OptimizedCache {
     let leastUsedKey = '';
     let leastUsedCount = Infinity;
     let oldestAccess = Infinity;
-    
+
     for (const [key, item] of this.cache.entries()) {
-      if (item.accessCount < leastUsedCount || 
-          (item.accessCount === leastUsedCount && item.lastAccess < oldestAccess)) {
+      if (item.accessCount < leastUsedCount ||
+        (item.accessCount === leastUsedCount && item.lastAccess < oldestAccess)) {
         leastUsedKey = key;
         leastUsedCount = item.accessCount;
         oldestAccess = item.lastAccess;
       }
     }
-    
+
     if (leastUsedKey) {
       this.cache.delete(leastUsedKey);
     }
@@ -155,7 +155,7 @@ export function throttle<T extends (...args: any[]) => any>(
 // Función para lazy loading de imágenes
 export function createImageLoader() {
   if (typeof window === 'undefined') return null;
-  
+
   const imageObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -169,7 +169,7 @@ export function createImageLoader() {
       }
     });
   });
-  
+
   return imageObserver;
 }
 
@@ -182,7 +182,7 @@ export function prefersReducedMotion(): boolean {
 // Función para optimizar el rendimiento de scroll
 export function optimizeScroll(callback: () => void): () => void {
   let ticking = false;
-  
+
   const handleScroll = () => {
     if (!ticking) {
       requestAnimationFrame(() => {
@@ -192,7 +192,7 @@ export function optimizeScroll(callback: () => void): () => void {
       ticking = true;
     }
   };
-  
+
   return handleScroll;
 }
 
@@ -239,4 +239,31 @@ export function getMatchStatus(
     isUpcoming,
     isFinished,
   };
+}
+
+/**
+ * Formatea una fecha como tiempo relativo (ej. "hace 2 min").
+ * @param date - Fecha a formatear
+ * @returns String de tiempo relativo
+ */
+export function formatRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 1000));
+
+  if (diffInSeconds < 60) {
+    return 'hace unos segundos';
+  }
+
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return `hace ${diffInMinutes} min`;
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `hace ${diffInHours} h`;
+  }
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `hace ${diffInDays} días`;
 }

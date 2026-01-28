@@ -48,8 +48,8 @@ export interface Match {
   id: number;
   radiant: string;
   dire: string;
-  radiant_score: number;
-  dire_score: number;
+  radiant_score: number | null;
+  dire_score: number | null;
   start_time: number;
   league: string;
   radiant_win: boolean | null;
