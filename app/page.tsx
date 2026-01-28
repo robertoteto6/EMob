@@ -14,6 +14,7 @@ import { useNotifications } from "./hooks/useNotifications";
 import { useDeferredClientRender } from "./hooks/useDeferredClientRender";
 import { usePagePullToRefresh, ScrollIndicator, PullToRefreshIndicator } from "./components/MobileGestures";
 import { useGameContext } from "./contexts/GameContext";
+import { getMatchStatus } from "./lib/utils";
 
 interface PandaScoreMatch {
   id: number;
@@ -392,12 +393,40 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
   );
 });
 
+const SummaryStatCard = memo(function SummaryStatCard({
+  label,
+  value,
+  helper,
+  accent,
+}: {
+  label: string;
+  value: string;
+  helper: string;
+  accent: string;
+}) {
+  return (
+    <div className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08]">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" aria-hidden="true" />
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
+            {label}
+          </p>
+          <p className="mt-1 text-xs text-white/40">{helper}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-2xl font-black text-white tabular-nums">{value}</p>
+          <p className="text-xs font-semibold text-white/50">{accent}</p>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 // Componente de partido destacado (memoizado) - Diseño Minimalista
 const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { match: Match; currentTime: number }) {
   const game = GAMES.find(g => g.id === match.game);
-  const isLive = match.start_time <= currentTime && match.radiant_win === null;
-  const isUpcoming = match.start_time > currentTime;
-  const isFinished = match.radiant_win !== null;
+  const { isLive, isUpcoming, isFinished } = getMatchStatus(match, currentTime);
 
   return (
     <Link href={`/esports/${match.id}`}>
@@ -573,6 +602,59 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
   );
 });
 
+const DashboardMatchItem = memo(function DashboardMatchItem({ match, currentTime }: { match: Match; currentTime: number }) {
+  const { isLive, isFinished } = getMatchStatus(match, currentTime);
+  const matchDate = new Date(match.start_time * 1000);
+
+  return (
+    <Link
+      href={`/esports/${match.id}`}
+      className="group flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-black/50 px-4 py-3 transition-all duration-300 hover:border-white/20 hover:bg-white/5"
+    >
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
+          {match.league || "Liga profesional"}
+        </p>
+        <p className="truncate text-sm font-semibold text-white">
+          {match.radiant}
+          <span className="mx-2 text-white/40">vs</span>
+          {match.dire}
+        </p>
+        <p className="mt-1 text-xs text-white/40">
+          {matchDate.toLocaleDateString("es-ES", {
+            day: "numeric",
+            month: "short",
+          })}{" "}
+          ·{" "}
+          {matchDate.toLocaleTimeString("es-ES", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </p>
+      </div>
+      <div className="flex items-center gap-3">
+        {isLive ? (
+          <LiveBadge label="EN CURSO" tone="emerald" className="scale-90" />
+        ) : isFinished ? (
+          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white/50">
+            Finalizado
+          </span>
+        ) : (
+          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white/50">
+            Próximo
+          </span>
+        )}
+        {isFinished && (
+          <div className="hidden flex-col items-end text-xs font-semibold text-white/70 sm:flex">
+            <span>{typeof match.radiant_score === "number" ? match.radiant_score : "—"}</span>
+            <span>{typeof match.dire_score === "number" ? match.dire_score : "—"}</span>
+          </div>
+        )}
+      </div>
+    </Link>
+  );
+});
+
 const Home = memo(function Home() {
   const { selectedGames, hasAnyGame, toggleGame, hasGame, getSelectedGamesConfig } = useGameContext();
   const [matches, setMatches] = useState<Match[]>([]);
@@ -718,11 +800,12 @@ const Home = memo(function Home() {
       let completedMatches = 0;
 
       for (const match of gameMatches) {
-        if (match.start_time <= currentTime && match.radiant_win === null) {
+        const { status } = getMatchStatus(match, currentTime);
+        if (status === 'live') {
           liveMatches += 1;
-        } else if (match.start_time > currentTime) {
+        } else if (status === 'upcoming') {
           upcomingMatches += 1;
-        } else if (match.radiant_win !== null) {
+        } else {
           completedMatches += 1;
         }
       }
@@ -756,10 +839,11 @@ const Home = memo(function Home() {
         acc.totalMatches += stats.totalMatches;
         acc.liveMatches += stats.liveMatches;
         acc.upcomingMatches += stats.upcomingMatches;
+        acc.completedMatches += stats.completedMatches;
         acc.tournaments += stats.activeTournaments;
         return acc;
       },
-      { totalMatches: 0, liveMatches: 0, upcomingMatches: 0, tournaments: 0 }
+      { totalMatches: 0, liveMatches: 0, upcomingMatches: 0, completedMatches: 0, tournaments: 0 }
     );
   }, [gameStats]);
 
@@ -778,6 +862,27 @@ const Home = memo(function Home() {
       label: "Torneos activos",
       value: aggregatedStats.tournaments,
       helper: "de las ligas top",
+    },
+  ];
+
+  const summaryStats = [
+    {
+      label: "En curso",
+      value: numberFormatter.format(Math.max(aggregatedStats.liveMatches, 0)),
+      helper: "partidos activos ahora",
+      accent: "Live",
+    },
+    {
+      label: "Próximos",
+      value: numberFormatter.format(Math.max(aggregatedStats.upcomingMatches, 0)),
+      helper: "todos los próximos partidos",
+      accent: "Agenda",
+    },
+    {
+      label: "Recientes",
+      value: numberFormatter.format(Math.max(aggregatedStats.completedMatches, 0)),
+      helper: "resultados cerrados",
+      accent: "Finalizados",
     },
   ];
 
@@ -874,12 +979,19 @@ const Home = memo(function Home() {
     const recent: Match[] = [];
 
     for (const match of filteredMatches) {
-      if (match.start_time <= currentTime && match.radiant_win === null) {
-        live.push(match);
-      } else if (match.start_time > currentTime) {
-        upcoming.push(match);
-      } else {
-        recent.push(match);
+      const { status } = getMatchStatus(match, currentTime);
+      if (status === 'live') {
+        if (live.length < 2) {
+          live.push(match);
+        }
+      } else if (status === 'upcoming') {
+        if (upcoming.length < 3) {
+          upcoming.push(match);
+        }
+      }
+
+      if (live.length >= 2 && upcoming.length >= 3) {
+        break;
       }
     }
 
@@ -898,18 +1010,39 @@ const Home = memo(function Home() {
     };
   }, [filteredMatches, currentTime]);
 
-  const heroMatchIsLive = heroFeaturedMatch ? heroFeaturedMatch.start_time <= currentTime && heroFeaturedMatch.radiant_win === null : false;
-  const heroMatchIsUpcoming = heroFeaturedMatch ? heroFeaturedMatch.start_time > currentTime : false;
-  const heroMatchIsFinished = heroFeaturedMatch ? heroFeaturedMatch.radiant_win !== null : false;
-  const heroMatchDate = heroFeaturedMatch ? new Date(heroFeaturedMatch.start_time * 1000) : null;
-  const heroRadiantWinner = heroMatchIsFinished && heroFeaturedMatch ? heroFeaturedMatch.radiant_win === true : false;
-  const heroDireWinner = heroMatchIsFinished && heroFeaturedMatch ? heroFeaturedMatch.radiant_win === false : false;
-  const hasAnyHighlightedMatches = Boolean(
-    heroFeaturedMatch
-    || secondaryLiveMatches.length
-    || secondaryUpcomingMatches.length
-    || secondaryRecentMatches.length
-  );
+  const dashboardMatches = useMemo(() => {
+    const live: Match[] = [];
+    const upcoming: Match[] = [];
+    const recent: Match[] = [];
+
+    for (const match of filteredMatches) {
+      const { status } = getMatchStatus(match, currentTime);
+      if (status === 'live') {
+        live.push(match);
+      } else if (status === 'upcoming') {
+        upcoming.push(match);
+      } else {
+        recent.push(match);
+      }
+    }
+
+    recent.sort((a, b) => b.start_time - a.start_time);
+
+    return {
+      live: live.slice(0, 4),
+      upcoming: upcoming.slice(0, 4),
+      recent: recent.slice(0, 4),
+    };
+  }, [filteredMatches, currentTime]);
+
+  const dashboardCounts = useMemo(() => {
+    const counts = { live: 0, upcoming: 0, recent: 0 };
+    for (const match of filteredMatches) {
+      const { status } = getMatchStatus(match, currentTime);
+      counts[status] += 1;
+    }
+    return counts;
+  }, [filteredMatches, currentTime]);
 
   // Si no hay juegos seleccionados, mostrar el selector
   if (!hasAnyGame) {
@@ -924,60 +1057,52 @@ const Home = memo(function Home() {
         ref={pullToRefresh.setRef}
         className="min-h-screen pt-20 pb-24 md:pb-0"
       >
-        {/* Hero Section - Diseño Minimalista */}
-        <section className="relative overflow-hidden py-12 sm:py-20 lg:py-28">
-          {/* Fondo negro puro */}
-          <div className="absolute inset-0 -z-20 bg-black" aria-hidden="true" />
-
-          {/* Patrón de grid sutil */}
-          <div className="absolute inset-0 -z-15 opacity-10" aria-hidden="true">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.1) 1px, transparent 0)`,
-              backgroundSize: '40px 40px'
-            }} />
+        {/* Dashboard principal */}
+        <section className="relative overflow-hidden py-12 sm:py-16">
+          <div className="absolute inset-0 -z-10 bg-black" aria-hidden="true" />
+          <div className="absolute inset-0 -z-10 opacity-10" aria-hidden="true">
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.1) 1px, transparent 0)`,
+                backgroundSize: '40px 40px',
+              }}
+            />
           </div>
 
-          {/* Orbes de luz sutiles */}
-          <div className="absolute -left-40 top-10 -z-10 h-[500px] w-[500px] rounded-full bg-white/5 blur-[100px]" aria-hidden="true" />
-          <div className="absolute -right-40 top-40 -z-10 h-[400px] w-[400px] rounded-full bg-white/5 blur-[80px]" aria-hidden="true" />
-
-          <div className="container relative z-10 mx-auto px-3 sm:px-6 lg:px-8">
-            <div className="relative">
-              <div className="grid grid-cols-1 gap-12 lg:gap-16 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] items-center">
-                {/* Contenido principal */}
-                <div className="flex flex-col gap-6 lg:gap-8">
-                  {/* Badge de temporada */}
-                  <div className="inline-flex w-fit items-center gap-3 rounded-full border border-white/20 bg-white/5 px-4 py-2 backdrop-blur-sm">
-                    <span className="flex h-2 w-2">
-                      <span className="absolute inline-flex h-2 w-2 rounded-full bg-white opacity-75 animate-ping"></span>
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-white"></span>
-                    </span>
-                    <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">
-                      Temporada 2025 · En directo
-                    </span>
-                  </div>
-
-                  {/* Título principal */}
-                  <h1 className="text-3xl sm:text-4xl lg:text-6xl xl:text-7xl font-black leading-[1.1] tracking-tight">
-                    <span className="text-white">Toda la escena</span>
-                    <br />
-                    <span className="text-white">
-                      esports
-                    </span>
-                    <span className="text-white/60"> en </span>
-                    <span className="relative inline-block">
-                      <span className="relative z-10 text-white">vivo</span>
-                      <span className="absolute -inset-1 -z-10 rounded-lg bg-white/10 blur-sm" aria-hidden="true"></span>
-                    </span>
-                  </h1>
-
-                  {/* Descripción */}
-                  <p className="max-w-xl text-sm sm:text-base lg:text-lg text-white/50 leading-relaxed">
-                    Monitoriza resultados en tiempo real, consulta horarios de las mejores ligas y recibe alertas instantáneas de
-                    <span className="text-white font-semibold"> Dota 2</span>,
-                    <span className="text-white font-semibold"> League of Legends</span>,
-                    <span className="text-white font-semibold"> CS2</span> y más.
+          <div className="container mx-auto px-3 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-8">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/40">
+                    Panel principal
                   </p>
+                  <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl">
+                    Dashboard de eventos
+                  </h1>
+                  <p className="mt-3 max-w-2xl text-sm text-white/50 sm:text-base">
+                    Prioriza lo que ocurre ahora, lo que viene y lo que acaba de terminar en tu escena favorita.
+                  </p>
+
+                  {/* Resumen rápido */}
+                  <div className="rounded-2xl border border-white/10 bg-black/60 p-4 backdrop-blur-sm">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">
+                        Resumen del feed
+                      </p>
+                    </div>
+                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      {summaryStats.map((stat) => (
+                        <SummaryStatCard
+                          key={stat.label}
+                          label={stat.label}
+                          value={stat.value}
+                          helper={stat.helper}
+                          accent={stat.accent}
+                        />
+                      ))}
+                    </div>
+                  </div>
 
                   {/* Botones de acción */}
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -1045,151 +1170,72 @@ const Home = memo(function Home() {
                     ))}
                   </div>
                 </div>
-
-                {/* Tarjeta de partido destacado */}
-                <div className="relative lg:mt-0">
-                  {/* Glows decorativos */}
-                  <div className="absolute -right-20 top-0 h-60 w-60 rounded-full bg-white/5 blur-[80px]" aria-hidden="true" />
-                  <div className="absolute -left-20 bottom-10 h-48 w-48 rounded-full bg-white/5 blur-[60px]" aria-hidden="true" />
-
-                  {/* Tarjeta principal */}
-                  <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/80 backdrop-blur-2xl">
-                    {/* Borde superior brillante */}
-                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" aria-hidden="true" />
-
-                    {/* Efecto de reflejo */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-transparent" aria-hidden="true" />
-
-                    <div className="relative flex flex-col gap-6 p-6 sm:p-8">
-                      {/* Header de la tarjeta */}
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/30">
-                            Evento destacado
-                          </p>
-                          <h3 className="mt-2 text-xl sm:text-2xl font-bold text-white leading-tight">
-                            {heroFeaturedMatch ? (
-                              <>
-                                {heroFeaturedMatch.radiant}
-                                <span className="mx-2 text-white/40">vs</span>
-                                {heroFeaturedMatch.dire}
-                              </>
-                            ) : (
-                              "Personaliza tu feed"
-                            )}
-                          </h3>
-                          <p className="mt-1 text-sm text-white/40">
-                            {heroFeaturedMatch ? heroFeaturedMatch.league || "Liga profesional" : "Sigue tus juegos favoritos"}
-                          </p>
-                        </div>
-
-                        {/* Badge de estado */}
-                          {heroFeaturedMatch ? (
-                            heroMatchIsLive ? (
-                              <LiveBadge label="En curso" className="scale-90" />
-                            ) : heroMatchIsUpcoming ? (
-                              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white/70">
-                                <span className="w-1.5 h-1.5 rounded-full bg-white/60"></span>
-                                Próximo
-                              </span>
-                            ) : heroMatchIsFinished ? (
-                              <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white/50">Reciente</span>
-                            ) : null
-                          ) : (
-                            <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white/50">Explorar</span>
-                          )}
-                      </div>
-
-                      {heroFeaturedMatch ? (
-                        <>
-                          {/* Marcador */}
-                          <div className="rounded-xl border border-white/10 bg-black/40 p-5">
-                            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-                              {/* Equipo 1 */}
-                              <div className="text-center space-y-2">
-                                <p className="text-xs font-bold uppercase tracking-wide text-white/40 truncate">{heroFeaturedMatch.radiant}</p>
-                                <p className={`text-4xl sm:text-5xl font-black tabular-nums ${heroRadiantWinner ? "text-white" : "text-white/60"}`}>
-                                  {typeof heroFeaturedMatch.radiant_score === "number" ? heroFeaturedMatch.radiant_score : "—"}
-                                </p>
-                              </div>
-
-                              {/* VS */}
-                              <div className="flex flex-col items-center gap-2">
-                                <span className="text-lg font-bold text-white/20">VS</span>
-                                <div className="w-px h-8 bg-gradient-to-b from-transparent via-white/20 to-transparent" aria-hidden="true" />
-                              </div>
-
-                              {/* Equipo 2 */}
-                              <div className="text-center space-y-2">
-                                <p className="text-xs font-bold uppercase tracking-wide text-white/40 truncate">{heroFeaturedMatch.dire}</p>
-                                <p className={`text-4xl sm:text-5xl font-black tabular-nums ${heroDireWinner ? "text-white" : "text-white/60"}`}>
-                                  {typeof heroFeaturedMatch.dire_score === "number" ? heroFeaturedMatch.dire_score : "—"}
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Info de fecha/hora */}
-                            <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-white/40">
-                              <span className="flex items-center gap-2">
-                                <span>📅</span>
-                                {heroMatchDate?.toLocaleDateString("es-ES", {
-                                  weekday: "short",
-                                  day: "numeric",
-                                  month: "short",
-                                })}
-                              </span>
-                              <span className="flex items-center gap-2">
-                                <span>🕐</span>
-                                {heroMatchDate?.toLocaleTimeString("es-ES", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Botón de acción */}
-                          <Link
-                            href={`/esports/${heroFeaturedMatch.id}`}
-                            className="group touch-target touch-ripple inline-flex items-center justify-center gap-3 rounded-lg border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-bold text-white transition-all duration-300 hover:border-white/20 hover:bg-white/10"
-                          >
-                            <span>Ver detalles del partido</span>
-                            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-                          </Link>
-                        </>
-                      ) : (
-                        /* Estado vacío */
-                        <div className="space-y-4 text-white/50">
-                          <p className="text-sm leading-relaxed">
-                            Configura notificaciones y selecciona tus títulos favoritos para recibir recomendaciones personalizadas.
-                          </p>
-                          <div className="flex flex-col gap-3 sm:flex-row">
-                            <Link
-                              href="/equipos"
-                              className="touch-target touch-ripple inline-flex items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-bold text-black transition-all duration-300 hover:bg-white/90 hover:scale-[1.02]"
-                            >
-                              👥 Descubrir equipos
-                            </Link>
-                            <Link
-                              href="/esports"
-                              className="touch-target touch-ripple inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-5 py-3 text-sm font-bold text-white/70 transition-all duration-300 hover:border-white/20 hover:bg-white/10 hover:text-white"
-                            >
-                              📅 Ver calendario
-                            </Link>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    href="/esports"
+                    className="touch-target touch-ripple inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-black transition-all duration-300 hover:bg-white/90"
+                  >
+                    🎮 Ver calendario completo
+                  </Link>
+                  <Link
+                    href="/landing"
+                    className="touch-target touch-ripple inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-bold text-white/70 transition-all duration-300 hover:border-white/20 hover:bg-white/10 hover:text-white"
+                  >
+                    ✨ Ir a la landing
+                  </Link>
                 </div>
               </div>
 
-              {isFiltering && !loading && (
-                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-[2.5rem] bg-black/50 backdrop-blur-md text-white animate-fadein">
-                  <Spinner size={30} label="Aplicando filtros" />
-                  <span className="text-sm font-medium tracking-wide">Actualizando resultados…</span>
-                </div>
-              )}
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                {[
+                  {
+                    title: "En curso",
+                    description: `${dashboardCounts.live} partidos activos`,
+                    matches: dashboardMatches.live,
+                  },
+                  {
+                    title: "Próximos",
+                    description: `${dashboardCounts.upcoming} próximos encuentros`,
+                    matches: dashboardMatches.upcoming,
+                  },
+                  {
+                    title: "Recientes",
+                    description: `${dashboardCounts.recent} finalizados recientemente`,
+                    matches: dashboardMatches.recent,
+                  },
+                ].map((block) => (
+                  <div
+                    key={block.title}
+                    className="flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-black/60 p-4 sm:p-6"
+                  >
+                    <div>
+                      <h2 className="text-xl font-bold text-white">{block.title}</h2>
+                      <p className="text-sm text-white/40">{block.description}</p>
+                    </div>
+                    <div className="flex flex-1 flex-col gap-3">
+                      {block.matches.length > 0 ? (
+                        block.matches.map((match) => (
+                          <DashboardMatchItem
+                            key={match.id}
+                            match={match}
+                            currentTime={currentTime}
+                          />
+                        ))
+                      ) : (
+                        <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-white/10 bg-black/40 p-6 text-center text-sm text-white/40">
+                          No hay partidos para mostrar aquí.
+                        </div>
+                      )}
+                    </div>
+                    <Link
+                      href="/esports"
+                      className="mt-auto text-xs font-semibold uppercase tracking-wide text-white/50 transition-colors hover:text-white"
+                    >
+                      Ver todo →
+                    </Link>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -1779,75 +1825,6 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
           </div>
         </section>
 
-        {/* Call to Action - Diseño Minimalista */}
-        <section className="container mx-auto px-3 sm:px-6 lg:px-8 py-12 sm:py-24">
-          <div className="relative overflow-hidden rounded-2xl">
-            {/* Fondo */}
-            <div className="absolute inset-0 bg-white/5" aria-hidden="true" />
-            <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/5 rounded-full blur-[100px]" aria-hidden="true" />
-            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/5 rounded-full blur-[100px]" aria-hidden="true" />
-
-            {/* Borde decorativo */}
-            <div className="absolute inset-0 rounded-2xl border border-white/10" aria-hidden="true" />
-            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" aria-hidden="true" />
-
-            <div className="relative text-center px-3 sm:px-6 py-8 sm:py-16 lg:py-24">
-              {/* Badge */}
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-white/60 mb-6">
-                <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                Únete ahora
-              </span>
-
-              <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black text-white mb-6 max-w-3xl mx-auto leading-tight">
-                ¿Listo para sumergirte en el{" "}
-                <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                  mundo esports
-                </span>
-                ?
-              </h2>
-
-              <p className="text-sm sm:text-lg lg:text-xl text-white/50 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Únete a miles de usuarios que ya siguen sus equipos favoritos y nunca se pierden un partido importante.
-              </p>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link
-                  href="/esports"
-                  className="group relative inline-flex items-center justify-center gap-3 rounded-xl bg-white px-10 py-4 text-lg font-bold text-black transition-all duration-300 hover:bg-white/90 hover:scale-[1.02] overflow-hidden"
-                >
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" aria-hidden="true" />
-                  <span className="relative z-10 flex items-center gap-2">
-                    🚀 Comenzar Ahora
-                    <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </span>
-                </Link>
-
-                <Link
-                  href="/equipos"
-                  className="group inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-transparent px-8 py-4 text-lg font-bold text-white/80 backdrop-blur-sm transition-all duration-300 hover:border-white/40 hover:bg-white/5 hover:text-white"
-                >
-                  👥 Explorar Equipos
-                </Link>
-              </div>
-
-              {/* Stats mini */}
-              <div className="mt-12 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-                {[
-                  { value: "50K+", label: "Usuarios activos" },
-                  { value: "1000+", label: "Partidos diarios" },
-                  { value: "5", label: "Juegos soportados" },
-                ].map((stat) => (
-                  <div key={stat.label} className="text-center">
-                    <p className="text-2xl sm:text-3xl font-black text-white tabular-nums">{stat.value}</p>
-                    <p className="text-xs sm:text-sm text-white/40 font-medium">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
 
       {/* Sistemas adicionales */}
