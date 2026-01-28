@@ -941,6 +941,8 @@ const Home = memo(function Home() {
     return [...live, ...upcoming].slice(0, 4);
   }, [filteredMatches, currentTime]);
 
+  const hasAnyHighlightedMatches = featuredMatches.length > 0;
+
   const heroFeaturedMatch = featuredMatches[0];
   const heroMatchIsLive = heroFeaturedMatch ? heroFeaturedMatch.start_time <= currentTime && heroFeaturedMatch.radiant_win === null : false;
   const heroMatchIsUpcoming = heroFeaturedMatch ? heroFeaturedMatch.start_time > currentTime : false;
@@ -1532,7 +1534,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                       Restablecer
                     </button>
 
-                    {featuredMatches.length > 0 && (
+                    {hasAnyHighlightedMatches && (
                       <Link
                         href="/esports"
                         className="touch-target touch-ripple bg-white hover:bg-white/90 text-black px-6 py-2 rounded-xl font-semibold transition-all duration-300 hover:scale-105 flex items-center gap-2"
@@ -1594,7 +1596,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                     </div>
                   ))}
                 </div>
-              ) : featuredMatches.length > 0 ? (
+              ) : hasAnyHighlightedMatches ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
                   {featuredMatches.map((match, index) => (
                     <div
@@ -1634,7 +1636,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
           </div>
 
           {/* Acciones rápidas */}
-          {featuredMatches.length > 0 && (
+          {hasAnyHighlightedMatches && (
             <div className="mt-12 text-center">
               <div className="bg-white/5 rounded-xl p-6 border border-white/10 backdrop-blur-sm">
                 <h3 className="text-lg font-semibold text-white mb-4">Acciones Rápidas</h3>
