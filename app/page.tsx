@@ -869,12 +869,11 @@ const Home = memo(function Home() {
     upcomingMatches: secondaryUpcomingMatches,
     recentMatches: secondaryRecentMatches,
   } = useMemo(() => {
-    const baseMatches = matches.filter(match => selectedGames.includes(match.game));
     const live: Match[] = [];
     const upcoming: Match[] = [];
     const recent: Match[] = [];
 
-    for (const match of baseMatches) {
+    for (const match of filteredMatches) {
       if (match.start_time <= currentTime && match.radiant_win === null) {
         live.push(match);
       } else if (match.start_time > currentTime) {
@@ -897,7 +896,7 @@ const Home = memo(function Home() {
       upcomingMatches: upcoming.filter(match => match.id !== featuredId).slice(0, 3),
       recentMatches: recent.filter(match => match.id !== featuredId).slice(0, 2),
     };
-  }, [matches, selectedGames, currentTime]);
+  }, [filteredMatches, currentTime]);
 
   const heroMatchIsLive = heroFeaturedMatch ? heroFeaturedMatch.start_time <= currentTime && heroFeaturedMatch.radiant_win === null : false;
   const heroMatchIsUpcoming = heroFeaturedMatch ? heroFeaturedMatch.start_time > currentTime : false;
