@@ -393,6 +393,36 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
   );
 });
 
+const SummaryStatCard = memo(function SummaryStatCard({
+  label,
+  value,
+  helper,
+  accent,
+}: {
+  label: string;
+  value: string;
+  helper: string;
+  accent: string;
+}) {
+  return (
+    <div className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08]">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" aria-hidden="true" />
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
+            {label}
+          </p>
+          <p className="mt-1 text-xs text-white/40">{helper}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-2xl font-black text-white tabular-nums">{value}</p>
+          <p className="text-xs font-semibold text-white/50">{accent}</p>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 // Componente de partido destacado (memoizado) - Diseño Minimalista
 const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { match: Match; currentTime: number }) {
   const game = GAMES.find(g => g.id === match.game);
@@ -797,6 +827,65 @@ const Home = memo(function Home() {
     [selectedGames]
   );
 
+  const numberFormatter = useMemo(() => new Intl.NumberFormat("es-ES"), []);
+
+  const aggregatedStats = useMemo(() => {
+    return Object.values(gameStats).reduce(
+      (acc, stats) => {
+        if (!stats) {
+          return acc;
+        }
+
+        acc.totalMatches += stats.totalMatches;
+        acc.liveMatches += stats.liveMatches;
+        acc.upcomingMatches += stats.upcomingMatches;
+        acc.completedMatches += stats.completedMatches;
+        acc.tournaments += stats.activeTournaments;
+        return acc;
+      },
+      { totalMatches: 0, liveMatches: 0, upcomingMatches: 0, completedMatches: 0, tournaments: 0 }
+    );
+  }, [gameStats]);
+
+  const heroHighlights = [
+    {
+      label: "Partidos activos",
+      value: aggregatedStats.liveMatches,
+      helper: "actualizados al minuto",
+    },
+    {
+      label: "Programados",
+      value: aggregatedStats.upcomingMatches,
+      helper: "para los próximos 7 días",
+    },
+    {
+      label: "Torneos activos",
+      value: aggregatedStats.tournaments,
+      helper: "de las ligas top",
+    },
+  ];
+
+  const summaryStats = [
+    {
+      label: "En curso",
+      value: numberFormatter.format(Math.max(aggregatedStats.liveMatches, 0)),
+      helper: "partidos activos ahora",
+      accent: "Live",
+    },
+    {
+      label: "Próximos",
+      value: numberFormatter.format(Math.max(aggregatedStats.upcomingMatches, 0)),
+      helper: "todos los próximos partidos",
+      accent: "Agenda",
+    },
+    {
+      label: "Recientes",
+      value: numberFormatter.format(Math.max(aggregatedStats.completedMatches, 0)),
+      helper: "resultados cerrados",
+      accent: "Finalizados",
+    },
+  ];
+
   // Partidos filtrados por timeframe y juegos seleccionados + métricas para los filtros
   const { filteredMatches, timeframeCounts } = useMemo(() => {
     // Filtrar solo partidos de los juegos seleccionados
@@ -979,6 +1068,92 @@ const Home = memo(function Home() {
                   <p className="mt-3 max-w-2xl text-sm text-white/50 sm:text-base">
                     Prioriza lo que ocurre ahora, lo que viene y lo que acaba de terminar en tu escena favorita.
                   </p>
+
+                  {/* Resumen rápido */}
+                  <div className="rounded-2xl border border-white/10 bg-black/60 p-4 backdrop-blur-sm">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">
+                        Resumen del feed
+                      </p>
+                    </div>
+                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      {summaryStats.map((stat) => (
+                        <SummaryStatCard
+                          key={stat.label}
+                          label={stat.label}
+                          value={stat.value}
+                          helper={stat.helper}
+                          accent={stat.accent}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Botones de acción */}
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <Link
+                      href="/esports"
+                      className="group relative touch-target touch-ripple inline-flex items-center justify-center gap-3 rounded-xl bg-white px-8 py-4 text-base font-bold text-black transition-all duration-300 hover:bg-white/90 hover:scale-[1.02] overflow-hidden"
+                    >
+                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" aria-hidden="true" />
+                      <span className="relative z-10 flex items-center gap-2">
+                        <span>🎮</span>
+                        Explorar partidos
+                        <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </span>
+                    </Link>
+
+                    <Link
+                      href="#torneos"
+                      className="group touch-target touch-ripple inline-flex items-center justify-center gap-3 rounded-xl border border-white/20 bg-transparent px-8 py-4 text-base font-bold text-white/80 backdrop-blur-sm transition-all duration-300 hover:border-white/40 hover:bg-white/5 hover:text-white"
+                    >
+                      <span>🏆</span>
+                      Ver torneos activos
+                      <span className="text-white/60 transition-transform duration-300 group-hover:translate-x-1">→</span>
+                    </Link>
+                  </div>
+
+                  {/* Métricas destacadas */}
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 mt-3 sm:mt-4">
+                    {heroHighlights.map((metric, index) => (
+                      <div
+                        key={metric.label}
+                        className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-3 sm:p-5 backdrop-blur-sm transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08]"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        {/* Acento decorativo */}
+                        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/20 via-transparent to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
+
+                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/40">
+                          {metric.label}
+                        </span>
+                        <p className="mt-2 text-3xl sm:text-4xl font-black text-white tabular-nums">
+                          {numberFormatter.format(Math.max(metric.value, 0))}
+                        </p>
+                        <p className="mt-1 text-xs text-white/40">{metric.helper}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Features badges */}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {[
+                      { icon: "⚡", text: "Alertas en vivo" },
+                      { icon: "🎯", text: "Cobertura multijuego" },
+                      { icon: "📊", text: "Estadísticas avanzadas" }
+                    ].map((feature, index) => (
+                      <span
+                        key={feature.text}
+                        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/60 transition-all duration-300 hover:scale-105 hover:bg-white/10 hover:text-white/80"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      >
+                        <span>{feature.icon}</span>
+                        {feature.text}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <Link
