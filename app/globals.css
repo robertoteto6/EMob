@@ -968,7 +968,6 @@ h3 {
 @media (hover: none) and (pointer: coarse) {
   * {
     -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
-    tap-highlight-color: rgba(255, 255, 255, 0.1);
   }
 
   a,
@@ -976,7 +975,6 @@ h3 {
   [role="button"],
   .clickable {
     -webkit-tap-highlight-color: transparent;
-    tap-highlight-color: transparent;
   }
 }
 
