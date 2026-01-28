@@ -14,6 +14,7 @@ import { useNotifications } from "./hooks/useNotifications";
 import { useDeferredClientRender } from "./hooks/useDeferredClientRender";
 import { usePagePullToRefresh, ScrollIndicator, PullToRefreshIndicator } from "./components/MobileGestures";
 import { useGameContext } from "./contexts/GameContext";
+import { getMatchStatus } from "./lib/utils";
 
 interface PandaScoreMatch {
   id: number;
@@ -395,9 +396,7 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats }: { game: GameC
 // Componente de partido destacado (memoizado) - Diseño Minimalista
 const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { match: Match; currentTime: number }) {
   const game = GAMES.find(g => g.id === match.game);
-  const isLive = match.start_time <= currentTime && match.radiant_win === null;
-  const isUpcoming = match.start_time > currentTime;
-  const isFinished = match.radiant_win !== null;
+  const { isLive, isUpcoming, isFinished } = getMatchStatus(match, currentTime);
 
   return (
     <Link href={`/esports/${match.id}`}>
@@ -574,8 +573,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
 });
 
 const DashboardMatchItem = memo(function DashboardMatchItem({ match, currentTime }: { match: Match; currentTime: number }) {
-  const isLive = match.start_time <= currentTime && match.radiant_win === null;
-  const isFinished = match.radiant_win !== null;
+  const { isLive, isFinished } = getMatchStatus(match, currentTime);
   const matchDate = new Date(match.start_time * 1000);
 
   return (
@@ -772,11 +770,12 @@ const Home = memo(function Home() {
       let completedMatches = 0;
 
       for (const match of gameMatches) {
-        if (match.start_time <= currentTime && match.radiant_win === null) {
+        const { status } = getMatchStatus(match, currentTime);
+        if (status === 'live') {
           liveMatches += 1;
-        } else if (match.start_time > currentTime) {
+        } else if (status === 'upcoming') {
           upcomingMatches += 1;
-        } else if (match.radiant_win !== null) {
+        } else {
           completedMatches += 1;
         }
       }
@@ -888,11 +887,12 @@ const Home = memo(function Home() {
     const upcoming: Match[] = [];
 
     for (const match of filteredMatches) {
-      if (match.start_time <= currentTime && match.radiant_win === null) {
+      const { status } = getMatchStatus(match, currentTime);
+      if (status === 'live') {
         if (live.length < 2) {
           live.push(match);
         }
-      } else if (match.start_time > currentTime) {
+      } else if (status === 'upcoming') {
         if (upcoming.length < 3) {
           upcoming.push(match);
         }
@@ -907,13 +907,20 @@ const Home = memo(function Home() {
   }, [filteredMatches, currentTime]);
 
   const dashboardMatches = useMemo(() => {
-    const live = filteredMatches.filter(
-      (match) => match.start_time <= currentTime && match.radiant_win === null
-    );
-    const upcoming = filteredMatches.filter((match) => match.start_time > currentTime);
-    const recent = filteredMatches.filter(
-      (match) => match.start_time <= currentTime && match.radiant_win !== null
-    );
+    const live: Match[] = [];
+    const upcoming: Match[] = [];
+    const recent: Match[] = [];
+
+    for (const match of filteredMatches) {
+      const { status } = getMatchStatus(match, currentTime);
+      if (status === 'live') {
+        live.push(match);
+      } else if (status === 'upcoming') {
+        upcoming.push(match);
+      } else {
+        recent.push(match);
+      }
+    }
 
     recent.sort((a, b) => b.start_time - a.start_time);
 
@@ -927,13 +934,8 @@ const Home = memo(function Home() {
   const dashboardCounts = useMemo(() => {
     const counts = { live: 0, upcoming: 0, recent: 0 };
     for (const match of filteredMatches) {
-      if (match.start_time <= currentTime && match.radiant_win === null) {
-        counts.live += 1;
-      } else if (match.start_time > currentTime) {
-        counts.upcoming += 1;
-      } else if (match.radiant_win !== null) {
-        counts.recent += 1;
-      }
+      const { status } = getMatchStatus(match, currentTime);
+      counts[status] += 1;
     }
     return counts;
   }, [filteredMatches, currentTime]);
