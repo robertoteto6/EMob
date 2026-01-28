@@ -1087,25 +1087,7 @@ const Home = memo(function Home() {
                     ))}
                   </div>
 
-                  {/* Features badges */}
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {[
-                      { icon: "⚡", text: "Alertas en vivo" },
-                      { icon: "🎯", text: "Cobertura multijuego" },
-                      { icon: "📊", text: "Estadísticas avanzadas" }
-                    ].map((feature, index) => (
-                      <span
-                        key={feature.text}
-                        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/60 transition-all duration-300 hover:scale-105 hover:bg-white/10 hover:text-white/80"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <span>{feature.icon}</span>
-                        {feature.text}
-                      </span>
-                    ))}
-                  </div>
                 </div>
-
                 {/* Tarjeta de partido destacado */}
                 <div className="relative lg:mt-0">
                   {/* Glows decorativos */}
@@ -1803,75 +1785,6 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
           </div>
         </section>
 
-        {/* Call to Action - Diseño Minimalista */}
-        <section className="container mx-auto px-3 sm:px-6 lg:px-8 py-12 sm:py-24">
-          <div className="relative overflow-hidden rounded-2xl">
-            {/* Fondo */}
-            <div className="absolute inset-0 bg-white/5" aria-hidden="true" />
-            <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/5 rounded-full blur-[100px]" aria-hidden="true" />
-            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/5 rounded-full blur-[100px]" aria-hidden="true" />
-
-            {/* Borde decorativo */}
-            <div className="absolute inset-0 rounded-2xl border border-white/10" aria-hidden="true" />
-            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" aria-hidden="true" />
-
-            <div className="relative text-center px-3 sm:px-6 py-8 sm:py-16 lg:py-24">
-              {/* Badge */}
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-white/60 mb-6">
-                <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                Únete ahora
-              </span>
-
-              <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black text-white mb-6 max-w-3xl mx-auto leading-tight">
-                ¿Listo para sumergirte en el{" "}
-                <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                  mundo esports
-                </span>
-                ?
-              </h2>
-
-              <p className="text-sm sm:text-lg lg:text-xl text-white/50 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Únete a miles de usuarios que ya siguen sus equipos favoritos y nunca se pierden un partido importante.
-              </p>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link
-                  href="/esports"
-                  className="group relative inline-flex items-center justify-center gap-3 rounded-xl bg-white px-10 py-4 text-lg font-bold text-black transition-all duration-300 hover:bg-white/90 hover:scale-[1.02] overflow-hidden"
-                >
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" aria-hidden="true" />
-                  <span className="relative z-10 flex items-center gap-2">
-                    🚀 Comenzar Ahora
-                    <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </span>
-                </Link>
-
-                <Link
-                  href="/equipos"
-                  className="group inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-transparent px-8 py-4 text-lg font-bold text-white/80 backdrop-blur-sm transition-all duration-300 hover:border-white/40 hover:bg-white/5 hover:text-white"
-                >
-                  👥 Explorar Equipos
-                </Link>
-              </div>
-
-              {/* Stats mini */}
-              <div className="mt-12 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-                {[
-                  { value: "50K+", label: "Usuarios activos" },
-                  { value: "1000+", label: "Partidos diarios" },
-                  { value: "5", label: "Juegos soportados" },
-                ].map((stat) => (
-                  <div key={stat.label} className="text-center">
-                    <p className="text-2xl sm:text-3xl font-black text-white tabular-nums">{stat.value}</p>
-                    <p className="text-xs sm:text-sm text-white/40 font-medium">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
 
       {/* Sistemas adicionales */}

@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bars3Icon, BellIcon, XMarkIcon, SparklesIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, BellIcon, XMarkIcon, SparklesIcon, ChevronDownIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import SearchLazy from "./SearchLazy";
 import ThemeToggle from "./ThemeToggle";
 import { useSwipeToClose } from "../hooks/useSwipeGesture";
@@ -273,6 +273,16 @@ function HeaderContent() {
               onDeleteNotification={deleteNotification}
             />
 
+            {/* Botón Info - Pequeño y discreto */}
+            <Link
+              href="/landing"
+              className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"
+              aria-label="Información sobre EMob"
+              title="Info"
+            >
+              <InformationCircleIcon className="w-5 h-5" aria-hidden="true" />
+            </Link>
+
             {/* Botón Pro/Premium - Armonizado con Alertas */}
             <Link
               href="/pro"
@@ -412,6 +422,15 @@ function HeaderContent() {
 
             {/* Acciones móviles con padding para safe area */}
             <div className="p-4 border-t border-white/5 space-y-3 safe-bottom">
+              <Link
+                href="/landing"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full touch-target touch-feedback inline-flex items-center justify-center gap-2 bg-white/5 text-white/70 px-4 py-3 rounded-xl font-semibold text-sm border border-white/10 gpu-accelerated hover:bg-white/10 hover:text-white transition-all duration-200"
+              >
+                <InformationCircleIcon className="w-4 h-4" aria-hidden="true" />
+                <span>Info</span>
+              </Link>
+
               <Link
                 href="/pro"
                 onClick={() => setIsMobileMenuOpen(false)}
