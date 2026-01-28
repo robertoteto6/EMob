@@ -469,7 +469,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
 
             {/* Estado del partido */}
             {isLive && (
-              <LiveBadge className="pointer-events-none" />
+              <LiveBadge label="En curso" className="pointer-events-none" />
             )}
 
             {isUpcoming && (
@@ -483,7 +483,7 @@ const FeaturedMatch = memo(function FeaturedMatch({ match, currentTime }: { matc
 
             {isFinished && (
               <span className="bg-white/10 text-white/60 text-xs font-bold px-3 py-2 rounded-full border border-white/10">
-                FINALIZADO
+                RECIENTE
               </span>
             )}
           </div>
@@ -968,12 +968,15 @@ const Home = memo(function Home() {
     [timeframeCounts]
   );
 
-  // Partidos destacados (en vivo + próximos importantes)
-  const featuredMatches = useMemo(() => {
-    if (!filteredMatches.length) return [];
-
+  const {
+    featuredMatch: heroFeaturedMatch,
+    liveMatches: secondaryLiveMatches,
+    upcomingMatches: secondaryUpcomingMatches,
+    recentMatches: secondaryRecentMatches,
+  } = useMemo(() => {
     const live: Match[] = [];
     const upcoming: Match[] = [];
+    const recent: Match[] = [];
 
     for (const match of filteredMatches) {
       const { status } = getMatchStatus(match, currentTime);
@@ -992,7 +995,19 @@ const Home = memo(function Home() {
       }
     }
 
-    return [...live, ...upcoming].slice(0, 4);
+    live.sort((a, b) => b.start_time - a.start_time);
+    upcoming.sort((a, b) => a.start_time - b.start_time);
+    recent.sort((a, b) => b.start_time - a.start_time);
+
+    const featuredMatch = live[0] ?? upcoming[0] ?? recent[0];
+    const featuredId = featuredMatch?.id;
+
+    return {
+      featuredMatch,
+      liveMatches: live.filter(match => match.id !== featuredId).slice(0, 2),
+      upcomingMatches: upcoming.filter(match => match.id !== featuredId).slice(0, 3),
+      recentMatches: recent.filter(match => match.id !== featuredId).slice(0, 2),
+    };
   }, [filteredMatches, currentTime]);
 
   const dashboardMatches = useMemo(() => {
@@ -1505,7 +1520,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                       Restablecer
                     </button>
 
-                    {featuredMatches.length > 0 && (
+                    {hasAnyHighlightedMatches && (
                       <Link
                         href="/esports"
                         className="touch-target touch-ripple bg-white hover:bg-white/90 text-black px-6 py-2 rounded-xl font-semibold transition-all duration-300 hover:scale-105 flex items-center gap-2"
@@ -1523,14 +1538,14 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
           </div>
         </section>
 
-        {/* Partidos Destacados */}
+        {/* Eventos Destacados */}
         <section className="container mx-auto px-3 sm:px-6 py-8 sm:py-16">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-4xl font-bold mb-4 text-white">
-              ⚡ Partidos Destacados
+              ⚡ Eventos Destacados
             </h2>
             <p className="text-white/50 text-sm sm:text-lg max-w-2xl mx-auto">
-              Los enfrentamientos más emocionantes en vivo y próximos a comenzar
+              El evento principal y el resto de enfrentamientos organizados por estado
             </p>
             <div className="w-24 h-1 bg-white/20 mx-auto mt-4 rounded-full"></div>
           </div>
@@ -1567,15 +1582,51 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                     </div>
                   ))}
                 </div>
-              ) : featuredMatches.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
-                  {featuredMatches.map((match, index) => (
+              ) : hasAnyHighlightedMatches ? (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {[
+                    {
+                      id: "live",
+                      title: "En curso",
+                      description: "Partidos que se están jugando ahora",
+                      matches: secondaryLiveMatches,
+                    },
+                    {
+                      id: "upcoming",
+                      title: "Próximo",
+                      description: "Los próximos en el calendario",
+                      matches: secondaryUpcomingMatches,
+                    },
+                    {
+                      id: "recent",
+                      title: "Reciente",
+                      description: "Últimos resultados finalizados",
+                      matches: secondaryRecentMatches,
+                    },
+                  ].map((bucket) => (
                     <div
-                      key={match.id}
-                      className="animate-fadein"
-                      style={{ animationDelay: `${index * 0.1}s` }}
+                      key={bucket.id}
+                      className="rounded-2xl border border-white/10 bg-black/60 p-4 sm:p-5 backdrop-blur-xl"
                     >
-                      <FeaturedMatch match={match} currentTime={currentTime} />
+                      <div className="mb-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">
+                          {bucket.title}
+                        </p>
+                        <p className="text-sm text-white/50">{bucket.description}</p>
+                      </div>
+                      {bucket.matches.length > 0 ? (
+                        <div className="space-y-4">
+                          {bucket.matches.map((match) => (
+                            <div key={match.id} className="animate-fadein">
+                              <FeaturedMatch match={match} currentTime={currentTime} />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/40">
+                          Sin eventos disponibles
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1583,9 +1634,9 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
                 <div className="text-center py-16">
                   <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-12 border border-gray-700 max-w-md mx-auto">
                     <div className="text-6xl mb-4">🎮</div>
-                    <h3 className="text-xl font-bold text-white mb-2">No hay partidos destacados</h3>
+                    <h3 className="text-xl font-bold text-white mb-2">No hay eventos destacados</h3>
                     <p className="text-gray-400 mb-6">
-                      No hay partidos en vivo o próximos en este momento.
+                      No hay partidos en curso, próximos o recientes en este momento.
                     </p>
                     <Link
                       href="/esports"
@@ -1607,7 +1658,7 @@ ${game.description ?? "Información del título"}. Coincidencias actuales: ${gam
           </div>
 
           {/* Acciones rápidas */}
-          {featuredMatches.length > 0 && (
+          {hasAnyHighlightedMatches && (
             <div className="mt-12 text-center">
               <div className="bg-white/5 rounded-xl p-6 border border-white/10 backdrop-blur-sm">
                 <h3 className="text-lg font-semibold text-white mb-4">Acciones Rápidas</h3>
