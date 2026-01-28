@@ -61,6 +61,127 @@ export const SUPPORTED_GAMES: GameConfig[] = [
     description: "Acción de héroes en equipo",
     apiSupported: true,
     apiName: "ow"
+  },
+  // Juegos adicionales de PandaScore API
+  {
+    id: "valorant",
+    name: "Valorant",
+    icon: "/valorant.svg",
+    color: "#FF4655",
+    gradient: "from-red-600 to-red-800",
+    description: "Tactical shooter 5v5 de Riot Games",
+    apiSupported: true,
+    apiName: "valorant"
+  },
+  {
+    id: "fortnite",
+    name: "Fortnite",
+    icon: "/fortnite.svg",
+    color: "#9D4EDD",
+    gradient: "from-purple-500 to-pink-600",
+    description: "Battle Royale competitivo",
+    apiSupported: true,
+    apiName: "fortnite"
+  },
+  {
+    id: "pubg",
+    name: "PUBG",
+    icon: "/pubg.svg",
+    color: "#F2A900",
+    gradient: "from-yellow-500 to-orange-600",
+    description: "PlayerUnknown's Battlegrounds",
+    apiSupported: true,
+    apiName: "pubg"
+  },
+  {
+    id: "apex",
+    name: "Apex Legends",
+    icon: "/apex.svg",
+    color: "#DA292A",
+    gradient: "from-red-500 to-orange-600",
+    description: "Battle Royale de Respawn Entertainment",
+    apiSupported: true,
+    apiName: "apex"
+  },
+  {
+    id: "cod",
+    name: "Call of Duty",
+    icon: "/cod.svg",
+    color: "#8C8C8C",
+    gradient: "from-gray-600 to-gray-800",
+    description: "La franquicia FPS más vendida",
+    apiSupported: true,
+    apiName: "cod"
+  },
+  {
+    id: "rl",
+    name: "Rocket League",
+    icon: "/rocketleague.svg",
+    color: "#00C8FF",
+    gradient: "from-cyan-500 to-blue-600",
+    description: "Fútbol con coches boost",
+    apiSupported: true,
+    apiName: "rl"
+  },
+  {
+    id: "sf",
+    name: "Street Fighter",
+    icon: "/streetfighter.svg",
+    color: "#FF6B35",
+    gradient: "from-orange-500 to-red-600",
+    description: "La saga de fighting games definitiva",
+    apiSupported: true,
+    apiName: "sf"
+  },
+  {
+    id: "ssb",
+    name: "Super Smash Bros",
+    icon: "/smash.svg",
+    color: "#E3001B",
+    gradient: "from-red-600 to-pink-700",
+    description: "Fighting game crossover de Nintendo",
+    apiSupported: true,
+    apiName: "ssb"
+  },
+  {
+    id: "sc2",
+    name: "StarCraft II",
+    icon: "/starcraft2.svg",
+    color: "#0074E0",
+    gradient: "from-blue-600 to-indigo-700",
+    description: "RTS de ciencia ficción de Blizzard",
+    apiSupported: true,
+    apiName: "sc2"
+  },
+  {
+    id: "kog",
+    name: "King of Glory",
+    icon: "/kog.svg",
+    color: "#FFD700",
+    gradient: "from-yellow-500 to-amber-600",
+    description: "El MOBA móvil más popular de China",
+    apiSupported: true,
+    apiName: "kog"
+  },
+  {
+    id: "wr",
+    name: "Wild Rift",
+    icon: "/wildrift.svg",
+    color: "#00D4AA",
+    gradient: "from-teal-500 to-emerald-600",
+    description: "League of Legends para móvil",
+    apiSupported: true,
+    apiName: "wr"
+  },
+  {
+    id: "wow",
+    name: "World of Warcraft",
+    icon: "/wow.svg",
+    color: "#9B59B6",
+    gradient: "from-purple-600 to-indigo-700",
+    description: "El MMORPG más icónico en Arena PvP",
+    apiSupported: true,
+    apiName: "wow"
   }
 ];
 

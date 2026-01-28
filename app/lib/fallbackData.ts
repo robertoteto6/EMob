@@ -124,3 +124,190 @@ export const fallbackTeams = {
 export function getFallbackTeams(game: string) {
   return fallbackTeams[game as keyof typeof fallbackTeams] || [];
 }
+
+// Fallback data para ligas
+export const fallbackLeagues = {
+  dota2: [
+    {
+      id: 101,
+      name: "Dota Pro Circuit",
+      url: "https://dpc.pandascore.co",
+      image_url: null,
+      modified_at: new Date().toISOString(),
+    },
+    {
+      id: 102,
+      name: "ESL One",
+      url: "https://esl.com",
+      image_url: null,
+      modified_at: new Date().toISOString(),
+    }
+  ],
+  lol: [
+    {
+      id: 201,
+      name: "League Championship Series",
+      url: "https://lolesports.com",
+      image_url: null,
+      modified_at: new Date().toISOString(),
+    },
+    {
+      id: 202,
+      name: "League of Legends EMEA Championship",
+      url: "https://lec.com",
+      image_url: null,
+      modified_at: new Date().toISOString(),
+    }
+  ],
+  csgo: [
+    {
+      id: 301,
+      name: "ESL Pro League",
+      url: "https://esl.com",
+      image_url: null,
+      modified_at: new Date().toISOString(),
+    },
+    {
+      id: 302,
+      name: "BLAST Premier",
+      url: "https://blastpremier.com",
+      image_url: null,
+      modified_at: new Date().toISOString(),
+    }
+  ],
+  valorant: [
+    {
+      id: 601,
+      name: "VCT - Valorant Champions Tour",
+      url: "https://valorantesports.com",
+      image_url: null,
+      modified_at: new Date().toISOString(),
+    }
+  ],
+  fortnite: [
+    {
+      id: 701,
+      name: "Fortnite Champion Series",
+      url: "https://fortnite.com",
+      image_url: null,
+      modified_at: new Date().toISOString(),
+    }
+  ],
+  rl: [
+    {
+      id: 1101,
+      name: "Rocket League Championship Series",
+      url: "https://rocketleagueesports.com",
+      image_url: null,
+      modified_at: new Date().toISOString(),
+    }
+  ]
+};
+
+export function getFallbackLeagues(game: string) {
+  return fallbackLeagues[game as keyof typeof fallbackLeagues] || [];
+}
+
+// Fallback data para series
+export const fallbackSeries = {
+  dota2: [
+    {
+      id: 1001,
+      name: "DPC 2024",
+      full_name: "Dota Pro Circuit 2024",
+      season: "Winter",
+      year: 2024,
+      tier: "S",
+    }
+  ],
+  lol: [
+    {
+      id: 2001,
+      name: "LCS 2024",
+      full_name: "League Championship Series 2024",
+      season: "Spring",
+      year: 2024,
+      tier: "A",
+    }
+  ],
+  csgo: [
+    {
+      id: 3001,
+      name: "ESL Pro League S19",
+      full_name: "ESL Pro League Season 19",
+      season: "Season 19",
+      year: 2024,
+      tier: "S",
+    }
+  ],
+  valorant: [
+    {
+      id: 6001,
+      name: "VCT 2024",
+      full_name: "Valorant Champions Tour 2024",
+      season: "Champions",
+      year: 2024,
+      tier: "S",
+    }
+  ]
+};
+
+export function getFallbackSeries(game: string) {
+  return fallbackSeries[game as keyof typeof fallbackSeries] || [];
+}
+
+// Fallback data para jugadores
+export const fallbackPlayers = {
+  dota2: [
+    {
+      id: 10001,
+      name: "N0tail",
+      first_name: "Johan",
+      last_name: "Sundstein",
+      nationality: "DK",
+      role: "Support",
+      current_team: { name: "OG", id: 1002 },
+      gloryScore: 95
+    }
+  ],
+  lol: [
+    {
+      id: 20001,
+      name: "Faker",
+      first_name: "Lee",
+      last_name: "Sang-hyeok",
+      nationality: "KR",
+      role: "Mid",
+      current_team: { name: "T1", id: 2001 },
+      gloryScore: 98
+    }
+  ],
+  csgo: [
+    {
+      id: 30001,
+      name: "s1mple",
+      first_name: "Oleksandr",
+      last_name: "Kostyliev",
+      nationality: "UA",
+      role: "AWP",
+      current_team: { name: "NAVI", id: 3002 },
+      gloryScore: 96
+    }
+  ],
+  valorant: [
+    {
+      id: 60001,
+      name: "TenZ",
+      first_name: "Tyson",
+      last_name: "Ngo",
+      nationality: "CA",
+      role: "Duelist",
+      current_team: { name: "Sentinels", id: 6001 },
+      gloryScore: 90
+    }
+  ]
+};
+
+export function getFallbackPlayers(game: string) {
+  return fallbackPlayers[game as keyof typeof fallbackPlayers] || [];
+}

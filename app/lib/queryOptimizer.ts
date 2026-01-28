@@ -267,6 +267,14 @@ export class QueryOptimizer {
       '/api/esports/matches',
       '/api/esports/tournaments',
       '/api/esports/teams',
+      '/api/esports/players',
+      '/api/esports/leagues',
+      '/api/esports/series',
+      '/api/esports/lives',
+      '/api/esports/odds',
+      '/api/esports/stats',
+      '/api/esports/games',
+      '/api/esports/brackets',
     ];
     
     return batchSupportedEndpoints.some(supported => endpoint.includes(supported));
@@ -438,6 +446,24 @@ export class QueryOptimizer {
         params: { status: 'running' },
         priority: 'high',
         cacheTTL: 5 * 60 * 1000, // 5 minutos
+      },
+      {
+        endpoint: '/api/esports/lives',
+        params: {},
+        priority: 'critical',
+        cacheTTL: 30 * 1000, // 30 segundos
+      },
+      {
+        endpoint: '/api/esports/leagues',
+        params: { per_page: 20 },
+        priority: 'medium',
+        cacheTTL: 10 * 60 * 1000, // 10 minutos
+      },
+      {
+        endpoint: '/api/esports/series',
+        params: { per_page: 20 },
+        priority: 'medium',
+        cacheTTL: 10 * 60 * 1000, // 10 minutos
       },
     ];
 

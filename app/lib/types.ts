@@ -96,7 +96,163 @@ export interface Tournament {
 }
 
 /**
- * Estadísticas de un juego
+ * Representa una liga
+ */
+export interface League {
+  id: number;
+  name: string;
+  url?: string | null;
+  image_url?: string | null;
+  modified_at?: string;
+  series?: Serie[];
+  game: string;
+}
+
+/**
+ * Representa una serie (dentro de una liga)
+ */
+export interface Serie {
+  id: number;
+  name: string;
+  full_name?: string;
+  season?: string | null;
+  year?: number | null;
+  begin_at?: string | null;
+  end_at?: string | null;
+  tier?: string | null;
+  winner_id?: number | null;
+  winner_type?: string | null;
+  league?: League;
+  tournaments?: Tournament[];
+  game: string;
+}
+
+/**
+ * Representa un bracket de torneo
+ */
+export interface Bracket {
+  id: number;
+  type: string;
+  stage_type: string;
+  stage_name: string;
+  position: number;
+  group_name?: string;
+  matches?: Match[];
+  tournament_id: number;
+}
+
+/**
+ * Representa un game individual dentro de un partido
+ */
+export interface Game {
+  id: number;
+  position: number;
+  status: 'not_started' | 'running' | 'finished';
+  begin_at: string | null;
+  end_at: string | null;
+  finished: boolean;
+  winner_id: number | null;
+  winner_type: string | null;
+  match_id: number;
+  forfeit: boolean;
+  length: number | null;
+  game_stats?: GameStatistics;
+}
+
+/**
+ * Estadísticas detalladas de un game
+ */
+export interface GameStatistics {
+  game_id: number;
+  teams?: TeamGameStats[];
+  players?: PlayerGameStats[];
+}
+
+/**
+ * Estadísticas de equipo en un game
+ */
+export interface TeamGameStats {
+  team_id: number;
+  name: string;
+  total_kills?: number;
+  total_deaths?: number;
+  total_assists?: number;
+  gold?: number;
+  turrets?: number;
+  dragons?: number;
+  barons?: number;
+  elders?: number;
+  [key: string]: any;
+}
+
+/**
+ * Estadísticas de jugador en un game
+ */
+export interface PlayerGameStats {
+  player_id: number;
+  name: string;
+  kills?: number;
+  deaths?: number;
+  assists?: number;
+  gold?: number;
+  cs?: number;
+  damage_dealt?: number;
+  damage_taken?: number;
+  [key: string]: any;
+}
+
+/**
+ * Representa datos en vivo de un partido
+ */
+export interface LiveMatch {
+  match_id: number;
+  status: string;
+  current_game?: number;
+  score_team_1: number;
+  score_team_2: number;
+  events?: LiveEvent[];
+  updated_at: string;
+}
+
+/**
+ * Evento en vivo durante un partido
+ */
+export interface LiveEvent {
+  id: string;
+  type: string;
+  timestamp: string;
+  game: number;
+  team?: number;
+  player?: string;
+  description: string;
+}
+
+/**
+ * Representa odds de apuestas
+ */
+export interface Odds {
+  match_id: number;
+  bookmaker: string;
+  market: string;
+  odds_team_1: number;
+  odds_team_2: number;
+  odds_draw?: number | null;
+  updated_at: string;
+}
+
+/**
+ * Estadísticas generales por tipo
+ */
+export interface Stats {
+  player_id?: number;
+  team_id?: number;
+  match_id?: number;
+  game: string;
+  stats: Record<string, number | string>;
+}
+
+/**
+ * Estadísticas de un juego (categoría general)
  */
 export interface GameStats {
   totalMatches: number;
@@ -223,7 +379,7 @@ export interface Language {
 /**
  * Tipos de elementos que se pueden buscar
  */
-export type SearchItemType = 'team' | 'player' | 'match' | 'tournament';
+export type SearchItemType = 'team' | 'player' | 'match' | 'tournament' | 'league' | 'serie';
 
 /**
  * Elemento de resultado de búsqueda

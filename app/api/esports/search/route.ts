@@ -6,7 +6,7 @@ import { apiCache } from "../../../lib/utils";
 interface SearchResult {
   id: number;
   name: string;
-  type: "team" | "player" | "tournament" | "match";
+  type: "team" | "player" | "tournament" | "match" | "league" | "serie";
   image_url: string | null;
   league?: string;
   game: string;
@@ -50,14 +50,41 @@ interface MatchData {
   status?: string;
 }
 
+interface LeagueData {
+  id: number;
+  name: string;
+  image_url?: string;
+  url?: string;
+}
+
+interface SerieData {
+  id: number;
+  name: string;
+  full_name?: string;
+  season?: string;
+  year?: number;
+}
+
 // Mapeo de IDs de juegos a los nombres de la API de PandaScore
 const GAME_MAPPING: Record<string, string> = {
   "dota2": "dota2",
   "lol": "lol",
   "csgo": "csgo",
   "r6siege": "r6siege",
-  "ow": "ow", // Overwatch usa "ow" en PandaScore
-  "overwatch": "ow" // Fallback para compatibilidad
+  "ow": "ow",
+  "overwatch": "ow",
+  "valorant": "valorant",
+  "fortnite": "fortnite",
+  "pubg": "pubg",
+  "apex": "apex",
+  "cod": "cod",
+  "rl": "rl",
+  "sf": "sf",
+  "ssb": "ssb",
+  "sc2": "sc2",
+  "kog": "kog",
+  "wr": "wr",
+  "wow": "wow",
 };
 
 // Timeout para peticiones individuales (8 segundos)
@@ -169,11 +196,13 @@ export async function GET(req: Request) {
     const params = `per_page=12&search%5Bname%5D=${encoded}`;
 
     try {
-      const [teams, players, tournaments, matches] = await Promise.all([
+      const [teams, players, tournaments, matches, leagues, series] = await Promise.all([
         fetchJSON(`${base}/teams`, params),
         fetchJSON(`${base}/players`, params),
         fetchJSON(`${base}/tournaments`, params),
         fetchJSON(`${base}/matches`, params),
+        fetchJSON(`${base}/leagues`, params),
+        fetchJSON(`${base}/series`, params),
       ]);
 
       const gameResults: (SearchResult & { relevance: number })[] = [];
@@ -237,6 +266,31 @@ export async function GET(req: Request) {
         });
       });
 
+      leagues.forEach((l: LeagueData) => {
+        const relevance = calculateRelevance(l.name, q);
+        gameResults.push({
+          id: l.id,
+          name: l.name,
+          type: "league",
+          image_url: l.image_url ?? null,
+          game: gameParam,
+          relevance,
+        });
+      });
+
+      series.forEach((s: SerieData) => {
+        const name = s.full_name || s.name;
+        const relevance = calculateRelevance(name, q);
+        gameResults.push({
+          id: s.id,
+          name: name,
+          type: "serie",
+          image_url: null,
+          game: gameParam,
+          relevance,
+        });
+      });
+
       return gameResults;
     } catch (err) {
       console.error(`Search API error for game ${gameParam}:`, err);
@@ -255,9 +309,11 @@ export async function GET(req: Request) {
       }
       // Si tienen la misma relevancia, priorizar equipos y jugadores
       const typePriority: Record<string, number> = {
-        team: 3,
-        player: 2,
-        tournament: 1,
+        team: 4,
+        player: 3,
+        tournament: 2,
+        league: 1,
+        serie: 1,
         match: 0,
       };
       return (typePriority[b.type] || 0) - (typePriority[a.type] || 0);
