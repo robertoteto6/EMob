@@ -1,10 +1,18 @@
 import { memo } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import Tooltip from "./Tooltip";
+import GameIcon from "./GameIcon";
+import ImageErrorBoundary from "./ImageErrorBoundary";
 import { type GameConfig } from "../lib/gameConfig";
 import { type GeneralGameStats as GameStats } from "../lib/types";
 import { formatRelativeTime } from "../lib/utils";
+
+// Fallback visual para errores de imagen en GameStatsCard
+const GameIconFallback = ({ game }: { game: GameConfig }) => (
+  <div className="flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-600 rounded-lg text-white font-bold w-9 h-9 text-sm">
+    {game.name.slice(0, 2).toUpperCase()}
+  </div>
+);
 
 // Componente de estadísticas del juego (memoizado) - Diseño Minimalista
 const GameStatsCard = memo(function GameStatsCard({ game, stats, lastUpdated }: { game: GameConfig, stats: GameStats, lastUpdated?: Date }) {
@@ -24,9 +32,11 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats, lastUpdated }: 
                     {/* Efecto de brillo en hover */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" aria-hidden="true" />
 
-                    {/* Icono flotante decorativo */}
+                    {/* Icono flotante decorativo con Error Boundary */}
                     <div className="absolute top-3 right-3 opacity-10 group-hover:opacity-20 transition-opacity duration-500" aria-hidden="true">
-                        <Image src={game.icon} alt="" width={64} height={64} className="w-14 h-14 group-hover:scale-110 transition-transform duration-500" priority />
+                        <ImageErrorBoundary>
+                            <GameIcon src={game.icon} alt={game.name} size={56} className="group-hover:scale-110 transition-transform duration-500" priority />
+                        </ImageErrorBoundary>
                     </div>
 
                     {/* Badge "Explorar" en hover */}
@@ -42,7 +52,9 @@ const GameStatsCard = memo(function GameStatsCard({ game, stats, lastUpdated }: 
                         <div className="flex items-center gap-3 mb-5">
                             <div className="relative">
                                 <div className="absolute -inset-1 bg-white/10 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
-                                <Image src={game.icon} alt={`Icono de ${game.name}`} width={36} height={36} className="relative w-9 h-9 group-hover:scale-110 transition-transform duration-300" priority />
+                                <ImageErrorBoundary fallback={<GameIconFallback game={game} />}>
+                                    <GameIcon src={game.icon} alt={game.name} size={36} className="group-hover:scale-110 transition-transform duration-300" priority />
+                                </ImageErrorBoundary>
                             </div>
                             <div>
                                 <h3 className="text-base font-bold text-white group-hover:text-white transition-colors duration-300 leading-tight">

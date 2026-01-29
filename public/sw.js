@@ -13,7 +13,7 @@ const STATIC_ASSETS = [
   '/dota2.svg',
   '/leagueoflegends.svg',
   '/counterstrike.svg',
-  '/rainbow6siege.png',
+  '/icons/games/rainbow-six.svg',
   '/overwatch.svg'
 ];
 
