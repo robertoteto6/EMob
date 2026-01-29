@@ -175,7 +175,7 @@ const MatchCard = ({ match, isFavorite, onToggleFavorite, lang }: MatchCardProps
   );
 };
 
-const TeamSide = ({ team, teamId, score, isWinner }: { team: string; teamId: number | null; score: number; isWinner: boolean }) => {
+const TeamSide = ({ team, teamId, score, isWinner }: { team: string; teamId: number | null; score: number | null; isWinner: boolean }) => {
   const hasValidId = teamId !== null && teamId !== undefined;
   
   const TeamContent = () => (
@@ -218,8 +218,8 @@ const TeamSide = ({ team, teamId, score, isWinner }: { team: string; teamId: num
         <span className={`inline-block px-4 py-1.5 rounded-lg text-2xl font-semibold transition-colors duration-200 font-mono ${isWinner
             ? 'bg-white text-black'
             : 'bg-white/5 text-white/60 border border-white/5'
-          }`} aria-label={`Puntuación: ${score}`}>
-          {score}
+          }`} aria-label={`Puntuación: ${score ?? '-'}`}>
+          {score ?? '-'}
         </span>
       </div>
     </div>

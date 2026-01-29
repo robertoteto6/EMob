@@ -467,3 +467,4 @@ export async function preloadExtendedData() {
         console.warn('Failed to preload extended data:', error);
     }
 }
+

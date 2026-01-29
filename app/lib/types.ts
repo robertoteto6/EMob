@@ -254,7 +254,7 @@ export interface Stats {
 /**
  * Estadísticas de un juego (categoría general)
  */
-export interface GameStats {
+export interface GeneralGameStats {
   totalMatches: number;
   liveMatches: number;
   upcomingMatches: number;
