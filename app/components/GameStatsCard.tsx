@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Tooltip from "./Tooltip";
 import { type GameConfig } from "../lib/gameConfig";
-import { type GameStats } from "../lib/types";
+import { type GeneralGameStats as GameStats } from "../lib/types";
 import { formatRelativeTime } from "../lib/utils";
 
 // Componente de estadísticas del juego (memoizado) - Diseño Minimalista

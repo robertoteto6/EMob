@@ -12,7 +12,7 @@ import { SUPPORTED_GAMES } from "../lib/gameConfig";
 import { useCurrentTime } from "../hooks/useCurrentTime";
 import { useGameContext } from "../contexts/GameContext";
 import { fetchAllMatches, fetchAllTournaments } from "../lib/esports";
-import { type Match, type Tournament, type GameStats } from "../lib/types";
+import { type Match, type Tournament, type GeneralGameStats as GameStats } from "../lib/types";
 
 const GAMES = SUPPORTED_GAMES;
 
